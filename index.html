@@ -793,7 +793,6 @@
             <input type="text" class="form-input" id="adminUsernameInput" placeholder="ユーザーネームを入力" maxlength="20">
             <div class="error-message" id="adminUsernameError"></div>
           </div>
-          <div id="adminConnectionStatus" style="text-align: center; padding: 0.5rem; margin-bottom: 1rem; color: var(--text-dim); font-size: 0.85rem;"></div>
           <button class="submit-btn" id="adminRegisterBtn" onclick="registerAsAdmin()">管理者として登録</button>
         </div>
       </div>
@@ -1021,7 +1020,6 @@
       document.getElementById('backBtn').classList.toggle('visible', id !== 'titleScreen');
       if (id === 'historyScreen') loadHistory();
       if (id === 'tournamentScreen') updateAdminUI();
-      if (id === 'adminScreen') updateConnectionStatus();
     }
     
     function showErrorPopup(title, message) {
@@ -1180,132 +1178,83 @@
     }
     function loadHistory() { document.getElementById('historyList').innerHTML = '<p style="text-align:center;color:var(--text-dim)">読み込み中...</p>'; }
 
-    // Firebase ready state
-    appState.firebaseReady = false;
-    
-    function checkFirebaseReady() {
-      if (!appState.firebaseReady || !appState.currentUser) {
-        return false;
-      }
-      return true;
-    }
-    
-    function updateConnectionStatus() {
-      const statusEl = document.getElementById('adminConnectionStatus');
-      if (statusEl) {
-        if (appState.firebaseReady && appState.currentUser) {
-          statusEl.innerHTML = '<span style="color: var(--matrix-green);">✓ 接続済み</span>';
-        } else {
-          statusEl.innerHTML = '<span style="color: var(--matrix-gold);">⏳ 接続中...</span>';
-        }
-      }
-    }
-    
     // Placeholders - will be overwritten when Firebase loads
-    window.submitEntry = () => { if (!checkFirebaseReady()) return; };
-    window.cancelEntry = () => { if (!checkFirebaseReady()) return; };
-    window.registerAsAdmin = () => { if (!checkFirebaseReady()) return; };
-    window.setDeadline = () => { hideModal('setDeadlineModal'); if (!checkFirebaseReady()) return; };
-    window.setGameName = () => { hideModal('setGameNameModal'); if (!checkFirebaseReady()) return; };
-    window.startRoulette = () => { if (!checkFirebaseReady()) return; };
-    window.spinRoulette = () => { if (!checkFirebaseReady()) return; };
-    window.confirmMatch = () => { if (!checkFirebaseReady()) return; };
+    window.submitEntry = () => { showToast('読み込み中...', 'info'); };
+    window.cancelEntry = () => { showToast('読み込み中...', 'info'); };
+    window.registerAsAdmin = () => { showToast('読み込み中...', 'info'); };
+    window.setDeadline = () => { hideModal('setDeadlineModal'); };
+    window.setGameName = () => { hideModal('setGameNameModal'); };
+    window.startRoulette = () => {};
+    window.spinRoulette = () => {};
+    window.confirmMatch = () => {};
     window.executeConfirmMatch = () => hideModal('confirmMatchModal');
-    window.declareWinner = () => { if (!checkFirebaseReady()) return; };
+    window.declareWinner = () => {};
     window.executeWinner = () => hideModal('confirmWinnerModal');
-    window.recordAndReset = () => { hideModal('confirmRecordModal'); if (!checkFirebaseReady()) return; };
+    window.recordAndReset = () => { hideModal('confirmRecordModal'); };
   </script>
 
-  <!-- Firebase SDK - NEW CONFIG -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
-    import { getFirestore, collection, doc, setDoc, getDoc, getDocs, onSnapshot, query, orderBy, deleteDoc, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
-
-    // NEW Firebase Config
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyCNGRa4DCOM595aM5Exor5BF6oPUvg1TIY",
       authDomain: "tournament-app-a0837.firebaseapp.com",
-      databaseURL: "https://tournament-app-a0837-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "tournament-app-a0837",
       storageBucket: "tournament-app-a0837.firebasestorage.app",
       messagingSenderId: "514905483124",
-      appId: "1:514905483124:web:1882493de273598b0a2e21",
-      measurementId: "G-92VSX3Y3SE"
+      appId: "1:514905483124:web:1882493de273598b0a2e21"
     };
 
-    let db, auth;
+    let db;
     try {
-      const app = initializeApp(firebaseConfig);
-      db = getFirestore(app);
-      auth = getAuth(app);
-      console.log('Firebase initialized');
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      console.log('Firebase Firestore initialized');
       
-      // 即座に匿名認証を試行
-      signInAnonymously(auth).then(() => {
-        console.log('Anonymous sign in initiated');
-      }).catch(e => {
-        console.error('Initial auth error:', e);
-      });
+      // 即座にデータ読み込み開始
+      loadData();
+      checkAdmin();
     } catch (e) { 
       console.error('Firebase init error:', e);
-      // エラー時もステータス更新
-      const statusEl = document.getElementById('adminConnectionStatus');
-      if (statusEl) {
-        statusEl.innerHTML = '<span style="color: var(--error-red);">✕ 接続エラー</span>';
-      }
+      showToast('Firebase接続エラー: ' + e.message, 'error');
     }
-
-    onAuthStateChanged(auth, async user => {
-      console.log('Auth state changed:', user ? user.uid : 'no user');
-      if (user) {
-        appState.currentUser = user;
-        appState.firebaseReady = true;
-        console.log('Firebase auth ready, user:', user.uid);
-        updateConnectionStatus();
-        loadData();
-        checkAdmin();
-      } else {
-        console.log('No user, signing in anonymously...');
-        signInAnonymously(auth).catch(e => {
-          console.error('Auth error:', e);
-          const statusEl = document.getElementById('adminConnectionStatus');
-          if (statusEl) {
-            statusEl.innerHTML = '<span style="color: var(--error-red);">✕ 認証エラー: ' + e.message + '</span>';
-          }
-        });
-      }
-    });
 
     async function checkAdmin() {
       try {
-        const d = await getDoc(doc(db, 'tournaments', 'current'));
-        if (d.exists()) appState.isAdmin = d.data().admin_uids?.includes(appState.currentUser.uid) || false;
+        const d = await db.collection('tournaments').doc('current').get();
+        if (d.exists) {
+          const adminDevices = d.data().admin_devices || [];
+          appState.isAdmin = adminDevices.includes(appState.deviceId);
+        }
         updateAdminUI();
-      } catch (e) { console.error(e); }
+      } catch (e) { console.error('checkAdmin error:', e); }
     }
 
     function loadData() {
-      onSnapshot(doc(db, 'tournaments', 'current'), d => {
-        if (d.exists()) { appState.tournament = d.data(); updateTournamentDisplay(); }
-      });
-      onSnapshot(query(collection(db, 'entries'), orderBy('entry_id', 'asc')), snap => {
+      // tournaments
+      db.collection('tournaments').doc('current').onSnapshot(d => {
+        if (d.exists) { 
+          appState.tournament = d.data(); 
+          updateTournamentDisplay(); 
+        }
+      }, e => console.error('tournaments snapshot error:', e));
+      
+      // entries
+      db.collection('entries').orderBy('entry_id', 'asc').onSnapshot(snap => {
         appState.entries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         updateEntriesDisplay();
         updateRouletteWheel();
-      });
-      onSnapshot(query(collection(db, 'matches'), orderBy('created_at', 'asc')), snap => {
+        checkAdmin(); // エントリー更新時に管理者状態も再チェック
+      }, e => console.error('entries snapshot error:', e));
+      
+      // matches
+      db.collection('matches').orderBy('created_at', 'asc').onSnapshot(snap => {
         appState.matches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      });
+      }, e => console.error('matches snapshot error:', e));
     }
 
     window.registerAsAdmin = async () => {
-      // 接続確認
-      if (!appState.currentUser) {
-        showErrorPopup('接続エラー', '接続が完了していません。ページを再読み込みしてください。');
-        return;
-      }
-      
       // ユーザー名チェック
       const username = document.getElementById('adminUsernameInput').value.trim();
       const err = document.getElementById('adminUsernameError');
@@ -1332,35 +1281,39 @@
       
       err.classList.remove('visible');
       
-      console.log('Registering admin, user uid:', appState.currentUser.uid);
+      console.log('Registering admin with deviceId:', appState.deviceId);
       try {
-        // 1. まずユーザーとしてエントリー登録
+        // 1. ユーザーとしてエントリー登録
         const entryId = appState.entries.length + 1;
-        await setDoc(doc(db, 'entries', appState.deviceId), {
+        await db.collection('entries').doc(appState.deviceId).set({
           entry_id: entryId,
           username: username,
           device_id: appState.deviceId,
-          user_uid: appState.currentUser.uid,
           icon_url: null,
           status: 'ACTIVE',
           is_admin: true,
-          created_at: serverTimestamp()
+          created_at: firebase.firestore.FieldValue.serverTimestamp()
         });
         console.log('Entry registered');
         
-        // 2. 管理者として登録
-        const ref = doc(db, 'tournaments', 'current');
-        const d = await getDoc(ref);
-        let uids = d.exists() ? (d.data().admin_uids || []) : [];
-        if (!uids.includes(appState.currentUser.uid)) {
-          uids.push(appState.currentUser.uid);
+        // 2. 管理者デバイスとして登録
+        const d = await db.collection('tournaments').doc('current').get();
+        let adminDevices = d.exists ? (d.data().admin_devices || []) : [];
+        if (!adminDevices.includes(appState.deviceId)) {
+          adminDevices.push(appState.deviceId);
         }
-        await setDoc(ref, { admin_uids: uids, updated_at: serverTimestamp() }, { merge: true });
+        await db.collection('tournaments').doc('current').set({ 
+          admin_devices: adminDevices, 
+          updated_at: firebase.firestore.FieldValue.serverTimestamp() 
+        }, { merge: true });
         console.log('Admin registered');
         
         appState.isAdmin = true;
         updateAdminUI();
-        showToast('管理者登録完了', 'success');
+        showToast('管理者登録完了！', 'success');
+        
+        // タイトル画面に戻る
+        setTimeout(() => navigateTo('titleScreen'), 1000);
       } catch (e) { 
         console.error('Admin registration error:', e);
         showErrorPopup('登録エラー', '登録に失敗しました: ' + e.message);
@@ -1390,9 +1343,13 @@
       try {
         const id = appState.entries.length + 1;
         const icon = document.getElementById('iconPreview').querySelector('img');
-        await setDoc(doc(db, 'entries', appState.deviceId), {
-          entry_id: id, username: name, device_id: appState.deviceId, user_uid: appState.currentUser.uid,
-          icon_url: icon ? icon.src : null, status: 'ACTIVE', created_at: serverTimestamp()
+        await db.collection('entries').doc(appState.deviceId).set({
+          entry_id: id, 
+          username: name, 
+          device_id: appState.deviceId,
+          icon_url: icon ? icon.src : null, 
+          status: 'ACTIVE', 
+          created_at: firebase.firestore.FieldValue.serverTimestamp()
         });
         showToast('登録完了', 'success');
         document.getElementById('usernameInput').value = '';
@@ -1401,7 +1358,10 @@
 
     window.cancelEntry = async () => {
       if (!confirm('キャンセルしますか？')) return;
-      try { await deleteDoc(doc(db, 'entries', appState.deviceId)); showToast('キャンセル完了', 'success'); }
+      try { 
+        await db.collection('entries').doc(appState.deviceId).delete(); 
+        showToast('キャンセル完了', 'success'); 
+      }
       catch (e) { showToast('失敗: ' + e.message, 'error'); }
     };
 
@@ -1409,8 +1369,12 @@
       const v = document.getElementById('deadlineInput').value;
       if (!v) { showToast('日時を入力', 'error'); return; }
       try {
-        await setDoc(doc(db, 'tournaments', 'current'), { deadline: new Date(v), updated_at: serverTimestamp() }, { merge: true });
-        hideModal('setDeadlineModal'); showToast('設定完了', 'success');
+        await db.collection('tournaments').doc('current').set({ 
+          deadline: new Date(v), 
+          updated_at: firebase.firestore.FieldValue.serverTimestamp() 
+        }, { merge: true });
+        hideModal('setDeadlineModal'); 
+        showToast('設定完了', 'success');
       } catch (e) { showToast('失敗: ' + e.message, 'error'); }
     };
 
@@ -1418,8 +1382,12 @@
       const v = document.getElementById('gameNameInput').value.trim();
       if (!v) { showToast('ゲーム名を入力', 'error'); return; }
       try {
-        await setDoc(doc(db, 'tournaments', 'current'), { game_name: v, updated_at: serverTimestamp() }, { merge: true });
-        hideModal('setGameNameModal'); showToast('設定完了', 'success');
+        await db.collection('tournaments').doc('current').set({ 
+          game_name: v, 
+          updated_at: firebase.firestore.FieldValue.serverTimestamp() 
+        }, { merge: true });
+        hideModal('setGameNameModal'); 
+        showToast('設定完了', 'success');
       } catch (e) { showToast('失敗: ' + e.message, 'error'); }
     };
 
@@ -1457,10 +1425,14 @@
 
     window.executeConfirmMatch = async () => {
       try {
-        await setDoc(doc(collection(db, 'matches')), {
-          player1_id: appState.selectedPlayer1.entry_id, player1_name: appState.selectedPlayer1.username,
-          player2_id: appState.selectedPlayer2.entry_id, player2_name: appState.selectedPlayer2.username,
-          winner_id: null, round: 1, created_at: serverTimestamp()
+        await db.collection('matches').add({
+          player1_id: appState.selectedPlayer1.entry_id, 
+          player1_name: appState.selectedPlayer1.username,
+          player2_id: appState.selectedPlayer2.entry_id, 
+          player2_name: appState.selectedPlayer2.username,
+          winner_id: null, 
+          round: 1, 
+          created_at: firebase.firestore.FieldValue.serverTimestamp()
         });
         hideModal('confirmMatchModal');
         document.getElementById('matchResultControls').style.display = 'flex';
@@ -1480,9 +1452,16 @@
         const { n, w } = appState.pendingWinner;
         const loser = n === 1 ? appState.selectedPlayer2 : appState.selectedPlayer1;
         const m = appState.matches.find(x => x.player1_id === appState.selectedPlayer1.entry_id && x.player2_id === appState.selectedPlayer2.entry_id && !x.winner_id);
-        if (m) await setDoc(doc(db, 'matches', m.id), { ...m, winner_id: w.entry_id, winner_name: w.username });
+        if (m) {
+          await db.collection('matches').doc(m.id).update({ 
+            winner_id: w.entry_id, 
+            winner_name: w.username 
+          });
+        }
         const le = appState.entries.find(e => e.entry_id === loser.entry_id);
-        if (le) await setDoc(doc(db, 'entries', le.id), { ...le, status: 'LOST' });
+        if (le) {
+          await db.collection('entries').doc(le.id).update({ status: 'LOST' });
+        }
         hideModal('confirmWinnerModal');
         document.getElementById('matchResultControls').style.display = 'none';
         appState.selectedPlayer1 = null; appState.selectedPlayer2 = null;
@@ -1496,13 +1475,12 @@
       try {
         const t = appState.tournament;
         const champ = appState.entries.find(e => e.status === 'ACTIVE' || !e.status);
-        // 管理者一覧を取得
         const admins = appState.entries.filter(e => e.is_admin);
         const adminNames = admins.map(a => a.username);
         
-        await setDoc(doc(collection(db, 'history')), {
+        await db.collection('history').add({
           year: new Date().getFullYear(), 
-          date: serverTimestamp(),
+          date: firebase.firestore.FieldValue.serverTimestamp(),
           game_name: t?.game_name || '未設定', 
           champion_name: champ?.username || '未確定',
           champion_id: champ?.entry_id || null,
@@ -1513,14 +1491,21 @@
             status: e.status,
             is_admin: e.is_admin || false
           })),
-          matches: appState.matches,
+          matches: appState.matches.map(m => ({...m})),
           total_participants: appState.entries.length
         });
-        const batch = writeBatch(db);
-        appState.entries.forEach(e => batch.delete(doc(db, 'entries', e.id)));
-        appState.matches.forEach(m => batch.delete(doc(db, 'matches', m.id)));
-        batch.set(doc(db, 'tournaments', 'current'), { admin_uids: [], game_name: null, deadline: null, updated_at: serverTimestamp() });
+        
+        const batch = db.batch();
+        appState.entries.forEach(e => batch.delete(db.collection('entries').doc(e.id)));
+        appState.matches.forEach(m => batch.delete(db.collection('matches').doc(m.id)));
+        batch.set(db.collection('tournaments').doc('current'), { 
+          admin_devices: [], 
+          game_name: null, 
+          deadline: null, 
+          updated_at: firebase.firestore.FieldValue.serverTimestamp() 
+        });
         await batch.commit();
+        
         hideModal('confirmRecordModal');
         showModal('tournamentEndModal');
         appState.isAdmin = false;
@@ -1530,7 +1515,7 @@
 
     window.loadHistory = async () => {
       try {
-        const snap = await getDocs(query(collection(db, 'history'), orderBy('date', 'desc')));
+        const snap = await db.collection('history').orderBy('date', 'desc').get();
         const list = document.getElementById('historyList');
         if (snap.empty) { list.innerHTML = '<p style="text-align:center;color:var(--text-dim)">記録なし</p>'; return; }
         list.innerHTML = snap.docs.map(d => {

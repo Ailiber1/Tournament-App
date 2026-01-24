@@ -1113,6 +1113,19 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="confirmCancelEntryModal">
+    <div class="modal-content">
+      <button class="modal-close-btn" onclick="hideModal('confirmCancelEntryModal')">×</button>
+      <h3 class="modal-title">エントリー解除</h3>
+      <p style="text-align:center;margin:1rem 0;color:var(--text-primary);">エントリーを解除しますか？</p>
+      <p style="text-align:center;color:var(--text-dim);font-size:0.9rem;">参加者リストから削除されます。</p>
+      <div class="modal-buttons">
+        <button class="modal-btn modal-btn-cancel" onclick="hideModal('confirmCancelEntryModal')">キャンセル</button>
+        <button class="modal-btn modal-btn-confirm" style="background:var(--error-red);" onclick="executeCancelEntry()">解除する</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="settingsCompleteModal">
     <div class="modal-content">
       <h3 class="modal-title">✅ 設定完了</h3>
@@ -1882,17 +1895,47 @@
     }
 
     function cancelEntry() {
-      if (!db) return;
-      if (!confirm('エントリーを解除しますか？')) return;
+      // 締切日チェック
+      const dl = appState.tournament?.deadline;
+      if (dl) {
+        const deadline = dl.toDate ? dl.toDate() : new Date(dl);
+        if (new Date() >= deadline) {
+          showToast('締切日時を過ぎているため解除できません', 'error');
+          return;
+        }
+      }
       
+      // 確認モーダルを表示
+      showModal('confirmCancelEntryModal');
+    }
+
+    function executeCancelEntry() {
       playClick();
       
-      db.collection('entries').doc(appState.deviceId).delete()
-      .then(() => {
-        showToast('エントリーを解除しました', 'success');
-        updateEntryScreen();
-      })
-      .catch(e => showToast('エラー: ' + e.message, 'error'));
+      // ローカルステートから削除
+      const index = appState.entries.findIndex(e => e.device_id === appState.deviceId);
+      if (index !== -1) {
+        appState.entries.splice(index, 1);
+      }
+      
+      // Firebase から削除を試みる
+      if (db) {
+        db.collection('entries').doc(appState.deviceId).delete()
+        .then(() => {
+          console.log('Firebase削除成功');
+        })
+        .catch(e => {
+          console.error('Firebase削除エラー:', e);
+        });
+      }
+      
+      // 表示を更新
+      updateEntriesDisplay();
+      updateTournamentDisplay();
+      updateEntryScreen();
+      
+      hideModal('confirmCancelEntryModal');
+      showToast('エントリーを解除しました', 'success');
     }
 
     function spinRoulette() {

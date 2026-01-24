@@ -184,6 +184,15 @@
       opacity: 0.4;
       cursor: not-allowed;
     }
+    .menu-btn.cancel-btn {
+      border-color: var(--error-red);
+      color: var(--error-red);
+    }
+    .menu-btn.cancel-btn:hover:not(:disabled) {
+      background: var(--error-red);
+      color: white;
+      box-shadow: 0 0 25px rgba(255, 50, 50, 0.6);
+    }
 
     /* Form Styles */
     .form-container {
@@ -838,6 +847,7 @@
           <button class="menu-btn" onclick="navigateTo('tournamentScreen')">トーナメントを見る</button>
           <button class="menu-btn" onclick="navigateTo('historyScreen')">過去の大会記録を見る</button>
           <button class="menu-btn" onclick="navigateTo('adminScreen')">管理者登録をする</button>
+          <button class="menu-btn cancel-btn" id="cancelEntryBtn" onclick="cancelEntry()" disabled>登録解除</button>
         </div>
       </div>
     </div>
@@ -902,7 +912,7 @@
               <span id="myEntryName"></span>
               <span class="my-entry-id" id="myEntryId"></span>
             </div>
-            <button class="cancel-entry-btn" onclick="cancelEntry()">エントリー解除</button>
+            <p style="font-size:0.85rem;color:var(--text-dim);margin-top:1rem;">※解除はタイトル画面の「登録解除」から行えます</p>
           </div>
         </div>
         
@@ -1122,6 +1132,16 @@
       <div class="modal-buttons">
         <button class="modal-btn modal-btn-cancel" onclick="hideModal('confirmCancelEntryModal')">キャンセル</button>
         <button class="modal-btn modal-btn-confirm" style="background:var(--error-red);" onclick="executeCancelEntry()">解除する</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="cancelCompleteModal">
+    <div class="modal-content">
+      <h3 class="modal-title">✅ 解除完了</h3>
+      <p style="text-align:center;margin:1rem 0;color:var(--text-primary);">エントリーを解除しました。</p>
+      <div class="modal-buttons">
+        <button class="modal-btn modal-btn-confirm" onclick="hideModal('cancelCompleteModal')">OK</button>
       </div>
     </div>
   </div>
@@ -1452,6 +1472,7 @@
       document.getElementById('tournamentCount').textContent = appState.entries.length + '名';
       updateEntryButton();
       updateMatchmakingButton();
+      updateCancelEntryButton();
     }
 
     function updateEntryButton() {
@@ -1753,6 +1774,10 @@
       document.getElementById(currentScreen).classList.remove('active');
       document.getElementById('adminSetupScreen').classList.add('active');
       currentScreen = 'adminSetupScreen';
+      
+      // ヘッダーを表示
+      const header = document.getElementById('mainHeader');
+      header.classList.remove('hidden');
       document.getElementById('backBtn').classList.add('visible');
     }
 
@@ -1895,6 +1920,13 @@
     }
 
     function cancelEntry() {
+      // 自分がエントリーしているか確認
+      const myEntry = appState.entries.find(e => e.device_id === appState.deviceId);
+      if (!myEntry) {
+        showToast('エントリーしていません', 'error');
+        return;
+      }
+      
       // 締切日チェック
       const dl = appState.tournament?.deadline;
       if (dl) {
@@ -1933,9 +1965,29 @@
       updateEntriesDisplay();
       updateTournamentDisplay();
       updateEntryScreen();
+      updateCancelEntryButton();
       
       hideModal('confirmCancelEntryModal');
-      showToast('エントリーを解除しました', 'success');
+      showModal('cancelCompleteModal');
+    }
+
+    function updateCancelEntryButton() {
+      const btn = document.getElementById('cancelEntryBtn');
+      if (!btn) return;
+      
+      const myEntry = appState.entries.find(e => e.device_id === appState.deviceId);
+      const dl = appState.tournament?.deadline;
+      let canCancel = !!myEntry;
+      
+      // 締切後は解除不可
+      if (dl) {
+        const deadline = dl.toDate ? dl.toDate() : new Date(dl);
+        if (new Date() >= deadline) {
+          canCancel = false;
+        }
+      }
+      
+      btn.disabled = !canCancel;
     }
 
     function spinRoulette() {

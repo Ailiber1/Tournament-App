@@ -45,7 +45,6 @@
       line-height: 1.3;
       color: var(--matrix-green);
       writing-mode: vertical-rl;
-      text-orientation: mixed;
       animation: matrix-fall linear infinite;
       opacity: 0.15;
       text-shadow: 0 0 8px var(--matrix-green);
@@ -64,6 +63,9 @@
       position: sticky;
       top: 0;
       z-index: 100;
+    }
+    .header.hidden {
+      display: none;
     }
     .back-btn {
       background: transparent;
@@ -86,6 +88,10 @@
       text-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
       letter-spacing: 0.15em;
     }
+    .header-icons {
+      display: flex;
+      gap: 0.5rem;
+    }
     .info-btn {
       background: transparent;
       border: 2px solid var(--matrix-green);
@@ -94,10 +100,26 @@
       height: 36px;
       border-radius: 50%;
       cursor: pointer;
-      font-size: 1.2rem;
+      font-size: 1rem;
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: all 0.2s;
+    }
+    .info-btn:hover {
+      background: var(--matrix-green);
+      color: var(--bg-dark);
+      box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+      transform: scale(1.1);
+    }
+    .info-btn.admin-info {
+      border-color: var(--matrix-gold);
+      color: var(--matrix-gold);
+    }
+    .info-btn.admin-info:hover {
+      background: var(--matrix-gold);
+      color: var(--bg-dark);
+      box-shadow: 0 0 15px rgba(255, 204, 0, 0.5);
     }
     .container {
       max-width: 900px;
@@ -115,6 +137,14 @@
       justify-content: center;
       min-height: 70vh;
       text-align: center;
+      position: relative;
+    }
+    .title-guide-icons {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      display: flex;
+      gap: 0.5rem;
     }
     .main-title {
       font-family: 'Noto Serif JP', serif;
@@ -141,16 +171,17 @@
       font-weight: bold;
       border-radius: 8px;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.2s;
       text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
     }
     .menu-btn:hover:not(:disabled) {
       background: var(--matrix-green);
       color: var(--bg-dark);
-      box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+      box-shadow: 0 0 25px rgba(0, 255, 65, 0.6);
+      transform: scale(1.02);
     }
     .menu-btn:disabled {
-      opacity: 0.5;
+      opacity: 0.4;
       cursor: not-allowed;
     }
 
@@ -191,192 +222,6 @@
       border-color: var(--matrix-green);
       box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
     }
-    /* datetime-local カレンダーのスタイル */
-    input[type="datetime-local"] {
-      color-scheme: dark;
-    }
-    input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-      filter: invert(1) sepia(1) saturate(5) hue-rotate(85deg);
-      cursor: pointer;
-    }
-
-    /* Custom Calendar Modal */
-    .calendar-modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.9);
-      z-index: 2000;
-      align-items: center;
-      justify-content: center;
-    }
-    .calendar-modal.active { display: flex; }
-    .calendar-container {
-      background: rgba(0, 20, 10, 0.95);
-      border: 2px solid var(--matrix-green);
-      border-radius: 16px;
-      padding: 1.5rem;
-      max-width: 380px;
-      width: 95%;
-      box-shadow: 0 0 40px rgba(0, 255, 65, 0.3);
-      position: relative;
-    }
-    .calendar-close {
-      position: absolute;
-      top: 10px; right: 10px;
-      background: transparent;
-      border: none;
-      color: var(--text-dim);
-      font-size: 1.8rem;
-      cursor: pointer;
-      width: 36px; height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      transition: all 0.3s;
-    }
-    .calendar-close:hover {
-      color: var(--matrix-green);
-      background: rgba(0, 255, 65, 0.1);
-    }
-    .calendar-title {
-      color: var(--matrix-green);
-      font-size: 1.2rem;
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-    .calendar-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-    .calendar-nav {
-      background: transparent;
-      border: 1px solid var(--matrix-green);
-      color: var(--matrix-green);
-      width: 36px; height: 36px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 1.2rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s;
-    }
-    .calendar-nav:hover {
-      background: var(--matrix-green);
-      color: var(--bg-dark);
-    }
-    .calendar-month-year {
-      color: var(--matrix-green);
-      font-size: 1.1rem;
-      font-weight: bold;
-    }
-    .calendar-weekdays {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 2px;
-      margin-bottom: 0.5rem;
-    }
-    .calendar-weekday {
-      text-align: center;
-      color: var(--text-dim);
-      font-size: 0.8rem;
-      padding: 0.5rem;
-    }
-    .calendar-days {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 2px;
-    }
-    .calendar-day {
-      aspect-ratio: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0, 40, 20, 0.5);
-      border: 1px solid transparent;
-      border-radius: 8px;
-      color: var(--text-primary);
-      cursor: pointer;
-      font-size: 0.95rem;
-      transition: all 0.2s;
-    }
-    .calendar-day:hover:not(.disabled):not(.empty) {
-      border-color: var(--matrix-green);
-      background: rgba(0, 255, 65, 0.1);
-    }
-    .calendar-day.selected {
-      background: var(--matrix-green);
-      color: var(--bg-dark);
-      font-weight: bold;
-    }
-    .calendar-day.today {
-      border-color: var(--matrix-gold);
-    }
-    .calendar-day.disabled {
-      color: #333;
-      cursor: not-allowed;
-      background: rgba(0, 0, 0, 0.3);
-    }
-    .calendar-day.empty {
-      background: transparent;
-      cursor: default;
-    }
-    .calendar-time {
-      display: flex;
-      gap: 1rem;
-      margin-top: 1rem;
-      justify-content: center;
-      align-items: center;
-    }
-    .calendar-time-input {
-      width: 70px;
-      padding: 0.5rem;
-      background: rgba(0, 20, 10, 0.8);
-      border: 1px solid var(--matrix-green-dim);
-      border-radius: 6px;
-      color: var(--text-primary);
-      font-size: 1.1rem;
-      text-align: center;
-    }
-    .calendar-time-input:focus {
-      outline: none;
-      border-color: var(--matrix-green);
-    }
-    .calendar-time-label {
-      color: var(--text-dim);
-      font-size: 1.2rem;
-    }
-    .calendar-confirm {
-      width: 100%;
-      margin-top: 1.5rem;
-      padding: 1rem;
-      background: linear-gradient(180deg, var(--matrix-green-dim) 0%, var(--matrix-green-dark) 100%);
-      border: 2px solid var(--matrix-green);
-      color: var(--matrix-green);
-      font-size: 1.1rem;
-      font-weight: bold;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    .calendar-confirm:hover {
-      background: var(--matrix-green);
-      color: var(--bg-dark);
-    }
-    .calendar-selected-display {
-      text-align: center;
-      color: var(--matrix-gold);
-      font-size: 1rem;
-      margin-top: 1rem;
-      padding: 0.5rem;
-      background: rgba(255, 204, 0, 0.1);
-      border-radius: 6px;
-    }
     .submit-btn {
       width: 100%;
       padding: 1rem;
@@ -387,14 +232,16 @@
       font-weight: bold;
       border-radius: 8px;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.2s;
     }
     .submit-btn:hover:not(:disabled) {
       background: var(--matrix-green);
       color: var(--bg-dark);
+      box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+      transform: scale(1.02);
     }
     .submit-btn:disabled {
-      opacity: 0.5;
+      opacity: 0.4;
       cursor: not-allowed;
     }
     .error-message {
@@ -417,9 +264,7 @@
       gap: 1rem;
     }
     @media (min-width: 600px) {
-      .info-panel {
-        grid-template-columns: repeat(4, 1fr);
-      }
+      .info-panel { grid-template-columns: repeat(4, 1fr); }
     }
     .info-item { text-align: center; }
     .info-label {
@@ -509,49 +354,13 @@
       object-fit: cover;
     }
 
-    /* Admin Panel */
-    .admin-panel {
-      background: rgba(0, 30, 15, 0.8);
-      border: 2px solid var(--matrix-gold);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-    }
-    .admin-title {
-      color: var(--matrix-gold);
-      font-size: 1.2rem;
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .admin-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.8rem;
-    }
-    .admin-btn {
-      background: rgba(255, 204, 0, 0.1);
-      border: 1px solid var(--matrix-gold);
-      color: var(--matrix-gold);
-      padding: 0.6rem 1.2rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: all 0.3s;
-    }
-    .admin-btn:hover {
-      background: var(--matrix-gold);
-      color: var(--bg-dark);
-    }
-
     /* Modal */
     .modal-overlay {
       display: none;
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.85);
       z-index: 1000;
       align-items: center;
       justify-content: center;
@@ -562,21 +371,21 @@
       border: 2px solid var(--matrix-green);
       border-radius: 12px;
       padding: 2rem;
-      max-width: 400px;
+      max-width: 500px;
       width: 90%;
       position: relative;
+      max-height: 90vh;
+      overflow-y: auto;
     }
     .modal-close-btn {
       position: absolute;
-      top: 10px;
-      right: 10px;
+      top: 10px; right: 10px;
       background: transparent;
       border: none;
       color: var(--text-dim);
-      font-size: 1.5rem;
+      font-size: 1.8rem;
       cursor: pointer;
-      width: 30px;
-      height: 30px;
+      width: 36px; height: 36px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -604,17 +413,51 @@
       border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
-      transition: all 0.3s;
+      transition: all 0.2s;
     }
     .modal-btn-cancel {
       background: transparent;
       border: 1px solid var(--text-dim);
       color: var(--text-dim);
     }
+    .modal-btn-cancel:hover {
+      border-color: var(--matrix-green);
+      color: var(--matrix-green);
+      box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+    }
     .modal-btn-confirm {
       background: var(--matrix-green);
       border: none;
       color: var(--bg-dark);
+    }
+    .modal-btn-confirm:hover {
+      box-shadow: 0 0 20px rgba(0, 255, 65, 0.6);
+      transform: scale(1.02);
+    }
+
+    /* Guide Modal */
+    .guide-content {
+      color: var(--text-primary);
+      line-height: 1.8;
+    }
+    .guide-content h4 {
+      color: var(--matrix-green);
+      margin: 1.5rem 0 0.5rem;
+      font-size: 1.1rem;
+    }
+    .guide-content h4:first-child {
+      margin-top: 0;
+    }
+    .guide-content p {
+      margin-bottom: 0.8rem;
+      color: var(--text-dim);
+    }
+    .guide-content ul {
+      margin-left: 1.5rem;
+      color: var(--text-dim);
+    }
+    .guide-content li {
+      margin-bottom: 0.5rem;
     }
 
     /* Toast */
@@ -647,18 +490,243 @@
       padding: 1.5rem;
       margin-bottom: 1rem;
     }
-    .history-date {
-      color: var(--text-dim);
-      font-size: 0.85rem;
+    .history-date { color: var(--text-dim); font-size: 0.85rem; }
+    .history-game { color: var(--matrix-green); font-size: 1.2rem; font-weight: bold; margin: 0.5rem 0; }
+    .history-winner { color: var(--matrix-gold); }
+
+    /* Custom Calendar */
+    .calendar-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
     }
-    .history-game {
+    .calendar-modal.active { display: flex; }
+    .calendar-container {
+      background: rgba(0, 20, 10, 0.95);
+      border: 2px solid var(--matrix-green);
+      border-radius: 16px;
+      padding: 1.5rem;
+      max-width: 380px;
+      width: 95%;
+      box-shadow: 0 0 40px rgba(0, 255, 65, 0.3);
+      position: relative;
+    }
+    .calendar-close {
+      position: absolute;
+      top: 10px; right: 10px;
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-size: 1.8rem;
+      cursor: pointer;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      transition: all 0.3s;
+    }
+    .calendar-close:hover {
+      color: var(--matrix-green);
+      background: rgba(0, 255, 65, 0.1);
+    }
+    .calendar-title {
       color: var(--matrix-green);
       font-size: 1.2rem;
-      font-weight: bold;
-      margin: 0.5rem 0;
+      text-align: center;
+      margin-bottom: 1rem;
     }
-    .history-winner {
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .calendar-nav {
+      background: transparent;
+      border: 1px solid var(--matrix-green);
+      color: var(--matrix-green);
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: all 0.2s;
+    }
+    .calendar-nav:hover {
+      background: var(--matrix-green);
+      color: var(--bg-dark);
+      box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+      transform: scale(1.1);
+    }
+    .calendar-month-year {
+      color: var(--matrix-green);
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+    .calendar-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      margin-bottom: 0.5rem;
+    }
+    .calendar-weekday {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      padding: 0.5rem;
+    }
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+    .calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 40, 20, 0.5);
+      border: 1px solid transparent;
+      border-radius: 8px;
+      color: var(--text-primary);
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+    }
+    .calendar-day:hover:not(.disabled):not(.empty) {
+      border-color: var(--matrix-green);
+      background: rgba(0, 255, 65, 0.2);
+      box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+    }
+    .calendar-day.selected {
+      background: var(--matrix-green) !important;
+      color: var(--bg-dark) !important;
+      font-weight: bold;
+      box-shadow: 0 0 15px rgba(0, 255, 65, 0.6);
+      border-color: var(--matrix-green) !important;
+    }
+    .calendar-day.today:not(.selected) { 
+      border-color: var(--matrix-gold); 
+      box-shadow: 0 0 8px rgba(255, 204, 0, 0.3);
+    }
+    .calendar-day.disabled {
+      color: #333;
+      cursor: not-allowed;
+      background: rgba(0, 0, 0, 0.3);
+    }
+    .calendar-day.empty { background: transparent; cursor: default; }
+    .calendar-time {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      justify-content: center;
+      align-items: center;
+    }
+    .calendar-time-input {
+      width: 70px;
+      padding: 0.6rem;
+      background: rgba(0, 20, 10, 0.8);
+      border: 1px solid var(--matrix-green-dim);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 1.1rem;
+      text-align: center;
+    }
+    .calendar-time-label {
+      color: var(--text-dim);
+      font-size: 1.2rem;
+    }
+    .calendar-confirm {
+      width: 100%;
+      margin-top: 1rem;
+      padding: 1rem;
+      background: linear-gradient(180deg, var(--matrix-green-dim) 0%, var(--matrix-green-dark) 100%);
+      border: 2px solid var(--matrix-green);
+      color: var(--matrix-green);
+      font-size: 1.1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .calendar-confirm:hover {
+      background: var(--matrix-green);
+      color: var(--bg-dark);
+      box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+      transform: scale(1.02);
+    }
+    .calendar-selected-display {
+      text-align: center;
       color: var(--matrix-gold);
+      font-size: 1rem;
+      margin-top: 1rem;
+      padding: 0.5rem;
+      background: rgba(255, 204, 0, 0.1);
+      border-radius: 6px;
+    }
+
+    /* Icon Preview with delete */
+    .icon-preview-container {
+      position: relative;
+      display: inline-block;
+    }
+    .icon-delete-btn {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      width: 20px;
+      height: 20px;
+      background: var(--error-red);
+      border: none;
+      border-radius: 50%;
+      color: white;
+      font-size: 12px;
+      cursor: pointer;
+      display: none;
+    }
+    .icon-preview-container.has-icon .icon-delete-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* My Entry Display */
+    .my-entry-box {
+      background: rgba(0, 255, 65, 0.1);
+      border: 2px solid var(--matrix-green);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    .my-entry-title {
+      color: var(--matrix-green);
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+    }
+    .my-entry-info {
+      font-size: 1.3rem;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+    }
+    .my-entry-id {
+      color: var(--matrix-gold);
+      font-weight: bold;
+    }
+    .cancel-entry-btn {
+      background: transparent;
+      border: 1px solid var(--error-red);
+      color: var(--error-red);
+      padding: 0.5rem 1.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .cancel-entry-btn:hover {
+      background: var(--error-red);
+      color: white;
     }
 
     /* Roulette */
@@ -703,10 +771,7 @@
       margin-bottom: 1.5rem;
       min-width: 300px;
     }
-    .vs-title {
-      color: var(--text-dim);
-      margin-bottom: 1rem;
-    }
+    .vs-title { color: var(--text-dim); margin-bottom: 1rem; }
     .vs-players {
       display: flex;
       align-items: center;
@@ -726,19 +791,9 @@
       font-size: 1.5rem;
       color: var(--matrix-green);
     }
-    .vs-player-id {
-      color: var(--text-dim);
-      font-size: 0.85rem;
-    }
-    .vs-player-name {
-      color: var(--matrix-green);
-      font-weight: bold;
-    }
-    .vs-text {
-      font-size: 2rem;
-      font-weight: bold;
-      color: var(--matrix-gold);
-    }
+    .vs-player-id { color: var(--text-dim); font-size: 0.85rem; }
+    .vs-player-name { color: var(--matrix-green); font-weight: bold; }
+    .vs-text { font-size: 2rem; font-weight: bold; color: var(--matrix-gold); }
     .roulette-controls {
       display: flex;
       gap: 1rem;
@@ -752,35 +807,31 @@
       cursor: pointer;
       transition: all 0.3s;
     }
-    .roulette-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    #spinBtn {
-      background: var(--matrix-green);
-      border: none;
-      color: var(--bg-dark);
-    }
-    #confirmMatchBtn {
-      background: transparent;
-      border: 2px solid var(--matrix-gold);
-      color: var(--matrix-gold);
-    }
+    .roulette-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    #spinBtn { background: var(--matrix-green); border: none; color: var(--bg-dark); }
+    #confirmMatchBtn { background: transparent; border: 2px solid var(--matrix-gold); color: var(--matrix-gold); }
   </style>
 </head>
 <body>
   <div class="matrix-bg" id="matrixBg"></div>
 
-  <header class="header">
+  <header class="header hidden" id="mainHeader">
     <button class="back-btn" id="backBtn" onclick="goBack()">< 戻る</button>
     <h1 class="app-title">トーナメント</h1>
-    <button class="info-btn" onclick="showInfo()">♪</button>
+    <div class="header-icons">
+      <button class="info-btn" onclick="showGuide('user')" title="使い方ガイド">?</button>
+      <button class="info-btn admin-info" onclick="showGuide('admin')" title="管理者ガイド">👑</button>
+    </div>
   </header>
 
   <div class="container">
     <!-- Title Screen -->
     <div class="screen active" id="titleScreen">
       <div class="title-screen">
+        <div class="title-guide-icons">
+          <button class="info-btn" onclick="showGuide('user')" title="使い方ガイド">?</button>
+          <button class="info-btn admin-info" onclick="showGuide('admin')" title="管理者ガイド">👑</button>
+        </div>
         <h1 class="main-title">トーナメント</h1>
         <div class="menu-buttons">
           <button class="menu-btn" id="entryBtn" onclick="navigateTo('entryScreen')" disabled>エントリー登録</button>
@@ -805,7 +856,7 @@
       </div>
     </div>
 
-    <!-- Admin Setup Screen (after registration) -->
+    <!-- Admin Setup Screen -->
     <div class="screen" id="adminSetupScreen">
       <div class="form-container">
         <h2 class="form-title">大会設定</h2>
@@ -825,6 +876,14 @@
           <input type="hidden" id="setupDeadline">
           <div class="error-message" id="setupDeadlineError"></div>
         </div>
+
+        <div class="form-group">
+          <label class="form-label">対戦相手を決める</label>
+          <button type="button" class="form-input" id="matchmakingBtn" onclick="showMatchmakingInfo()" style="text-align:center;cursor:pointer;opacity:0.5;">
+            🎲 対戦カード抽選（締切後に有効化）
+          </button>
+          <p style="font-size:0.8rem;color:var(--text-dim);margin-top:0.5rem;">※大会当日（締切日時以降）に有効化されます</p>
+        </div>
         
         <button class="submit-btn" onclick="saveTournamentSettings()">設定を保存</button>
       </div>
@@ -834,7 +893,20 @@
     <div class="screen" id="entryScreen">
       <div class="form-container">
         <h2 class="form-title">エントリー登録</h2>
-        <div id="entryStatus"></div>
+        
+        <!-- 既にエントリー済みの場合 -->
+        <div id="myEntryDisplay" style="display:none;">
+          <div class="my-entry-box">
+            <div class="my-entry-title">✓ エントリー済み</div>
+            <div class="my-entry-info">
+              <span id="myEntryName"></span>
+              <span class="my-entry-id" id="myEntryId"></span>
+            </div>
+            <button class="cancel-entry-btn" onclick="cancelEntry()">エントリー解除</button>
+          </div>
+        </div>
+        
+        <!-- 未エントリーの場合 -->
         <div id="entryForm">
           <div class="form-group">
             <label class="form-label">ユーザーネーム</label>
@@ -845,18 +917,21 @@
             <label class="form-label">アイコン（任意）</label>
             <input type="file" accept="image/*" onchange="previewIcon(this)" style="display:none" id="iconInput">
             <div style="display:flex;align-items:center;gap:1rem;">
-              <div id="iconPreview" style="width:60px;height:60px;border-radius:50%;background:var(--matrix-green-dark);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;" onclick="document.getElementById('iconInput').click()">
-                <span style="color:var(--text-dim);">+</span>
+              <div class="icon-preview-container" id="iconPreviewContainer">
+                <div id="iconPreview" style="width:60px;height:60px;border-radius:50%;background:var(--matrix-green-dark);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;" onclick="document.getElementById('iconInput').click()">
+                  <span style="color:var(--text-dim);">+</span>
+                </div>
+                <button type="button" class="icon-delete-btn" onclick="clearIcon()">×</button>
               </div>
               <span style="color:var(--text-dim);font-size:0.85rem;">クリックして画像を選択</span>
             </div>
           </div>
-          <button class="submit-btn" id="entrySubmitBtn" onclick="submitEntry()">登録する</button>
+          <button class="submit-btn" onclick="submitEntry()">登録する</button>
         </div>
       </div>
     </div>
 
-    <!-- Tournament Screen -->
+    <!-- Tournament Screen (観覧用、管理者パネルなし) -->
     <div class="screen" id="tournamentScreen">
       <div class="info-panel">
         <div class="info-item">
@@ -877,18 +952,7 @@
         </div>
       </div>
 
-      <!-- Admin Panel (visible only to admins) -->
-      <div class="admin-panel" id="adminPanel" style="display:none;">
-        <div class="admin-title">👑 管理者パネル</div>
-        <div class="admin-buttons">
-          <button class="admin-btn" onclick="showModal('setDeadlineModal')">締切日時設定</button>
-          <button class="admin-btn" onclick="showModal('setGameNameModal')">ゲーム名設定</button>
-          <button class="admin-btn" onclick="startRoulette()">ルーレット開始</button>
-          <button class="admin-btn" onclick="showModal('confirmRecordModal')">記録して終了</button>
-        </div>
-      </div>
-
-      <!-- Roulette Container -->
+      <!-- Roulette Container (管理者が開始した場合のみ表示) -->
       <div class="roulette-container" id="rouletteContainer">
         <div class="roulette-wheel">
           <div class="wheel-inner" id="wheelInner"></div>
@@ -909,11 +973,11 @@
             </div>
           </div>
         </div>
-        <div class="roulette-controls">
+        <div class="roulette-controls" id="rouletteAdminControls" style="display:none;">
           <button class="roulette-btn" id="spinBtn" onclick="spinRoulette()">ルーレット回転</button>
           <button class="roulette-btn" id="confirmMatchBtn" onclick="confirmMatch()" disabled>対戦確定</button>
         </div>
-        <div class="roulette-controls" id="matchResultControls" style="display:none;margin-top:1rem;">
+        <div class="roulette-controls" id="matchResultControls" style="display:none;">
           <button class="roulette-btn" onclick="declareWinner(1)">← 勝利</button>
           <button class="roulette-btn" onclick="declareWinner(2)">勝利 →</button>
         </div>
@@ -941,36 +1005,71 @@
     </div>
   </div>
 
-  <!-- Modals -->
-  <div class="modal-overlay" id="setDeadlineModal">
+  <!-- User Guide Modal -->
+  <div class="modal-overlay" id="userGuideModal">
     <div class="modal-content">
-      <button class="modal-close-btn" onclick="hideModal('setDeadlineModal')">×</button>
-      <h3 class="modal-title">締切日時設定</h3>
-      <button type="button" class="form-input" id="modalDeadlineBtn" onclick="openCalendar('modal')" style="text-align:left;cursor:pointer;width:100%;">
-        クリックして日時を選択
-      </button>
-      <input type="hidden" id="deadlineInput">
-      <div class="modal-buttons">
-        <button class="modal-btn modal-btn-cancel" onclick="hideModal('setDeadlineModal')">キャンセル</button>
-        <button class="modal-btn modal-btn-confirm" onclick="setDeadline()">設定</button>
+      <button class="modal-close-btn" onclick="hideModal('userGuideModal')">×</button>
+      <h3 class="modal-title">📖 使い方ガイド</h3>
+      <div class="guide-content">
+        <h4>🎮 トーナメントとは</h4>
+        <p>参加者同士が対戦し、勝ち残った人が優勝する大会形式です。</p>
+        
+        <h4>📝 エントリー方法</h4>
+        <ul>
+          <li>管理者が締切日時を設定すると「エントリー登録」が有効になります</li>
+          <li>ユーザーネームを入力して登録してください</li>
+          <li>アイコンは任意で設定できます</li>
+          <li>締切日時までならエントリー解除も可能です</li>
+        </ul>
+        
+        <h4>👀 トーナメントを見る</h4>
+        <p>大会情報や参加者リストを確認できます。対戦が始まると、ルーレットの結果もリアルタイムで表示されます。</p>
+        
+        <h4>📚 過去の記録</h4>
+        <p>過去に開催された大会の結果を閲覧できます。</p>
       </div>
     </div>
   </div>
 
-  <div class="modal-overlay" id="setGameNameModal">
+  <!-- Admin Guide Modal -->
+  <div class="modal-overlay" id="adminGuideModal">
     <div class="modal-content">
-      <button class="modal-close-btn" onclick="hideModal('setGameNameModal')">×</button>
-      <h3 class="modal-title">ゲーム名設定</h3>
-      <input type="text" class="form-input" id="gameNameInput" placeholder="ゲーム名を入力">
-      <div class="modal-buttons">
-        <button class="modal-btn modal-btn-cancel" onclick="hideModal('setGameNameModal')">キャンセル</button>
-        <button class="modal-btn modal-btn-confirm" onclick="setGameName()">設定</button>
+      <button class="modal-close-btn" onclick="hideModal('adminGuideModal')">×</button>
+      <h3 class="modal-title" style="color:var(--matrix-gold);">👑 管理者ガイド</h3>
+      <div class="guide-content">
+        <h4>🔐 管理者登録</h4>
+        <p>「管理者登録をする」から管理者名を入力して登録します。</p>
+        
+        <h4>⚙️ 大会設定</h4>
+        <ul>
+          <li>ゲーム名（大会名）を入力</li>
+          <li>エントリー締切日時を設定</li>
+          <li>設定を保存するとエントリー登録が有効化されます</li>
+        </ul>
+        
+        <h4>🎲 対戦カード抽選</h4>
+        <ul>
+          <li>締切日時を過ぎると「対戦相手を決める」が有効化されます</li>
+          <li>ルーレットで対戦カードを決定します</li>
+          <li>勝敗を確定すると、敗者は名簿でグレー表示になります</li>
+        </ul>
+        
+        <h4>🏆 大会終了</h4>
+        <p>最後の1人が決まったら「記録して終了」で大会を記録・リセットできます。</p>
+        
+        <h4>⚠️ 注意事項</h4>
+        <ul>
+          <li>勝敗確定は取り消しできません。慎重に操作してください</li>
+          <li>大会終了後は管理者状態もリセットされます</li>
+        </ul>
       </div>
     </div>
   </div>
 
+  <!-- Confirm Modals -->
   <div class="modal-overlay" id="confirmMatchModal">
     <div class="modal-content">
+      <button class="modal-close-btn" onclick="hideModal('confirmMatchModal')">×</button>
       <h3 class="modal-title">対戦を確定しますか？</h3>
       <p style="text-align:center;margin:1rem 0;" id="confirmMatchText"></p>
       <div class="modal-buttons">
@@ -982,6 +1081,7 @@
 
   <div class="modal-overlay" id="confirmWinnerModal">
     <div class="modal-content">
+      <button class="modal-close-btn" onclick="hideModal('confirmWinnerModal')">×</button>
       <h3 class="modal-title">勝者を確定しますか？</h3>
       <p style="text-align:center;margin:1rem 0;color:var(--matrix-gold);font-size:1.3rem;" id="confirmWinnerText"></p>
       <div class="modal-buttons">
@@ -993,6 +1093,7 @@
 
   <div class="modal-overlay" id="confirmRecordModal">
     <div class="modal-content">
+      <button class="modal-close-btn" onclick="hideModal('confirmRecordModal')">×</button>
       <h3 class="modal-title">大会を記録して終了しますか？</h3>
       <p style="text-align:center;color:var(--text-dim);">全データがリセットされます</p>
       <div class="modal-buttons">
@@ -1012,20 +1113,40 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="settingsCompleteModal">
+    <div class="modal-content">
+      <h3 class="modal-title">✅ 設定完了</h3>
+      <p style="text-align:center;margin:1rem 0;color:var(--text-primary);">大会設定が保存されました。</p>
+      <p style="text-align:center;color:var(--text-dim);font-size:0.9rem;">締切日時まで、参加者のエントリーを待ちましょう。</p>
+      <div class="modal-buttons">
+        <button class="modal-btn modal-btn-confirm" onclick="hideModal('settingsCompleteModal');navigateTo('tournamentScreen', true)">確認する</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="entryCompleteModal">
+    <div class="modal-content">
+      <h3 class="modal-title">🎉 エントリー完了</h3>
+      <p style="text-align:center;margin:1rem 0;color:var(--text-primary);">エントリーが完了しました！</p>
+      <p style="text-align:center;color:var(--matrix-gold);font-size:1.1rem;" id="entryCompleteInfo"></p>
+      <div class="modal-buttons">
+        <button class="modal-btn modal-btn-confirm" onclick="hideModal('entryCompleteModal');navigateTo('tournamentScreen', true)">確認する</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
-  <!-- Custom Calendar Modal -->
+  <!-- Custom Calendar -->
   <div class="calendar-modal" id="calendarModal">
     <div class="calendar-container">
       <button class="calendar-close" onclick="closeCalendar()">×</button>
       <h3 class="calendar-title">締切日時を選択</h3>
-      
       <div class="calendar-header">
         <button class="calendar-nav" onclick="changeMonth(-1)">◀</button>
         <span class="calendar-month-year" id="calendarMonthYear"></span>
         <button class="calendar-nav" onclick="changeMonth(1)">▶</button>
       </div>
-      
       <div class="calendar-weekdays">
         <div class="calendar-weekday">日</div>
         <div class="calendar-weekday">月</div>
@@ -1035,20 +1156,21 @@
         <div class="calendar-weekday">金</div>
         <div class="calendar-weekday">土</div>
       </div>
-      
       <div class="calendar-days" id="calendarDays"></div>
-      
       <div class="calendar-time">
         <input type="number" class="calendar-time-input" id="calendarHour" min="0" max="23" value="12">
         <span class="calendar-time-label">:</span>
         <input type="number" class="calendar-time-input" id="calendarMinute" min="0" max="59" value="00" step="5">
       </div>
-      
       <div class="calendar-selected-display" id="calendarSelectedDisplay">日付を選択してください</div>
-      
       <button class="calendar-confirm" onclick="confirmCalendar()">この日時で設定</button>
     </div>
   </div>
+
+  <!-- Audio -->
+  <audio id="clickSound" preload="auto">
+    <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJOqr5mAZ1xqgJuqpYZ2bHKJoKSlkYJ6e4iTnaKekYl/hI+YnZ2Xj4qIjJSZm5mVkI6MjpOXmJeUko+OjpGVl5aUkpCPjpCTlZWUk5GPj4+RkpSUk5KQkJCQkZKTk5OSkJCQkJGSk5OSkpGRkZGRkpKSkpKRkZGRkZKSkpKSkZGRkZGRkpKSkpGRkZGRkZGSkpKSkZGRkZGRkZKSkpKRkZGRkZGRkpKSkpGRkZGRkZGRkpKRkZGRkZGRkZGRkpKRkZGRkZGRkZGRkZKRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZE=" type="audio/wav">
+  </audio>
 
   <script>
     // App State
@@ -1071,52 +1193,160 @@
       return id;
     }
 
-    // Check if user is already admin
-    if (appState.adminName) {
-      appState.isAdmin = true;
+    if (appState.adminName) appState.isAdmin = true;
+
+    // Sound
+    function playClick() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        oscillator.start(audioCtx.currentTime);
+        oscillator.stop(audioCtx.currentTime + 0.1);
+      } catch(e) {}
+    }
+
+    function playHover() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.frequency.value = 600;
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+        oscillator.start(audioCtx.currentTime);
+        oscillator.stop(audioCtx.currentTime + 0.05);
+      } catch(e) {}
+    }
+
+    // ボタンにホバー効果音を追加
+    function addHoverSounds() {
+      const buttons = document.querySelectorAll('button:not(.calendar-day), .menu-btn, .submit-btn, .modal-btn, .admin-btn, .roulette-btn, .info-btn, .calendar-nav, .calendar-confirm');
+      buttons.forEach(btn => {
+        btn.addEventListener('mouseenter', () => {
+          if (!btn.disabled) playHover();
+        });
+      });
+    }
+
+    // 全てのボタンにクリック音を追加
+    function addClickSounds() {
+      const buttons = document.querySelectorAll('button, .menu-btn, .submit-btn, .modal-btn, .admin-btn, .roulette-btn, .info-btn, .calendar-nav, .calendar-confirm, .back-btn, .cancel-entry-btn');
+      buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (!btn.disabled) playClick();
+        });
+        // スマホのタップ対応
+        btn.addEventListener('touchstart', () => {
+          if (!btn.disabled) playClick();
+        }, { passive: true });
+      });
+    }
+
+    // カレンダーの日付にもホバー効果音を追加
+    function addCalendarHoverSounds() {
+      const days = document.querySelectorAll('.calendar-day:not(.disabled):not(.empty)');
+      days.forEach(day => {
+        day.addEventListener('mouseenter', playHover);
+      });
+    }
+
+    // カレンダーの日付にクリック音を追加
+    function addCalendarClickSounds() {
+      const days = document.querySelectorAll('.calendar-day:not(.disabled):not(.empty)');
+      days.forEach(day => {
+        day.addEventListener('click', playClick);
+        day.addEventListener('touchstart', playClick, { passive: true });
+      });
     }
 
     // Matrix Background
     function createMatrixBg() {
       const bg = document.getElementById('matrixBg');
-      const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF';
-      for (let i = 0; i < 25; i++) {
+      const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789';
+      for (let i = 0; i < 20; i++) {
         const col = document.createElement('div');
         col.className = 'matrix-col';
-        col.style.left = (i * 4 + Math.random() * 2) + '%';
+        col.style.left = (i * 5 + Math.random() * 2) + '%';
         col.style.animationDuration = (15 + Math.random() * 20) + 's';
         col.style.animationDelay = (Math.random() * -30) + 's';
         let text = '';
-        for (let j = 0; j < 30; j++) {
-          text += chars[Math.floor(Math.random() * chars.length)] + '\n';
-        }
+        for (let j = 0; j < 30; j++) text += chars[Math.floor(Math.random() * chars.length)] + '\n';
         col.textContent = text;
         bg.appendChild(col);
       }
     }
     createMatrixBg();
 
+    // ホバー効果音とクリック音を初期化
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        addHoverSounds();
+        addClickSounds();
+      }, 100);
+    });
+
     // Navigation
     let currentScreen = 'titleScreen';
     let screenHistory = [];
 
-    function navigateTo(screenId) {
-      // エントリー画面への遷移時は締切日をチェック
+    function navigateTo(screenId, directToTitle = false) {
       if (screenId === 'entryScreen') {
         if (!appState.tournament?.deadline) {
           showToast('締切日時が設定されていません', 'error');
           return;
         }
+        updateEntryScreen();
       }
-
+      if (screenId === 'historyScreen') loadHistory();
+      
       screenHistory.push(currentScreen);
       document.getElementById(currentScreen).classList.remove('active');
       document.getElementById(screenId).classList.add('active');
       currentScreen = screenId;
-      document.getElementById('backBtn').classList.toggle('visible', screenId !== 'titleScreen');
       
-      if (screenId === 'historyScreen') loadHistory();
-      if (screenId === 'tournamentScreen') updateAdminUI();
+      // ヘッダーの表示制御（タイトル画面以外で表示）
+      const header = document.getElementById('mainHeader');
+      const backBtn = document.getElementById('backBtn');
+      
+      if (screenId === 'titleScreen') {
+        header.classList.add('hidden');
+      } else {
+        header.classList.remove('hidden');
+      }
+      
+      // 確認画面からの遷移の場合は「タイトルに戻る」
+      if (directToTitle) {
+        backBtn.textContent = '< タイトルに戻る';
+        backBtn.onclick = () => {
+          goToTitle();
+        };
+      } else {
+        backBtn.textContent = '< 戻る';
+        backBtn.onclick = goBack;
+      }
+      
+      backBtn.classList.toggle('visible', screenId !== 'titleScreen');
+    }
+    
+    function goToTitle() {
+      document.getElementById(currentScreen).classList.remove('active');
+      document.getElementById('titleScreen').classList.add('active');
+      currentScreen = 'titleScreen';
+      screenHistory = [];
+      
+      const header = document.getElementById('mainHeader');
+      header.classList.add('hidden');
+      document.getElementById('backBtn').classList.remove('visible');
     }
 
     function goBack() {
@@ -1125,17 +1355,22 @@
         document.getElementById(currentScreen).classList.remove('active');
         document.getElementById(prevScreen).classList.add('active');
         currentScreen = prevScreen;
+        
+        // ヘッダーの表示制御
+        const header = document.getElementById('mainHeader');
+        if (currentScreen === 'titleScreen') {
+          header.classList.add('hidden');
+        } else {
+          header.classList.remove('hidden');
+        }
+        
         document.getElementById('backBtn').classList.toggle('visible', currentScreen !== 'titleScreen');
       }
     }
 
-    // Modals
-    function showModal(id) { 
-      document.getElementById(id).classList.add('active'); 
-    }
+    function showModal(id) { document.getElementById(id).classList.add('active'); }
     function hideModal(id) { document.getElementById(id).classList.remove('active'); }
 
-    // Toast
     function showToast(message, type = 'success') {
       const toast = document.getElementById('toast');
       toast.textContent = message;
@@ -1143,48 +1378,67 @@
       setTimeout(() => toast.classList.remove('visible'), 3000);
     }
 
-    // Icon Preview
+    function showGuide(type) {
+      if (type === 'admin') showModal('adminGuideModal');
+      else showModal('userGuideModal');
+    }
+
+    function showMatchmakingInfo() {
+      const dl = appState.tournament?.deadline;
+      if (dl) {
+        const deadline = dl.toDate ? dl.toDate() : new Date(dl);
+        if (new Date() >= deadline) {
+          // 締切後 - ルーレット画面に遷移
+          navigateTo('tournamentScreen');
+          document.getElementById('rouletteContainer').style.display = 'flex';
+          document.getElementById('rouletteAdminControls').style.display = 'flex';
+          return;
+        }
+      }
+      showToast('大会当日（締切日時以降）に有効化されます', 'error');
+    }
+
+    // Icon
     function previewIcon(input) {
       if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = e => {
           document.getElementById('iconPreview').innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;">';
+          document.getElementById('iconPreviewContainer').classList.add('has-icon');
         };
         reader.readAsDataURL(input.files[0]);
       }
     }
 
-    // Escape HTML
+    function clearIcon() {
+      document.getElementById('iconPreview').innerHTML = '<span style="color:var(--text-dim);">+</span>';
+      document.getElementById('iconPreviewContainer').classList.remove('has-icon');
+      document.getElementById('iconInput').value = '';
+    }
+
     function escapeHtml(str) {
       if (!str) return '';
-      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
     // Update displays
     function updateTournamentDisplay() {
       const t = appState.tournament;
-      
-      // Game name
       document.getElementById('tournamentGameName').textContent = t?.game_name || '未設定';
-      
-      // Admin name
       document.getElementById('tournamentAdmin').textContent = t?.admin_name || '-';
       
-      // Deadline
       if (t?.deadline) {
         const dl = t.deadline.toDate ? t.deadline.toDate() : new Date(t.deadline);
-        document.getElementById('tournamentDeadline').textContent = dl.toLocaleString('ja-JP');
+        document.getElementById('tournamentDeadline').textContent = dl.toLocaleString('ja-JP', {year:'numeric',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
         document.getElementById('tournamentDeadline').classList.remove('warning');
       } else {
         document.getElementById('tournamentDeadline').textContent = '未設定';
         document.getElementById('tournamentDeadline').classList.add('warning');
       }
       
-      // Participant count
       document.getElementById('tournamentCount').textContent = appState.entries.length + '名';
-      
-      // Entry button state
       updateEntryButton();
+      updateMatchmakingButton();
     }
 
     function updateEntryButton() {
@@ -1193,10 +1447,19 @@
         btn.disabled = true;
       } else {
         const dl = appState.tournament.deadline.toDate ? appState.tournament.deadline.toDate() : new Date(appState.tournament.deadline);
-        if (new Date() > dl) {
-          btn.disabled = true;
-        } else {
-          btn.disabled = false;
+        btn.disabled = new Date() > dl;
+      }
+    }
+
+    function updateMatchmakingButton() {
+      const btn = document.getElementById('matchmakingBtn');
+      if (!btn) return;
+      const dl = appState.tournament?.deadline;
+      if (dl) {
+        const deadline = dl.toDate ? dl.toDate() : new Date(dl);
+        if (new Date() >= deadline) {
+          btn.style.opacity = '1';
+          btn.textContent = '🎲 対戦カード抽選を開始';
         }
       }
     }
@@ -1218,22 +1481,35 @@
       }).join('');
     }
 
-    function updateAdminUI() {
-      const panel = document.getElementById('adminPanel');
-      if (appState.isAdmin) {
-        panel.style.display = 'block';
+    function updateEntryScreen() {
+      const myEntry = appState.entries.find(e => e.device_id === appState.deviceId);
+      const dl = appState.tournament?.deadline;
+      const isPastDeadline = dl && new Date() > (dl.toDate ? dl.toDate() : new Date(dl));
+      
+      if (myEntry) {
+        document.getElementById('myEntryDisplay').style.display = 'block';
+        document.getElementById('entryForm').style.display = 'none';
+        document.getElementById('myEntryName').textContent = myEntry.username;
+        document.getElementById('myEntryId').textContent = ' (ID-' + String(myEntry.entry_id).padStart(2, '0') + ')';
+        
+        // 締切後は解除ボタンを非表示
+        const cancelBtn = document.querySelector('.cancel-entry-btn');
+        if (cancelBtn) cancelBtn.style.display = isPastDeadline ? 'none' : 'inline-block';
       } else {
-        panel.style.display = 'none';
+        document.getElementById('myEntryDisplay').style.display = 'none';
+        document.getElementById('entryForm').style.display = isPastDeadline ? 'none' : 'block';
+        
+        if (isPastDeadline) {
+          document.getElementById('myEntryDisplay').style.display = 'block';
+          document.getElementById('myEntryDisplay').innerHTML = '<div class="my-entry-box"><p style="color:var(--error-red);">締切日時を過ぎています</p></div>';
+        }
       }
     }
 
     function updateRouletteWheel() {
       const wheel = document.getElementById('wheelInner');
       const active = appState.entries.filter(e => e.status !== 'LOST');
-      if (active.length === 0) {
-        wheel.innerHTML = '';
-        return;
-      }
+      if (active.length === 0) { wheel.innerHTML = ''; return; }
       wheel.innerHTML = active.map((e, i) => {
         const angle = (360 / active.length) * i;
         return '<div class="wheel-segment" style="transform:rotate(' + angle + 'deg);">ID-' + String(e.entry_id).padStart(2, '0') + '</div>';
@@ -1243,22 +1519,153 @@
     function updateVsDisplay(p1, p2) {
       document.getElementById('vsPlayer1Id').textContent = p1 ? 'ID-' + String(p1.entry_id).padStart(2, '0') : '-';
       document.getElementById('vsPlayer1Name').textContent = p1 ? p1.username : '-';
-      document.getElementById('vsPlayer1Icon').innerHTML = p1?.icon_url ? '<img src="' + p1.icon_url + '">' : '<span>?</span>';
+      document.getElementById('vsPlayer1Icon').innerHTML = p1?.icon_url ? '<img src="' + p1.icon_url + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">' : '<span>?</span>';
       document.getElementById('vsPlayer2Id').textContent = p2 ? 'ID-' + String(p2.entry_id).padStart(2, '0') : '-';
       document.getElementById('vsPlayer2Name').textContent = p2 ? p2.username : '-';
-      document.getElementById('vsPlayer2Icon').innerHTML = p2?.icon_url ? '<img src="' + p2.icon_url + '">' : '<span>?</span>';
+      document.getElementById('vsPlayer2Icon').innerHTML = p2?.icon_url ? '<img src="' + p2.icon_url + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">' : '<span>?</span>';
     }
 
     function filterParticipants(query) {
       const rows = document.querySelectorAll('#participantList tr');
       rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(query.toLowerCase()) ? '' : 'none';
+        row.style.display = row.textContent.toLowerCase().includes(query.toLowerCase()) ? '' : 'none';
       });
     }
 
-    function showInfo() {
-      alert('トーナメント管理アプリ\n\n・参加者はエントリー登録から参加できます\n・管理者は締切日時とゲーム名を設定します\n・締切後、管理者がルーレットで対戦を決定します');
+    // ===== Calendar =====
+    let calendarDate = new Date();
+    let calendarSelectedDate = null;
+    let calendarTarget = null;
+
+    function openCalendar(target) {
+      calendarTarget = target;
+      calendarDate = new Date();
+      calendarSelectedDate = null;
+      document.getElementById('calendarHour').value = '12';
+      document.getElementById('calendarMinute').value = '00';
+      renderCalendar();
+      updateCalendarDisplay();
+      document.getElementById('calendarModal').classList.add('active');
+    }
+
+    function closeCalendar() {
+      document.getElementById('calendarModal').classList.remove('active');
+    }
+
+    function changeMonth(delta) {
+      calendarDate.setMonth(calendarDate.getMonth() + delta);
+      renderCalendar();
+    }
+
+    function renderCalendar() {
+      const year = calendarDate.getFullYear();
+      const month = calendarDate.getMonth();
+      const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+      document.getElementById('calendarMonthYear').textContent = year + '年 ' + monthNames[month];
+      
+      const daysContainer = document.getElementById('calendarDays');
+      daysContainer.innerHTML = '';
+      
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      for (let i = 0; i < firstDay; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'calendar-day empty';
+        daysContainer.appendChild(emptyCell);
+      }
+      
+      for (let day = 1; day <= daysInMonth; day++) {
+        const cell = document.createElement('div');
+        cell.className = 'calendar-day';
+        cell.textContent = day;
+        
+        const cellDate = new Date(year, month, day);
+        cellDate.setHours(0, 0, 0, 0);
+        
+        if (cellDate < today) {
+          cell.classList.add('disabled');
+        } else {
+          cell.onclick = () => selectDate(year, month, day);
+        }
+        
+        if (cellDate.getTime() === today.getTime()) cell.classList.add('today');
+        
+        if (calendarSelectedDate && 
+            calendarSelectedDate.getFullYear() === year && 
+            calendarSelectedDate.getMonth() === month && 
+            calendarSelectedDate.getDate() === day) {
+          cell.classList.add('selected');
+        }
+        
+        daysContainer.appendChild(cell);
+      }
+      
+      // カレンダー日付のホバー効果音とクリック音を追加
+      setTimeout(() => {
+        addCalendarHoverSounds();
+        addCalendarClickSounds();
+      }, 10);
+    }
+
+    function selectDate(year, month, day) {
+      calendarSelectedDate = new Date(year, month, day);
+      renderCalendar();
+      updateCalendarDisplay();
+    }
+
+    function updateCalendarDisplay() {
+      const display = document.getElementById('calendarSelectedDisplay');
+      if (calendarSelectedDate) {
+        const hour = document.getElementById('calendarHour').value.padStart(2, '0');
+        const minute = document.getElementById('calendarMinute').value.padStart(2, '0');
+        const dateStr = calendarSelectedDate.getFullYear() + '/' + 
+                       String(calendarSelectedDate.getMonth() + 1).padStart(2, '0') + '/' + 
+                       String(calendarSelectedDate.getDate()).padStart(2, '0');
+        display.textContent = dateStr + ' ' + hour + ':' + minute;
+      } else {
+        display.textContent = '日付を選択してください';
+      }
+    }
+
+    document.getElementById('calendarHour')?.addEventListener('input', updateCalendarDisplay);
+    document.getElementById('calendarMinute')?.addEventListener('input', updateCalendarDisplay);
+
+    function confirmCalendar() {
+      if (!calendarSelectedDate) {
+        showToast('日付を選択してください', 'error');
+        return;
+      }
+      
+      const hour = parseInt(document.getElementById('calendarHour').value) || 0;
+      const minute = parseInt(document.getElementById('calendarMinute').value) || 0;
+      
+      const selectedDateTime = new Date(
+        calendarSelectedDate.getFullYear(),
+        calendarSelectedDate.getMonth(),
+        calendarSelectedDate.getDate(),
+        hour, minute
+      );
+      
+      if (selectedDateTime <= new Date()) {
+        showToast('現在より後の日時を選択してください', 'error');
+        return;
+      }
+      
+      const dateTimeStr = selectedDateTime.toLocaleString('ja-JP', {year:'numeric',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      
+      if (calendarTarget === 'setup') {
+        document.getElementById('setupDeadline').value = selectedDateTime.toISOString();
+        document.getElementById('setupDeadlineBtn').textContent = dateTimeStr;
+      } else if (calendarTarget === 'modal') {
+        document.getElementById('deadlineInput').value = selectedDateTime.toISOString();
+        document.getElementById('modalDeadlineBtn').textContent = dateTimeStr;
+      }
+      
+      playClick();
+      closeCalendar();
     }
   </script>
 
@@ -1283,29 +1690,23 @@
         db = firebase.firestore();
         console.log('Firebase OK');
         loadData();
-      } catch (e) {
-        console.error('Firebase error:', e);
-      }
+      } catch (e) { console.error('Firebase error:', e); }
     }
 
     function loadData() {
       if (!db) return;
       
-      // Tournament data
       db.collection('tournaments').doc('current').onSnapshot(doc => {
         if (doc.exists) {
           appState.tournament = doc.data();
-          // Check if current user is admin
           if (appState.tournament.admin_device === appState.deviceId) {
             appState.isAdmin = true;
             appState.adminName = appState.tournament.admin_name;
           }
           updateTournamentDisplay();
-          updateAdminUI();
         }
       });
       
-      // Entries (participants only, not admins)
       db.collection('entries').orderBy('entry_id', 'asc').onSnapshot(snap => {
         appState.entries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         updateEntriesDisplay();
@@ -1313,17 +1714,14 @@
         updateTournamentDisplay();
       });
       
-      // Matches
       db.collection('matches').orderBy('created_at', 'asc').onSnapshot(snap => {
         appState.matches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       });
     }
 
-    // 管理者登録 - シンプルに
     function registerAdmin() {
-      const nameInput = document.getElementById('adminNameInput');
+      const name = document.getElementById('adminNameInput').value.trim();
       const err = document.getElementById('adminNameError');
-      const name = nameInput.value.trim();
       
       if (!name) {
         err.textContent = '管理者名を入力してください';
@@ -1332,12 +1730,12 @@
       }
       err.classList.remove('visible');
       
-      // ローカルに保存
       localStorage.setItem('tournament_admin_name', name);
       appState.adminName = name;
       appState.isAdmin = true;
       
-      // 設定画面に遷移
+      playClick();
+      
       screenHistory.push(currentScreen);
       document.getElementById(currentScreen).classList.remove('active');
       document.getElementById('adminSetupScreen').classList.add('active');
@@ -1345,14 +1743,12 @@
       document.getElementById('backBtn').classList.add('visible');
     }
 
-    // 大会設定保存
     function saveTournamentSettings() {
       const gameName = document.getElementById('setupGameName').value.trim();
       const deadline = document.getElementById('setupDeadline').value;
       const gameErr = document.getElementById('setupGameNameError');
       const deadlineErr = document.getElementById('setupDeadlineError');
       
-      // エラーをリセット
       gameErr.classList.remove('visible');
       deadlineErr.classList.remove('visible');
       
@@ -1372,31 +1768,41 @@
       
       if (hasError) return;
       
-      if (!db) {
-        showToast('データベース未接続', 'error');
-        return;
-      }
+      playClick();
       
-      db.collection('tournaments').doc('current').set({
+      // ローカルステートを更新
+      appState.tournament = {
         admin_name: appState.adminName,
         admin_device: appState.deviceId,
         game_name: gameName,
-        deadline: new Date(deadline),
-        updated_at: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true })
-      .then(() => {
-        showToast('設定を保存しました', 'success');
-        navigateTo('tournamentScreen');
-      })
-      .catch(e => {
-        showToast('保存エラー: ' + e.message, 'error');
-      });
+        deadline: new Date(deadline)
+      };
+      
+      // Firebase保存を試みる（失敗してもローカルは更新済み）
+      if (db) {
+        db.collection('tournaments').doc('current').set({
+          admin_name: appState.adminName,
+          admin_device: appState.deviceId,
+          game_name: gameName,
+          deadline: new Date(deadline),
+          updated_at: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true })
+        .then(() => {
+          console.log('Firebase保存成功');
+        })
+        .catch(e => {
+          console.error('Firebase保存エラー:', e);
+        });
+      }
+      
+      // 表示を更新
+      updateTournamentDisplay();
+      
+      // 完了モーダルを表示
+      showModal('settingsCompleteModal');
     }
 
-    // エントリー登録
     function submitEntry() {
-      if (!db) { showToast('接続中...', 'error'); return; }
-      
       if (!appState.tournament?.deadline) {
         showToast('締切日時が未設定です', 'error');
         return;
@@ -1432,69 +1838,61 @@
       const entryId = appState.entries.length + 1;
       const icon = document.getElementById('iconPreview').querySelector('img');
       
-      db.collection('entries').doc(appState.deviceId).set({
+      playClick();
+      
+      // ローカルステートを更新
+      const newEntry = {
+        id: appState.deviceId,
         entry_id: entryId,
         username: name,
         device_id: appState.deviceId,
         icon_url: icon ? icon.src : null,
-        status: 'ACTIVE',
-        created_at: firebase.firestore.FieldValue.serverTimestamp()
-      })
-      .then(() => {
-        showToast('エントリー完了！', 'success');
-        document.getElementById('usernameInput').value = '';
-      })
-      .catch(e => {
-        showToast('エラー: ' + e.message, 'error');
-      });
-    }
-
-    // 締切日時設定
-    function setDeadline() {
-      if (!db) return;
-      const v = document.getElementById('deadlineInput').value;
-      if (!v) { 
-        showToast('日時を選択してください', 'error'); 
-        return; 
+        status: 'ACTIVE'
+      };
+      appState.entries.push(newEntry);
+      
+      // Firebase保存を試みる
+      if (db) {
+        db.collection('entries').doc(appState.deviceId).set({
+          entry_id: entryId,
+          username: name,
+          device_id: appState.deviceId,
+          icon_url: icon ? icon.src : null,
+          status: 'ACTIVE',
+          created_at: firebase.firestore.FieldValue.serverTimestamp()
+        })
+        .then(() => {
+          console.log('Firebase登録成功');
+        })
+        .catch(e => {
+          console.error('Firebase登録エラー:', e);
+        });
       }
       
-      db.collection('tournaments').doc('current').set({
-        deadline: new Date(v),
-        updated_at: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true })
-      .then(() => {
-        hideModal('setDeadlineModal');
-        // ボタンテキストをリセット
-        document.getElementById('modalDeadlineBtn').textContent = 'クリックして日時を選択';
-        showToast('締切日時を設定しました', 'success');
-      })
-      .catch(e => showToast('エラー: ' + e.message, 'error'));
-    }
-
-    // ゲーム名設定
-    function setGameName() {
-      if (!db) return;
-      const v = document.getElementById('gameNameInput').value.trim();
-      if (!v) { showToast('ゲーム名を入力してください', 'error'); return; }
+      // 表示を更新
+      updateEntriesDisplay();
+      updateTournamentDisplay();
       
-      db.collection('tournaments').doc('current').set({
-        game_name: v,
-        updated_at: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true })
-      .then(() => {
-        hideModal('setGameNameModal');
-        showToast('ゲーム名を設定しました', 'success');
-      })
-      .catch(e => showToast('エラー: ' + e.message, 'error'));
+      document.getElementById('usernameInput').value = '';
+      clearIcon();
+      
+      // エントリー完了モーダルを表示
+      document.getElementById('entryCompleteInfo').textContent = name + ' (ID-' + String(entryId).padStart(2, '0') + ')';
+      showModal('entryCompleteModal');
     }
 
-    // ルーレット
-    function startRoulette() {
-      const dl = appState.tournament?.deadline;
-      if (!dl) { showToast('締切日時を設定してください', 'error'); return; }
-      const deadline = dl.toDate ? dl.toDate() : new Date(dl);
-      if (new Date() < deadline) { showToast('締切後にルーレット可能です', 'error'); return; }
-      document.getElementById('rouletteContainer').style.display = 'flex';
+    function cancelEntry() {
+      if (!db) return;
+      if (!confirm('エントリーを解除しますか？')) return;
+      
+      playClick();
+      
+      db.collection('entries').doc(appState.deviceId).delete()
+      .then(() => {
+        showToast('エントリーを解除しました', 'success');
+        updateEntryScreen();
+      })
+      .catch(e => showToast('エラー: ' + e.message, 'error'));
     }
 
     function spinRoulette() {
@@ -1529,6 +1927,7 @@
 
     function executeConfirmMatch() {
       if (!db) return;
+      playClick();
       db.collection('matches').add({
         player1_id: appState.selectedPlayer1.entry_id,
         player1_name: appState.selectedPlayer1.username,
@@ -1561,7 +1960,8 @@
       if (!db) return;
       const { winner, loser } = appState.pendingWinner;
       
-      // Update match
+      playClick();
+      
       const match = appState.matches.find(m => 
         m.player1_id === appState.selectedPlayer1.entry_id && 
         m.player2_id === appState.selectedPlayer2.entry_id && 
@@ -1575,7 +1975,6 @@
         });
       }
       
-      // Update loser status
       const loserEntry = appState.entries.find(e => e.entry_id === loser.entry_id);
       if (loserEntry) {
         db.collection('entries').doc(loserEntry.id).update({ status: 'LOST' });
@@ -1595,7 +1994,8 @@
       const t = appState.tournament;
       const champion = appState.entries.find(e => e.status !== 'LOST');
       
-      // Save to history
+      playClick();
+      
       db.collection('history').add({
         year: new Date().getFullYear(),
         date: firebase.firestore.FieldValue.serverTimestamp(),
@@ -1610,7 +2010,6 @@
         total_participants: appState.entries.length
       })
       .then(() => {
-        // Delete all entries and matches
         const batch = db.batch();
         appState.entries.forEach(e => batch.delete(db.collection('entries').doc(e.id)));
         appState.matches.forEach(m => batch.delete(db.collection('matches').doc(m.id)));
@@ -1629,7 +2028,6 @@
         appState.isAdmin = false;
         appState.adminName = null;
         localStorage.removeItem('tournament_admin_name');
-        updateAdminUI();
       })
       .catch(e => showToast('エラー: ' + e.message, 'error'));
     }
@@ -1657,153 +2055,7 @@
       });
     }
 
-    // Initialize
     document.addEventListener('DOMContentLoaded', initFirebase);
-
-    // ===== Custom Calendar =====
-    let calendarDate = new Date();
-    let calendarSelectedDate = null;
-    let calendarTarget = null; // 'setup' or 'modal'
-
-    function openCalendar(target) {
-      calendarTarget = target;
-      calendarDate = new Date();
-      calendarSelectedDate = null;
-      
-      // 時刻をデフォルトに
-      document.getElementById('calendarHour').value = '12';
-      document.getElementById('calendarMinute').value = '00';
-      
-      renderCalendar();
-      updateCalendarDisplay();
-      document.getElementById('calendarModal').classList.add('active');
-    }
-
-    function closeCalendar() {
-      document.getElementById('calendarModal').classList.remove('active');
-    }
-
-    function changeMonth(delta) {
-      calendarDate.setMonth(calendarDate.getMonth() + delta);
-      renderCalendar();
-    }
-
-    function renderCalendar() {
-      const year = calendarDate.getFullYear();
-      const month = calendarDate.getMonth();
-      
-      // 月表示
-      const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
-      document.getElementById('calendarMonthYear').textContent = year + '年 ' + monthNames[month];
-      
-      // 日付グリッド
-      const daysContainer = document.getElementById('calendarDays');
-      daysContainer.innerHTML = '';
-      
-      const firstDay = new Date(year, month, 1).getDay();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      // 空のセル
-      for (let i = 0; i < firstDay; i++) {
-        const emptyCell = document.createElement('div');
-        emptyCell.className = 'calendar-day empty';
-        daysContainer.appendChild(emptyCell);
-      }
-      
-      // 日付セル
-      for (let day = 1; day <= daysInMonth; day++) {
-        const cell = document.createElement('div');
-        cell.className = 'calendar-day';
-        cell.textContent = day;
-        
-        const cellDate = new Date(year, month, day);
-        cellDate.setHours(0, 0, 0, 0);
-        
-        // 過去の日付は無効
-        if (cellDate < today) {
-          cell.classList.add('disabled');
-        } else {
-          cell.onclick = () => selectDate(year, month, day);
-        }
-        
-        // 今日
-        if (cellDate.getTime() === today.getTime()) {
-          cell.classList.add('today');
-        }
-        
-        // 選択中
-        if (calendarSelectedDate && 
-            calendarSelectedDate.getFullYear() === year && 
-            calendarSelectedDate.getMonth() === month && 
-            calendarSelectedDate.getDate() === day) {
-          cell.classList.add('selected');
-        }
-        
-        daysContainer.appendChild(cell);
-      }
-    }
-
-    function selectDate(year, month, day) {
-      calendarSelectedDate = new Date(year, month, day);
-      renderCalendar();
-      updateCalendarDisplay();
-    }
-
-    function updateCalendarDisplay() {
-      const display = document.getElementById('calendarSelectedDisplay');
-      if (calendarSelectedDate) {
-        const hour = document.getElementById('calendarHour').value.padStart(2, '0');
-        const minute = document.getElementById('calendarMinute').value.padStart(2, '0');
-        const dateStr = calendarSelectedDate.getFullYear() + '/' + 
-                       String(calendarSelectedDate.getMonth() + 1).padStart(2, '0') + '/' + 
-                       String(calendarSelectedDate.getDate()).padStart(2, '0');
-        display.textContent = dateStr + ' ' + hour + ':' + minute;
-      } else {
-        display.textContent = '日付を選択してください';
-      }
-    }
-
-    // 時刻変更時に表示更新
-    document.getElementById('calendarHour')?.addEventListener('input', updateCalendarDisplay);
-    document.getElementById('calendarMinute')?.addEventListener('input', updateCalendarDisplay);
-
-    function confirmCalendar() {
-      if (!calendarSelectedDate) {
-        showToast('日付を選択してください', 'error');
-        return;
-      }
-      
-      const hour = parseInt(document.getElementById('calendarHour').value) || 0;
-      const minute = parseInt(document.getElementById('calendarMinute').value) || 0;
-      
-      const selectedDateTime = new Date(
-        calendarSelectedDate.getFullYear(),
-        calendarSelectedDate.getMonth(),
-        calendarSelectedDate.getDate(),
-        hour,
-        minute
-      );
-      
-      // 現在時刻より後かチェック
-      if (selectedDateTime <= new Date()) {
-        showToast('現在より後の日時を選択してください', 'error');
-        return;
-      }
-      
-      const dateTimeStr = selectedDateTime.toLocaleString('ja-JP');
-      
-      if (calendarTarget === 'setup') {
-        document.getElementById('setupDeadline').value = selectedDateTime.toISOString();
-        document.getElementById('setupDeadlineBtn').textContent = dateTimeStr;
-      } else if (calendarTarget === 'modal') {
-        document.getElementById('deadlineInput').value = selectedDateTime.toISOString();
-        document.getElementById('modalDeadlineBtn').textContent = dateTimeStr;
-      }
-      
-      closeCalendar();
-    }
   </script>
 </body>
 </html>

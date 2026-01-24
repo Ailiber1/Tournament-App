@@ -50,43 +50,6 @@
       0% { transform: translateY(0); }
       100% { transform: translateY(220vh); }
     }
-    .hud-frame {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      pointer-events: none;
-      z-index: 1;
-    }
-    .hud-corner {
-      position: absolute;
-      width: 50px; height: 50px;
-      border-color: var(--hud-green);
-      border-style: solid;
-      border-width: 0;
-      box-shadow: 0 0 10px var(--hud-green-glow);
-    }
-    .hud-corner.tl { top: 8px; left: 8px; border-top-width: 3px; border-left-width: 3px; }
-    .hud-corner.tr { top: 8px; right: 8px; border-top-width: 3px; border-right-width: 3px; }
-    .hud-corner.bl { bottom: 8px; left: 8px; border-bottom-width: 3px; border-left-width: 3px; }
-    .hud-corner.br { bottom: 8px; right: 8px; border-bottom-width: 3px; border-right-width: 3px; }
-    .hud-line-h {
-      position: absolute;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--hud-green), transparent);
-      left: 70px; right: 70px;
-      box-shadow: 0 0 8px var(--hud-green-glow);
-    }
-    .hud-line-h.top { top: 8px; }
-    .hud-line-h.bottom { bottom: 8px; }
-    .hud-line-v {
-      position: absolute;
-      width: 2px;
-      background: linear-gradient(180deg, transparent, var(--hud-green), transparent);
-      top: 70px; bottom: 70px;
-      box-shadow: 0 0 8px var(--hud-green-glow);
-    }
-    .hud-line-v.left { left: 8px; }
-    .hud-line-v.right { right: 8px; }
     .header {
       position: relative;
       z-index: 10;
@@ -153,13 +116,37 @@
       .title-right-info { width: 300px; padding-top: 4rem; }
     }
     .main-title {
-      font-family: 'Orbitron', sans-serif;
+      font-family: 'Times New Roman', 'Georgia', serif;
       font-size: clamp(2.5rem, 10vw, 4.5rem);
-      font-weight: 900;
-      color: var(--hud-green);
-      text-shadow: 0 0 30px var(--hud-green-glow), 0 0 60px rgba(0,255,65,0.3);
-      letter-spacing: 0.1em;
-      margin-bottom: 1rem;
+      font-weight: bold;
+      letter-spacing: 0.25em;
+      position: relative;
+      display: inline-block;
+      color: #b8e6c8;
+      background: linear-gradient(
+        180deg,
+        #3a6a50 0%,
+        #5a9a70 10%,
+        #8cd4a8 25%,
+        #c8f0d8 40%,
+        #e8fff0 48%,
+        #ffffff 50%,
+        #e8fff0 52%,
+        #c8f0d8 60%,
+        #8cd4a8 75%,
+        #5a9a70 90%,
+        #3a6a50 100%
+      );
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: none;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 20px rgba(100, 255, 150, 0.3));
+      margin-bottom: 0;
+    }
+    .title-wrapper {
+      text-align: center;
+      padding: 1.5rem 1rem 1rem;
     }
     .title-guide-icons { position: fixed; top: 1.2rem; right: 1.5rem; display: flex; gap: 0.6rem; z-index: 20; }
     .hud-panel {
@@ -201,13 +188,110 @@
       transform: translateX(5px);
     }
     .menu-btn:disabled { opacity: 0.3; cursor: not-allowed; border-color: var(--text-dim); color: var(--text-dim); }
-    .menu-btn.cancel-btn { border-color: var(--hud-red); border-left-color: var(--hud-red); color: var(--hud-red); }
+    .menu-btn.cancel-btn { 
+      background: linear-gradient(90deg, rgba(40,10,20,0.9) 0%, rgba(60,15,30,0.8) 100%);
+      border: 2px solid var(--hud-red); 
+      border-left: 4px solid var(--hud-red); 
+      color: var(--hud-red);
+      margin-top: 1rem;
+    }
     .menu-btn.cancel-btn:hover:not(:disabled) { background: linear-gradient(90deg, var(--hud-red) 0%, rgba(255,50,100,0.7) 100%); color: white; box-shadow: 0 0 20px rgba(255,50,100,0.5); }
-    .info-display { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; margin-bottom: 1rem; }
+    .info-display { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; margin-bottom: 1rem; }
+    @media (max-width: 700px) { .info-display { grid-template-columns: repeat(2, 1fr); } }
     .info-item { background: rgba(0,30,15,0.6); border: 1px solid var(--hud-green-dim); padding: 0.6rem; text-align: center; }
     .info-label { font-size: 0.7rem; color: var(--text-dim); margin-bottom: 0.2rem; }
     .info-value { font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: var(--hud-green); }
     .info-value.warning { color: var(--hud-red); }
+    .title-info-panel {
+      max-width: 800px;
+      margin: 0 auto 1.5rem;
+      background: var(--bg-panel);
+      border: 2px solid var(--hud-green);
+      padding: 1rem 1.5rem;
+    }
+    .title-info-panel .hud-panel-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.85rem;
+      color: var(--hud-green);
+      letter-spacing: 0.08em;
+      margin-bottom: 0.8rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--hud-green-dim);
+      text-align: center;
+    }
+    .title-info-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+    @media (max-width: 600px) {
+      .title-info-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .title-info-item {
+      background: rgba(0,40,20,0.5);
+      border: 1px solid var(--hud-green-dim);
+      padding: 0.8rem;
+      text-align: center;
+    }
+    .title-info-label { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.3rem; }
+    .title-info-value { font-family: 'Orbitron', sans-serif; font-size: 1rem; color: var(--hud-green); }
+    .title-info-value.warning { color: var(--hud-red); }
+    .sound-controls {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 100;
+    }
+    .sound-control-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(0, 20, 10, 0.9);
+      border: 1px solid var(--hud-green-dim);
+      padding: 0.4rem 0.6rem;
+      border-radius: 4px;
+    }
+    .sound-btn {
+      background: transparent;
+      border: 1px solid var(--hud-green);
+      color: var(--hud-green);
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .sound-btn:hover { background: var(--hud-green); color: var(--bg-dark); }
+    .sound-btn.off { border-color: var(--hud-red); color: var(--hud-red); }
+    .sound-btn.off:hover { background: var(--hud-red); color: white; }
+    .sound-label { color: var(--text-dim); font-size: 0.7rem; min-width: 30px; }
+    .volume-slider {
+      width: 60px;
+      height: 4px;
+      -webkit-appearance: none;
+      background: var(--hud-green-dim);
+      border-radius: 2px;
+      cursor: pointer;
+    }
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      background: var(--hud-green);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    @media (max-width: 600px) {
+      .sound-controls { bottom: 1rem; left: 1rem; }
+      .volume-slider { width: 50px; }
+    }
     .form-group { margin-bottom: 1.2rem; }
     .form-label { display: block; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.4rem; }
     .form-input {
@@ -264,6 +348,11 @@
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 5, 2, 0.92); z-index: 1000; align-items: center; justify-content: center; }
     .modal-overlay.active { display: flex; }
     .modal-content { background: var(--bg-panel); border: 2px solid var(--hud-green); padding: 1.5rem; max-width: 450px; width: 90%; position: relative; clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15px 100%, 0 calc(100% - 15px)); box-shadow: 0 0 30px var(--hud-green-glow); }
+    .modal-content.guide-modal { max-width: 700px; width: 95%; }
+    @media (max-width: 750px) {
+      .modal-content.guide-modal { max-width: 95%; }
+      .guide-content h4, .guide-content p, .guide-content li { white-space: normal; }
+    }
     .modal-close-btn { position: absolute; top: 8px; right: 12px; background: transparent; border: none; color: var(--text-dim); font-size: 1.5rem; cursor: pointer; }
     .modal-close-btn:hover { color: var(--hud-green); }
     .modal-title { font-family: 'Orbitron', sans-serif; color: var(--hud-green); font-size: 1.1rem; text-align: center; margin-bottom: 1.2rem; }
@@ -274,10 +363,10 @@
     .modal-btn-confirm { background: var(--hud-green); border: none; color: var(--bg-dark); }
     .modal-btn-confirm:hover { box-shadow: 0 0 20px var(--hud-green-glow); }
     .guide-content { color: var(--text-primary); line-height: 1.7; max-height: 55vh; overflow-y: auto; font-size: 0.9rem; }
-    .guide-content h4 { color: var(--hud-green); margin: 1rem 0 0.4rem; font-size: 0.95rem; }
-    .guide-content p { color: var(--text-dim); margin-bottom: 0.4rem; }
+    .guide-content h4 { color: var(--hud-green); margin: 1rem 0 0.4rem; font-size: 0.95rem; white-space: nowrap; }
+    .guide-content p { color: var(--text-dim); margin-bottom: 0.4rem; white-space: nowrap; }
     .guide-content ul { margin-left: 1rem; color: var(--text-dim); }
-    .guide-content li { margin-bottom: 0.2rem; }
+    .guide-content li { margin-bottom: 0.3rem; white-space: nowrap; }
     .calendar-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 5, 2, 0.95); z-index: 2000; align-items: center; justify-content: center; }
     .calendar-modal.active { display: flex; }
     .calendar-container { background: var(--bg-panel); border: 2px solid var(--hud-green); padding: 1.2rem; max-width: 340px; width: 95%; box-shadow: 0 0 30px var(--hud-green-glow); position: relative; }
@@ -330,20 +419,29 @@
     .history-date { color: var(--text-dim); font-size: 0.8rem; }
     .history-game { color: var(--hud-green); font-size: 1.1rem; font-weight: bold; margin: 0.4rem 0; }
     .history-winner { color: var(--hud-gold); }
+    .participant-status {
+      text-align: center;
+      padding: 2rem 1rem;
+      margin-top: 1.5rem;
+    }
+    .participant-status-main {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+      color: var(--hud-green);
+      margin-bottom: 0.5rem;
+    }
+    .participant-status-main span {
+      color: var(--hud-gold);
+      font-weight: bold;
+    }
+    .participant-status-sub {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
   </style>
 </head>
 <body>
   <div class="matrix-bg" id="matrixBg"></div>
-  <div class="hud-frame">
-    <div class="hud-corner tl"></div>
-    <div class="hud-corner tr"></div>
-    <div class="hud-corner bl"></div>
-    <div class="hud-corner br"></div>
-    <div class="hud-line-h top"></div>
-    <div class="hud-line-h bottom"></div>
-    <div class="hud-line-v left"></div>
-    <div class="hud-line-v right"></div>
-  </div>
   <header class="header" id="mainHeader">
     <button class="back-btn" id="backBtn" onclick="goBack()">◀ 戻る</button>
     <h1 class="app-title">トーナメント</h1>
@@ -354,32 +452,40 @@
   </header>
   <div class="main-container">
     <div class="screen active" id="titleScreen">
-      <div class="title-screen">
-        <div class="title-guide-icons">
-          <button class="info-btn" onclick="showGuide('user')">?</button>
-          <button class="info-btn admin-info" onclick="showGuide('admin')">👑</button>
+      <div class="title-guide-icons">
+        <button class="info-btn" onclick="showGuide('user')">?</button>
+        <button class="info-btn admin-info" onclick="showGuide('admin')">👑</button>
+      </div>
+      
+      <!-- タイトル（上部） -->
+      <div class="title-wrapper">
+        <h1 class="main-title">トーナメント</h1>
+      </div>
+      
+      <!-- 大会情報（タイトル直下、横長） -->
+      <div class="title-info-panel">
+        <div class="hud-panel-title">◆ 大会情報</div>
+        <div class="title-info-grid">
+          <div class="title-info-item"><div class="title-info-label">ゲーム名</div><div class="title-info-value" id="titleGameName">未設定</div></div>
+          <div class="title-info-item"><div class="title-info-label">締切日時</div><div class="title-info-value" id="titleDeadline">未設定</div></div>
+          <div class="title-info-item"><div class="title-info-label">管理者</div><div class="title-info-value" id="titleAdmin">-</div></div>
+          <div class="title-info-item"><div class="title-info-label">参加者</div><div class="title-info-value" id="titleCount">0名</div></div>
         </div>
-        <div class="title-left-menu">
-          <button class="menu-btn" id="entryBtn" onclick="navigateTo('entryScreen')" disabled>エントリー登録する</button>
-          <button class="menu-btn" onclick="navigateTo('tournamentScreen')">トーナメントを見る</button>
-          <button class="menu-btn" onclick="navigateTo('historyScreen')">過去の大会記録を見る</button>
-          <button class="menu-btn" onclick="navigateTo('adminScreen')">管理者登録をする</button>
-          <button class="menu-btn cancel-btn" id="cancelEntryBtn" onclick="cancelEntry()" disabled>登録解除</button>
-        </div>
-        <div class="title-center">
-          <h1 class="main-title">トーナメント</h1>
-        </div>
-        <div class="title-right-info">
-          <div class="hud-panel">
-            <div class="hud-panel-title">◆ 大会情報</div>
-            <div class="info-display">
-              <div class="info-item"><div class="info-label">ゲーム名</div><div class="info-value" id="titleGameName">未設定</div></div>
-              <div class="info-item"><div class="info-label">締切日時</div><div class="info-value" id="titleDeadline">未設定</div></div>
-              <div class="info-item"><div class="info-label">管理者</div><div class="info-value" id="titleAdmin">-</div></div>
-              <div class="info-item"><div class="info-label">参加者</div><div class="info-value" id="titleCount">0名</div></div>
-            </div>
-          </div>
-        </div>
+      </div>
+      
+      <!-- メニューボタン（中央） -->
+      <div style="max-width:320px;margin:0 auto;padding:0 1rem;">
+        <button class="menu-btn" id="entryBtn" onclick="navigateTo('entryScreen')" disabled>エントリー登録する</button>
+        <button class="menu-btn" onclick="navigateTo('tournamentScreen')">トーナメントを見る</button>
+        <button class="menu-btn" onclick="navigateTo('historyScreen')">過去の大会記録を見る</button>
+        <button class="menu-btn" onclick="navigateTo('adminScreen')">管理者登録をする</button>
+        <button class="menu-btn cancel-btn" id="cancelEntryBtn" onclick="cancelEntry()" disabled>登録解除</button>
+      </div>
+      
+      <!-- 参加者数表示（最下部） -->
+      <div class="participant-status">
+        <div class="participant-status-main">参加者数：<span id="titleParticipantCount">0</span>/100（最大100人）</div>
+        <div class="participant-status-sub">参加人数が上限に達するとエントリーは締め切られます。</div>
       </div>
     </div>
     <div class="screen" id="adminScreen">
@@ -437,7 +543,10 @@
             <label class="form-label">アイコン（任意）</label>
             <input type="file" accept="image/*" onchange="previewIcon(this)" style="display:none" id="iconInput">
             <div style="display:flex;align-items:center;gap:0.8rem;">
-              <div id="iconPreview" style="width:55px;height:55px;border-radius:50%;border:2px solid var(--hud-green-dim);background:var(--bg-dark);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;" onclick="document.getElementById('iconInput').click()"><span style="color:var(--text-dim);font-size:1.3rem;">+</span></div>
+              <div style="position:relative;">
+                <div id="iconPreview" style="width:55px;height:55px;border-radius:50%;border:2px solid var(--hud-green-dim);background:var(--bg-dark);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;" onclick="document.getElementById('iconInput').click()"><span style="color:var(--text-dim);font-size:1.3rem;">+</span></div>
+                <button type="button" id="iconDeleteBtn" onclick="clearIcon()" style="display:none;position:absolute;top:-5px;right:-5px;width:20px;height:20px;border-radius:50%;background:var(--hud-red);border:none;color:white;font-size:0.8rem;cursor:pointer;line-height:1;">×</button>
+              </div>
               <span style="color:var(--text-dim);font-size:0.8rem;">クリックして画像を選択</span>
             </div>
           </div>
@@ -489,7 +598,7 @@
     </div>
   </div>
   <div class="modal-overlay" id="userGuideModal">
-    <div class="modal-content">
+    <div class="modal-content guide-modal">
       <button class="modal-close-btn" onclick="hideModal('userGuideModal')">×</button>
       <h3 class="modal-title">◆ 使い方ガイド</h3>
       <div class="guide-content">
@@ -500,7 +609,7 @@
     </div>
   </div>
   <div class="modal-overlay" id="adminGuideModal">
-    <div class="modal-content">
+    <div class="modal-content guide-modal">
       <button class="modal-close-btn" onclick="hideModal('adminGuideModal')">×</button>
       <h3 class="modal-title" style="color:var(--hud-gold);">◆ 管理者ガイド</h3>
       <div class="guide-content">
@@ -568,6 +677,26 @@
     </div>
   </div>
   <div class="toast" id="toast"></div>
+  
+  <!-- BGM/SE Controls -->
+  <div class="sound-controls" id="soundControls">
+    <div class="sound-control-row">
+      <button class="sound-btn" id="bgmBtn" onclick="toggleBGM()" title="BGM ON/OFF">🎵</button>
+      <span class="sound-label">BGM</span>
+      <input type="range" class="volume-slider" id="bgmVolume" min="0" max="100" value="30" oninput="setBGMVolume(this.value)">
+    </div>
+    <div class="sound-control-row">
+      <button class="sound-btn" id="seBtn" onclick="toggleSE()" title="SE ON/OFF">🔊</button>
+      <span class="sound-label">SE</span>
+      <input type="range" class="volume-slider" id="seVolume" min="0" max="100" value="50" oninput="setSEVolume(this.value)">
+    </div>
+  </div>
+  
+  <!-- BGM Audio -->
+  <audio id="bgmAudio" loop preload="auto">
+    <source src="tournament.mp3" type="audio/mpeg">
+  </audio>
+  
   <div class="calendar-modal" id="calendarModal">
     <div class="calendar-container">
       <button class="calendar-close" onclick="closeCalendar()">×</button>
@@ -603,8 +732,60 @@
     };
     if (appState.adminName) appState.isAdmin = true;
 
-    function playClick() { try { const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=800;o.type='sine';g.gain.setValueAtTime(0.25,c.currentTime);g.gain.exponentialRampToValueAtTime(0.01,c.currentTime+0.1);o.start(c.currentTime);o.stop(c.currentTime+0.1);} catch(e){} }
-    function playHover() { try { const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=600;o.type='sine';g.gain.setValueAtTime(0.06,c.currentTime);g.gain.exponentialRampToValueAtTime(0.01,c.currentTime+0.04);o.start(c.currentTime);o.stop(c.currentTime+0.04);} catch(e){} }
+    // BGM/SE State
+    let bgmEnabled = true;
+    let seEnabled = true;
+    let bgmVolume = 0.3;
+    let seVolume = 0.5;
+    const bgmAudio = document.getElementById('bgmAudio');
+
+    function toggleBGM() {
+      bgmEnabled = !bgmEnabled;
+      const btn = document.getElementById('bgmBtn');
+      if (bgmEnabled) {
+        btn.classList.remove('off');
+        btn.textContent = '🎵';
+        bgmAudio.play().catch(e => console.log('BGM autoplay blocked'));
+      } else {
+        btn.classList.add('off');
+        btn.textContent = '🎵';
+        bgmAudio.pause();
+      }
+    }
+
+    function setBGMVolume(val) {
+      bgmVolume = val / 100;
+      bgmAudio.volume = bgmVolume;
+    }
+
+    function toggleSE() {
+      seEnabled = !seEnabled;
+      const btn = document.getElementById('seBtn');
+      if (seEnabled) {
+        btn.classList.remove('off');
+        btn.textContent = '🔊';
+      } else {
+        btn.classList.add('off');
+        btn.textContent = '🔇';
+      }
+    }
+
+    function setSEVolume(val) {
+      seVolume = val / 100;
+    }
+
+    function initBGM() {
+      bgmAudio.volume = bgmVolume;
+      // ユーザー操作後に自動再生を試みる
+      document.addEventListener('click', () => {
+        if (bgmEnabled && bgmAudio.paused) {
+          bgmAudio.play().catch(e => {});
+        }
+      }, { once: true });
+    }
+
+    function playClick() { if (!seEnabled) return; try { const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=800;o.type='sine';g.gain.setValueAtTime(seVolume*0.5,c.currentTime);g.gain.exponentialRampToValueAtTime(0.01,c.currentTime+0.1);o.start(c.currentTime);o.stop(c.currentTime+0.1);} catch(e){} }
+    function playHover() { if (!seEnabled) return; try { const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=600;o.type='sine';g.gain.setValueAtTime(seVolume*0.12,c.currentTime);g.gain.exponentialRampToValueAtTime(0.01,c.currentTime+0.04);o.start(c.currentTime);o.stop(c.currentTime+0.04);} catch(e){} }
     function addSounds() { document.querySelectorAll('button').forEach(b => { b.addEventListener('mouseenter', () => { if(!b.disabled) playHover(); }); b.addEventListener('click', () => { if(!b.disabled) playClick(); }); }); }
 
     function createMatrixBg() {
@@ -647,8 +828,8 @@
     function showToast(msg, type = 'success') { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast ' + type + ' visible'; setTimeout(() => t.classList.remove('visible'), 3000); }
     function showGuide(type) { showModal(type === 'admin' ? 'adminGuideModal' : 'userGuideModal'); }
     function showMatchmakingInfo() { const dl = appState.tournament?.deadline; if (dl) { const d = dl.toDate ? dl.toDate() : new Date(dl); if (new Date() >= d) { navigateTo('tournamentScreen'); document.getElementById('rouletteContainer').style.display = 'flex'; document.getElementById('rouletteAdminControls').style.display = 'flex'; return; } } showToast('締切日時以降に有効化されます', 'error'); }
-    function previewIcon(input) { if (input.files && input.files[0]) { const r = new FileReader(); r.onload = e => { document.getElementById('iconPreview').innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;">'; }; r.readAsDataURL(input.files[0]); } }
-    function clearIcon() { document.getElementById('iconPreview').innerHTML = '<span style="color:var(--text-dim);font-size:1.3rem;">+</span>'; document.getElementById('iconInput').value = ''; }
+    function previewIcon(input) { if (input.files && input.files[0]) { const r = new FileReader(); r.onload = e => { document.getElementById('iconPreview').innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;">'; document.getElementById('iconDeleteBtn').style.display = 'block'; }; r.readAsDataURL(input.files[0]); } }
+    function clearIcon() { document.getElementById('iconPreview').innerHTML = '<span style="color:var(--text-dim);font-size:1.3rem;">+</span>'; document.getElementById('iconInput').value = ''; document.getElementById('iconDeleteBtn').style.display = 'none'; }
     function escapeHtml(s) { return s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''; }
 
     function updateTournamentDisplay() {
@@ -667,6 +848,8 @@
       document.getElementById('tournamentDeadline').classList.toggle('warning', dl === '未設定');
       document.getElementById('tournamentAdmin').textContent = ad;
       document.getElementById('tournamentCount').textContent = appState.entries.length + '名';
+      const participantCountEl = document.getElementById('titleParticipantCount');
+      if (participantCountEl) participantCountEl.textContent = appState.entries.length;
       updateEntryButton();
       updateCancelEntryButton();
       updateMatchmakingButton();
@@ -714,7 +897,7 @@
     document.getElementById('calendarHour')?.addEventListener('input', updateCalendarDisplay);
     document.getElementById('calendarMinute')?.addEventListener('input', updateCalendarDisplay);
     function confirmCalendar() { if (!calendarSelectedDate) { showToast('日付を選択してください', 'error'); return; } const h = parseInt(document.getElementById('calendarHour').value) || 0, mi = parseInt(document.getElementById('calendarMinute').value) || 0; const dt = new Date(calendarSelectedDate.getFullYear(), calendarSelectedDate.getMonth(), calendarSelectedDate.getDate(), h, mi); if (dt <= new Date()) { showToast('現在より後の日時を選択してください', 'error'); return; } const str = dt.toLocaleString('ja-JP', {year:'numeric',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}); if (calendarTarget === 'setup') { document.getElementById('setupDeadline').value = dt.toISOString(); document.getElementById('setupDeadlineBtn').textContent = str; } playClick(); closeCalendar(); }
-    document.addEventListener('DOMContentLoaded', () => { setTimeout(addSounds, 100); initFirebase(); });
+    document.addEventListener('DOMContentLoaded', () => { setTimeout(addSounds, 100); initBGM(); initFirebase(); });
   </script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>

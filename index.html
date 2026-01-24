@@ -477,23 +477,179 @@
     }
     .participant-status-main {
       font-family: 'Orbitron', sans-serif;
-      font-size: 1rem;
+      font-size: 1.2rem;
       color: var(--hud-green);
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.3rem;
     }
     @media (min-width: 900px) {
-      .participant-status-main { font-size: 0.9rem; }
+      .participant-status-main { font-size: 1.1rem; }
     }
     .participant-status-main span {
       color: var(--hud-gold);
       font-weight: bold;
     }
     .participant-status-sub {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+    
+    /* HUD - リアルタイム情報エリア */
+    .hud-info-panel {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 320px;
+      right: 2rem;
+      background: rgba(0, 15, 8, 0.85);
+      border: 1px solid var(--hud-green-dim);
+      border-radius: 8px;
+      padding: 1.2rem 1.5rem;
+      z-index: 50;
+      display: none;
+    }
+    /* タイトル画面がアクティブな時のみPC表示 */
+    @media (min-width: 900px) {
+      #titleScreen.active ~ .hud-info-panel,
+      .hud-info-panel.title-active { display: block; }
+    }
+    .hud-info-panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      border-radius: 8px;
+      box-shadow: inset 0 0 20px rgba(0, 255, 65, 0.05);
+      pointer-events: none;
+    }
+    .hud-content {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    /* 状態バー（上部横長） */
+    .hud-status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0, 30, 15, 0.6);
+      border: 1px solid var(--hud-green);
+      border-radius: 4px;
+      padding: 0.8rem 1.5rem;
+    }
+    .hud-status-left {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    .hud-status-title {
       font-size: 0.8rem;
       color: var(--text-dim);
+      letter-spacing: 0.05em;
     }
-    @media (min-width: 900px) {
-      .participant-status-sub { font-size: 0.75rem; }
+    .hud-status-list {
+      display: flex;
+      gap: 0.6rem;
+    }
+    .hud-status-item {
+      font-size: 0.85rem;
+      padding: 0.4rem 1rem;
+      border: 1px solid var(--text-dim);
+      color: var(--text-dim);
+      border-radius: 3px;
+      transition: all 0.3s;
+    }
+    .hud-status-item.active {
+      border-color: var(--hud-green);
+      color: var(--hud-green);
+      box-shadow: 0 0 8px var(--hud-green-glow);
+      text-shadow: 0 0 5px var(--hud-green-glow);
+    }
+    .hud-next-event {
+      font-size: 0.9rem;
+      color: var(--hud-gold);
+    }
+    .hud-system-notice {
+      font-size: 0.8rem;
+      color: var(--hud-red);
+      margin-left: 1rem;
+    }
+    /* ログエリア（下部） */
+    .hud-log-area {
+      flex: 1;
+      min-width: 0;
+    }
+    .hud-log-title {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      margin-bottom: 0.6rem;
+      letter-spacing: 0.05em;
+    }
+    .hud-log-list {
+      height: 250px;
+      overflow: hidden;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    .hud-log-item {
+      color: var(--text-primary);
+      padding: 0.2rem 0;
+      opacity: 1;
+      transition: opacity 0.3s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .hud-log-item.fade-in {
+      animation: logFadeIn 0.3s ease;
+    }
+    .hud-log-item.fade-out {
+      opacity: 0;
+    }
+    .hud-log-item .log-time {
+      color: var(--text-dim);
+      margin-right: 0.6rem;
+      font-size: 0.8rem;
+    }
+    @keyframes logFadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* スマホ用HUD */
+    .hud-mobile {
+      display: none;
+      background: rgba(0, 15, 8, 0.9);
+      border: 1px solid var(--hud-green-dim);
+      border-radius: 6px;
+      padding: 0.8rem 1rem;
+      margin-top: 1rem;
+    }
+    @media (max-width: 899px) {
+      .hud-mobile { display: block; }
+    }
+    .hud-mobile .hud-status-bar {
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 0.5rem 0.8rem;
+      margin-bottom: 0.8rem;
+    }
+    .hud-mobile .hud-status-left {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .hud-mobile .hud-status-list {
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .hud-mobile .hud-next-event {
+      text-align: center;
+      font-size: 0.75rem;
+    }
+    .hud-mobile .hud-log-list {
+      height: 60px;
+      font-size: 0.7rem;
+    }
+    .hud-mobile .hud-log-title {
+      text-align: center;
     }
   </style>
 </head>
@@ -531,8 +687,8 @@
           
           <!-- 参加者数表示（メニュー下） -->
           <div class="participant-status" style="margin-top:1.5rem;padding:1rem 0;">
-            <div class="participant-status-main">参加者数：<span id="titleParticipantCount">0</span>/100（最大100人）</div>
-            <div class="participant-status-sub">参加人数が上限に達するとエントリーは締め切られます。</div>
+            <div class="participant-status-main">参加者数：<span id="titleParticipantCount">0</span>/100</div>
+            <div class="participant-status-sub">※最大100人・上限で締切</div>
           </div>
         </div>
         
@@ -547,6 +703,24 @@
               <div class="title-info-item"><div class="title-info-label">管理者</div><div class="title-info-value" id="titleAdmin">-</div></div>
               <div class="title-info-item"><div class="title-info-label">参加者</div><div class="title-info-value" id="titleCount">0名</div></div>
             </div>
+          </div>
+          
+          <!-- スマホ用HUD（モバイル時のみ表示） -->
+          <div class="hud-mobile" id="hudMobile">
+            <div class="hud-status-bar">
+              <div class="hud-status-left">
+                <span class="hud-status-title">▶ ステータス</span>
+                <div class="hud-status-list">
+                  <span class="hud-status-item active" id="statusReceptionMobile">受付中</span>
+                  <span class="hud-status-item" id="statusClosedMobile">受付終了</span>
+                  <span class="hud-status-item" id="statusProgressMobile">進行中</span>
+                  <span class="hud-status-item" id="statusEndMobile">終了</span>
+                </div>
+              </div>
+              <div class="hud-next-event" id="hudNextEventMobile"></div>
+            </div>
+            <div class="hud-log-title">▶ リアルタイムログ</div>
+            <div class="hud-log-list" id="hudLogListMobile"></div>
           </div>
         </div>
       </div>
@@ -637,6 +811,7 @@
         <div class="roulette-controls" id="rouletteAdminControls" style="display:none;">
           <button class="roulette-btn" id="spinBtn" onclick="spinRoulette()">ルーレット回転</button>
           <button class="roulette-btn" id="confirmMatchBtn" onclick="confirmMatch()" disabled>対戦確定</button>
+          <button class="roulette-btn" id="endTournamentBtn" onclick="confirmEndTournament()" style="background:rgba(40,10,20,0.8);border-color:var(--hud-red);color:var(--hud-red);">大会終了・記録</button>
         </div>
         <div class="roulette-controls" id="matchResultControls" style="display:none;">
           <button class="roulette-btn" onclick="declareWinner(1)">← 勝利</button>
@@ -739,6 +914,24 @@
       </div>
     </div>
   </div>
+  <!-- 大会終了確認モーダル -->
+  <div class="modal-overlay" id="endTournamentModal">
+    <div class="modal-content">
+      <button class="modal-close-btn" onclick="hideModal('endTournamentModal')">×</button>
+      <h3 class="modal-title" style="color:var(--hud-red);">大会を終了しますか？</h3>
+      <p style="text-align:center;color:var(--text-dim);margin:0.8rem 0;font-size:0.9rem;">優勝者を選択して記録を保存します</p>
+      <div class="form-group">
+        <label class="form-label">優勝者を選択</label>
+        <select id="championSelect" class="form-input" style="width:100%;padding:0.8rem;">
+          <option value="">-- 選択してください --</option>
+        </select>
+      </div>
+      <div class="modal-buttons">
+        <button class="modal-btn modal-btn-cancel" onclick="hideModal('endTournamentModal')">キャンセル</button>
+        <button class="modal-btn modal-btn-confirm" onclick="executeEndTournament()" style="background:var(--hud-red);border-color:var(--hud-red);">大会終了・記録</button>
+      </div>
+    </div>
+  </div>
   <div class="toast" id="toast"></div>
   
   <!-- BGM/SE Controls -->
@@ -755,9 +948,40 @@
     </div>
   </div>
   
+  <!-- HUD - リアルタイム情報パネル（PC専用） -->
+  <div class="hud-info-panel" id="hudPanel">
+    <div class="hud-content">
+      <!-- 状態バー（上部横長） -->
+      <div class="hud-status-bar">
+        <div class="hud-status-left">
+          <span class="hud-status-title">▶ ステータス</span>
+          <div class="hud-status-list">
+            <span class="hud-status-item active" id="statusReception">受付中</span>
+            <span class="hud-status-item" id="statusClosed">受付終了</span>
+            <span class="hud-status-item" id="statusProgress">進行中</span>
+            <span class="hud-status-item" id="statusEnd">終了</span>
+          </div>
+        </div>
+        <div class="hud-next-event" id="hudNextEvent"></div>
+        <div class="hud-system-notice" id="hudSystemNotice"></div>
+      </div>
+      <!-- 行動ログ（下部） -->
+      <div class="hud-log-area">
+        <div class="hud-log-title">▶ リアルタイムログ</div>
+        <div class="hud-log-list" id="hudLogList"></div>
+      </div>
+    </div>
+  </div>
+  
   <!-- BGM Audio -->
   <audio id="bgmAudio" loop preload="auto">
     <source src="tournament.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="battleBgmAudio" loop preload="auto">
+    <source src="battle.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="vsSoundAudio" preload="auto">
+    <source src="vs.mp3" type="audio/mpeg">
   </audio>
   
   <div class="calendar-modal" id="calendarModal">
@@ -800,7 +1024,10 @@
     let seEnabled = true;
     let bgmVolume = 0.3;
     let seVolume = 0.5;
+    let currentBgm = 'normal'; // 'normal' or 'battle'
     const bgmAudio = document.getElementById('bgmAudio');
+    const battleBgmAudio = document.getElementById('battleBgmAudio');
+    const vsSoundAudio = document.getElementById('vsSoundAudio');
 
     function toggleBGM() {
       bgmEnabled = !bgmEnabled;
@@ -808,17 +1035,23 @@
       if (bgmEnabled) {
         btn.classList.remove('off');
         btn.textContent = '🎵';
-        bgmAudio.play().catch(e => console.log('BGM autoplay blocked'));
+        if (currentBgm === 'normal') {
+          bgmAudio.play().catch(e => {});
+        } else {
+          battleBgmAudio.play().catch(e => {});
+        }
       } else {
         btn.classList.add('off');
-        btn.textContent = '🎵';
+        btn.textContent = '🔇';
         bgmAudio.pause();
+        battleBgmAudio.pause();
       }
     }
 
     function setBGMVolume(val) {
       bgmVolume = val / 100;
       bgmAudio.volume = bgmVolume;
+      battleBgmAudio.volume = bgmVolume;
     }
 
     function toggleSE() {
@@ -835,13 +1068,48 @@
 
     function setSEVolume(val) {
       seVolume = val / 100;
+      vsSoundAudio.volume = seVolume;
+    }
+
+    // BGMをバトル用に切り替え
+    function switchToBattleBGM() {
+      if (currentBgm === 'battle') return;
+      currentBgm = 'battle';
+      bgmAudio.pause();
+      bgmAudio.currentTime = 0;
+      battleBgmAudio.volume = bgmVolume;
+      if (bgmEnabled) {
+        battleBgmAudio.play().catch(e => console.log('Battle BGM blocked'));
+      }
+      appendLog('トーナメント開始！');
+    }
+
+    // BGMを通常に戻す
+    function switchToNormalBGM() {
+      if (currentBgm === 'normal') return;
+      currentBgm = 'normal';
+      battleBgmAudio.pause();
+      battleBgmAudio.currentTime = 0;
+      bgmAudio.volume = bgmVolume;
+      if (bgmEnabled) {
+        bgmAudio.play().catch(e => console.log('Normal BGM blocked'));
+      }
+    }
+
+    // VS効果音を再生
+    function playVsSound() {
+      if (!seEnabled) return;
+      vsSoundAudio.volume = seVolume;
+      vsSoundAudio.currentTime = 0;
+      vsSoundAudio.play().catch(e => console.log('VS sound blocked'));
     }
 
     function initBGM() {
       bgmAudio.volume = bgmVolume;
-      // ユーザー操作後に自動再生を試みる
+      battleBgmAudio.volume = bgmVolume;
+      vsSoundAudio.volume = seVolume;
       document.addEventListener('click', () => {
-        if (bgmEnabled && bgmAudio.paused) {
+        if (bgmEnabled && bgmAudio.paused && currentBgm === 'normal') {
           bgmAudio.play().catch(e => {});
         }
       }, { once: true });
@@ -850,6 +1118,180 @@
     function playClick() { if (!seEnabled) return; try { const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=800;o.type='sine';g.gain.setValueAtTime(seVolume*0.5,c.currentTime);g.gain.exponentialRampToValueAtTime(0.01,c.currentTime+0.1);o.start(c.currentTime);o.stop(c.currentTime+0.1);} catch(e){} }
     function playHover() { if (!seEnabled) return; try { const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=600;o.type='sine';g.gain.setValueAtTime(seVolume*0.12,c.currentTime);g.gain.exponentialRampToValueAtTime(0.01,c.currentTime+0.04);o.start(c.currentTime);o.stop(c.currentTime+0.04);} catch(e){} }
     function addSounds() { document.querySelectorAll('button').forEach(b => { b.addEventListener('mouseenter', () => { if(!b.disabled) playHover(); }); b.addEventListener('click', () => { if(!b.disabled) playClick(); }); }); }
+
+    // HUD - リアルタイムログ管理
+    const hudLogs = [];
+    const MAX_LOGS = 10;
+
+    function appendLog(message) {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      
+      // ローカル配列に追加（滝型：新しいログが上）
+      hudLogs.unshift({ time: timeStr, message: message });
+      
+      // 上限超過時は最下段から削除
+      if (hudLogs.length > MAX_LOGS) {
+        hudLogs.pop();
+      }
+      
+      renderLogs();
+      
+      // Firebaseにログを保存（他ユーザーと共有）
+      if (db) {
+        db.collection('logs').add({
+          time: timeStr,
+          message: message,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+          // 古いログを削除（10件を超えたら）
+          cleanupOldLogs();
+        }).catch(e => console.error('Log save error:', e));
+      }
+    }
+
+    // 古いログを削除（MAX_LOGS件を超えた分）
+    function cleanupOldLogs() {
+      if (!db) return;
+      
+      db.collection('logs')
+        .orderBy('timestamp', 'desc')
+        .get()
+        .then(snapshot => {
+          if (snapshot.size > MAX_LOGS) {
+            const batch = db.batch();
+            let count = 0;
+            snapshot.forEach(doc => {
+              count++;
+              // MAX_LOGS件より古いものを削除
+              if (count > MAX_LOGS) {
+                batch.delete(doc.ref);
+              }
+            });
+            batch.commit().catch(e => console.error('Log cleanup error:', e));
+          }
+        })
+        .catch(e => console.error('Log count error:', e));
+    }
+
+    // Firebaseからログをリアルタイム取得
+    function initLogListener() {
+      if (!db) return;
+      
+      db.collection('logs')
+        .orderBy('timestamp', 'desc')
+        .limit(MAX_LOGS)
+        .onSnapshot(snapshot => {
+          // 他デバイスからのログを反映
+          const firebaseLogs = [];
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.time && data.message) {
+              firebaseLogs.push({ time: data.time, message: data.message });
+            }
+          });
+          
+          // ローカルログをFirebaseログで更新
+          hudLogs.length = 0;
+          firebaseLogs.forEach(log => hudLogs.push(log));
+          
+          renderLogs();
+        }, err => console.error('Log listener error:', err));
+    }
+
+    function renderLogs() {
+      const logList = document.getElementById('hudLogList');
+      const logListMobile = document.getElementById('hudLogListMobile');
+      
+      const html = hudLogs.map((log, index) => {
+        const fadeClass = index === 0 ? 'fade-in' : '';
+        return '<div class="hud-log-item ' + fadeClass + '"><span class="log-time">' + log.time + '</span>' + escapeHtml(log.message) + '</div>';
+      }).join('');
+      
+      if (logList) logList.innerHTML = html;
+      if (logListMobile) logListMobile.innerHTML = html;
+    }
+
+    // トーナメント状態の更新
+    function updateTournamentStatus(status) {
+      const statuses = ['statusReception', 'statusClosed', 'statusProgress', 'statusEnd'];
+      const statusesMobile = ['statusReceptionMobile', 'statusClosedMobile', 'statusProgressMobile', 'statusEndMobile'];
+      
+      statuses.forEach(id => {
+        document.getElementById(id)?.classList.remove('active');
+      });
+      statusesMobile.forEach(id => {
+        document.getElementById(id)?.classList.remove('active');
+      });
+      
+      const statusMap = {
+        'reception': 'statusReception',
+        'closed': 'statusClosed',
+        'progress': 'statusProgress',
+        'end': 'statusEnd'
+      };
+      const statusMapMobile = {
+        'reception': 'statusReceptionMobile',
+        'closed': 'statusClosedMobile',
+        'progress': 'statusProgressMobile',
+        'end': 'statusEndMobile'
+      };
+      
+      if (statusMap[status]) {
+        document.getElementById(statusMap[status])?.classList.add('active');
+        document.getElementById(statusMapMobile[status])?.classList.add('active');
+      }
+    }
+
+    // 次のイベント予告の更新
+    function updateNextEvent(message) {
+      const el = document.getElementById('hudNextEvent');
+      const elMobile = document.getElementById('hudNextEventMobile');
+      if (el) el.textContent = message || '';
+      if (elMobile) elMobile.textContent = message || '';
+    }
+
+    // システム通知の更新
+    function updateSystemNotice(message) {
+      const el = document.getElementById('hudSystemNotice');
+      if (el) el.textContent = message || '';
+    }
+
+    // 状態判定と更新
+    function checkAndUpdateStatus() {
+      const t = appState.tournament;
+      const dl = t?.deadline;
+      
+      if (!dl) {
+        updateTournamentStatus('reception');
+        updateNextEvent('管理者の設定を待っています');
+        return;
+      }
+      
+      const deadline = dl.toDate ? dl.toDate() : new Date(dl);
+      const now = new Date();
+      
+      if (now < deadline) {
+        updateTournamentStatus('reception');
+        const diff = deadline - now;
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        updateNextEvent('締切まで: ' + hours + '時間 ' + mins + '分');
+      } else {
+        // 締切後
+        const activeCount = appState.entries.filter(e => e.status !== 'LOST').length;
+        if (activeCount > 1) {
+          updateTournamentStatus('progress');
+          updateNextEvent('管理者の操作を待っています');
+        } else if (activeCount === 1) {
+          updateTournamentStatus('end');
+          updateNextEvent('');
+        } else {
+          updateTournamentStatus('closed');
+          updateNextEvent('');
+        }
+      }
+    }
 
     function createMatrixBg() {
       const bg = document.getElementById('matrixBg');
@@ -883,14 +1325,16 @@
       if (screenId === 'titleScreen') { header.classList.remove('visible'); } else { header.classList.add('visible'); }
       if (directToTitle) { backBtn.textContent = '◀ タイトルに戻る'; backBtn.onclick = goToTitle; } else { backBtn.textContent = '◀ 戻る'; backBtn.onclick = goBack; }
       backBtn.classList.toggle('visible', screenId !== 'titleScreen');
+      updateHudVisibility();
     }
-    function goBack() { if (screenHistory.length > 0) { const prev = screenHistory.pop(); document.getElementById(currentScreen).classList.remove('active'); document.getElementById(prev).classList.add('active'); currentScreen = prev; const header = document.getElementById('mainHeader'); if (currentScreen === 'titleScreen') header.classList.remove('visible'); else header.classList.add('visible'); document.getElementById('backBtn').classList.toggle('visible', currentScreen !== 'titleScreen'); } }
-    function goToTitle() { document.getElementById(currentScreen).classList.remove('active'); document.getElementById('titleScreen').classList.add('active'); currentScreen = 'titleScreen'; screenHistory = []; document.getElementById('mainHeader').classList.remove('visible'); }
+    function goBack() { if (screenHistory.length > 0) { const prev = screenHistory.pop(); document.getElementById(currentScreen).classList.remove('active'); document.getElementById(prev).classList.add('active'); currentScreen = prev; const header = document.getElementById('mainHeader'); if (currentScreen === 'titleScreen') header.classList.remove('visible'); else header.classList.add('visible'); document.getElementById('backBtn').classList.toggle('visible', currentScreen !== 'titleScreen'); updateHudVisibility(); } }
+    function goToTitle() { document.getElementById(currentScreen).classList.remove('active'); document.getElementById('titleScreen').classList.add('active'); currentScreen = 'titleScreen'; screenHistory = []; document.getElementById('mainHeader').classList.remove('visible'); updateHudVisibility(); }
+    function updateHudVisibility() { const hud = document.getElementById('hudPanel'); if (hud) { if (currentScreen === 'titleScreen' && window.innerWidth >= 900) { hud.classList.add('title-active'); } else { hud.classList.remove('title-active'); } } }
     function showModal(id) { document.getElementById(id).classList.add('active'); }
     function hideModal(id) { document.getElementById(id).classList.remove('active'); }
     function showToast(msg, type = 'success') { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast ' + type + ' visible'; setTimeout(() => t.classList.remove('visible'), 3000); }
     function showGuide(type) { showModal(type === 'admin' ? 'adminGuideModal' : 'userGuideModal'); }
-    function showMatchmakingInfo() { const dl = appState.tournament?.deadline; if (dl) { const d = dl.toDate ? dl.toDate() : new Date(dl); if (new Date() >= d) { navigateTo('tournamentScreen'); document.getElementById('rouletteContainer').style.display = 'flex'; document.getElementById('rouletteAdminControls').style.display = 'flex'; return; } } showToast('締切日時以降に有効化されます', 'error'); }
+    function showMatchmakingInfo() { const dl = appState.tournament?.deadline; if (dl) { const d = dl.toDate ? dl.toDate() : new Date(dl); if (new Date() >= d) { switchToBattleBGM(); navigateTo('tournamentScreen'); document.getElementById('rouletteContainer').style.display = 'flex'; document.getElementById('rouletteAdminControls').style.display = 'flex'; return; } } showToast('締切日時以降に有効化されます', 'error'); }
     function previewIcon(input) { if (input.files && input.files[0]) { const r = new FileReader(); r.onload = e => { document.getElementById('iconPreview').innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;">'; document.getElementById('iconDeleteBtn').style.display = 'block'; }; r.readAsDataURL(input.files[0]); } }
     function clearIcon() { document.getElementById('iconPreview').innerHTML = '<span style="color:var(--text-dim);font-size:1.3rem;">+</span>'; document.getElementById('iconInput').value = ''; document.getElementById('iconDeleteBtn').style.display = 'none'; }
     function escapeHtml(s) { return s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''; }
@@ -916,6 +1360,7 @@
       updateEntryButton();
       updateCancelEntryButton();
       updateMatchmakingButton();
+      checkAndUpdateStatus();
     }
     function updateEntryButton() { const b = document.getElementById('entryBtn'); if (!appState.tournament?.deadline) { b.disabled = true; } else { const d = appState.tournament.deadline.toDate ? appState.tournament.deadline.toDate() : new Date(appState.tournament.deadline); b.disabled = new Date() > d; } }
     function updateCancelEntryButton() { const b = document.getElementById('cancelEntryBtn'); if (!b) return; const my = appState.entries.find(e => e.device_id === appState.deviceId); let can = !!my; const dl = appState.tournament?.deadline; if (dl) { const d = dl.toDate ? dl.toDate() : new Date(dl); if (new Date() >= d) can = false; } b.disabled = !can; }
@@ -960,25 +1405,98 @@
     document.getElementById('calendarHour')?.addEventListener('input', updateCalendarDisplay);
     document.getElementById('calendarMinute')?.addEventListener('input', updateCalendarDisplay);
     function confirmCalendar() { if (!calendarSelectedDate) { showToast('日付を選択してください', 'error'); return; } const h = parseInt(document.getElementById('calendarHour').value) || 0, mi = parseInt(document.getElementById('calendarMinute').value) || 0; const dt = new Date(calendarSelectedDate.getFullYear(), calendarSelectedDate.getMonth(), calendarSelectedDate.getDate(), h, mi); if (dt <= new Date()) { showToast('現在より後の日時を選択してください', 'error'); return; } const str = dt.toLocaleString('ja-JP', {year:'numeric',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}); if (calendarTarget === 'setup') { document.getElementById('setupDeadline').value = dt.toISOString(); document.getElementById('setupDeadlineBtn').textContent = str; } playClick(); closeCalendar(); }
-    document.addEventListener('DOMContentLoaded', () => { setTimeout(addSounds, 100); initBGM(); initFirebase(); });
+    document.addEventListener('DOMContentLoaded', () => { setTimeout(addSounds, 100); initBGM(); initFirebase(); updateHudVisibility(); });
   </script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script>
     const firebaseConfig = { apiKey: "AIzaSyCNGRa4DCOM595aM5Exor5BF6oPUvg1TIY", authDomain: "tournament-app-a0837.firebaseapp.com", projectId: "tournament-app-a0837", storageBucket: "tournament-app-a0837.firebasestorage.app", messagingSenderId: "514905483124", appId: "1:514905483124:web:1882493de273598b0a2e21" };
     let db = null;
-    function initFirebase() { try { firebase.initializeApp(firebaseConfig); db = firebase.firestore(); console.log('Firebase OK'); loadData(); } catch (e) { console.error('Firebase error:', e); updateTournamentDisplay(); } }
+    function initFirebase() { try { firebase.initializeApp(firebaseConfig); db = firebase.firestore(); console.log('Firebase OK'); loadData(); initLogListener(); } catch (e) { console.error('Firebase error:', e); updateTournamentDisplay(); } }
     function loadData() { if (!db) return; db.collection('tournaments').doc('current').onSnapshot(doc => { if (doc.exists) { appState.tournament = doc.data(); if (appState.tournament.admin_device === appState.deviceId) { appState.isAdmin = true; appState.adminName = appState.tournament.admin_name; } updateTournamentDisplay(); } }); db.collection('entries').orderBy('entry_id', 'asc').onSnapshot(snap => { appState.entries = snap.docs.map(d => ({ id: d.id, ...d.data() })); updateEntriesDisplay(); updateRouletteWheel(); updateTournamentDisplay(); }); db.collection('matches').orderBy('created_at', 'asc').onSnapshot(snap => { appState.matches = snap.docs.map(d => ({ id: d.id, ...d.data() })); }); }
-    function registerAdmin() { const n = document.getElementById('adminNameInput').value.trim(); const e = document.getElementById('adminNameError'); if (!n) { e.textContent = '管理者名を入力してください'; e.classList.add('visible'); return; } e.classList.remove('visible'); localStorage.setItem('tournament_admin_name', n); appState.adminName = n; appState.isAdmin = true; playClick(); screenHistory.push(currentScreen); document.getElementById(currentScreen).classList.remove('active'); document.getElementById('adminSetupScreen').classList.add('active'); currentScreen = 'adminSetupScreen'; document.getElementById('mainHeader').classList.add('visible'); document.getElementById('backBtn').classList.add('visible'); }
-    function saveTournamentSettings() { const gn = document.getElementById('setupGameName').value.trim(); const dl = document.getElementById('setupDeadline').value; const ge = document.getElementById('setupGameNameError'); const de = document.getElementById('setupDeadlineError'); ge.classList.remove('visible'); de.classList.remove('visible'); let err = false; if (!gn) { ge.textContent = 'ゲーム名を入力してください'; ge.classList.add('visible'); err = true; } if (!dl) { de.textContent = '締切日時を選択してください'; de.classList.add('visible'); err = true; } if (err) return; playClick(); appState.tournament = { admin_name: appState.adminName, admin_device: appState.deviceId, game_name: gn, deadline: new Date(dl) }; if (db) { db.collection('tournaments').doc('current').set({ admin_name: appState.adminName, admin_device: appState.deviceId, game_name: gn, deadline: new Date(dl), updated_at: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }).catch(e => console.error(e)); } updateTournamentDisplay(); showModal('settingsCompleteModal'); }
-    function submitEntry() { if (!appState.tournament?.deadline) { showToast('締切日時が未設定です', 'error'); return; } const d = appState.tournament.deadline.toDate ? appState.tournament.deadline.toDate() : new Date(appState.tournament.deadline); if (new Date() > d) { showToast('締切を過ぎています', 'error'); return; } const n = document.getElementById('usernameInput').value.trim(); const e = document.getElementById('usernameError'); if (!n) { e.textContent = 'ユーザーネームを入力してください'; e.classList.add('visible'); return; } if (appState.entries.find(x => x.username === n)) { e.textContent = 'このユーザー名は既に使用されています'; e.classList.add('visible'); return; } if (appState.entries.find(x => x.device_id === appState.deviceId)) { e.textContent = 'このデバイスは既に登録済みです'; e.classList.add('visible'); return; } e.classList.remove('visible'); const id = appState.entries.length + 1; const ic = document.getElementById('iconPreview').querySelector('img'); playClick(); const ne = { id: appState.deviceId, entry_id: id, username: n, device_id: appState.deviceId, icon_url: ic ? ic.src : null, status: 'ACTIVE' }; appState.entries.push(ne); if (db) { db.collection('entries').doc(appState.deviceId).set({ entry_id: id, username: n, device_id: appState.deviceId, icon_url: ic ? ic.src : null, status: 'ACTIVE', created_at: firebase.firestore.FieldValue.serverTimestamp() }).catch(x => console.error(x)); } updateEntriesDisplay(); updateTournamentDisplay(); document.getElementById('usernameInput').value = ''; clearIcon(); document.getElementById('entryCompleteInfo').textContent = n + ' (ID-' + String(id).padStart(2,'0') + ')'; showModal('entryCompleteModal'); }
+    function registerAdmin() { const n = document.getElementById('adminNameInput').value.trim(); const e = document.getElementById('adminNameError'); if (!n) { e.textContent = '管理者名を入力してください'; e.classList.add('visible'); return; } e.classList.remove('visible'); localStorage.setItem('tournament_admin_name', n); appState.adminName = n; appState.isAdmin = true; appendLog(n + 'が管理者になりました'); playClick(); screenHistory.push(currentScreen); document.getElementById(currentScreen).classList.remove('active'); document.getElementById('adminSetupScreen').classList.add('active'); currentScreen = 'adminSetupScreen'; document.getElementById('mainHeader').classList.add('visible'); document.getElementById('backBtn').classList.add('visible'); }
+    function saveTournamentSettings() { const gn = document.getElementById('setupGameName').value.trim(); const dl = document.getElementById('setupDeadline').value; const ge = document.getElementById('setupGameNameError'); const de = document.getElementById('setupDeadlineError'); ge.classList.remove('visible'); de.classList.remove('visible'); let err = false; if (!gn) { ge.textContent = 'ゲーム名を入力してください'; ge.classList.add('visible'); err = true; } if (!dl) { de.textContent = '締切日時を選択してください'; de.classList.add('visible'); err = true; } if (err) return; playClick(); appState.tournament = { admin_name: appState.adminName, admin_device: appState.deviceId, game_name: gn, deadline: new Date(dl) }; appendLog(appState.adminName + 'がトーナメント「' + gn + '」を作成しました'); if (db) { db.collection('tournaments').doc('current').set({ admin_name: appState.adminName, admin_device: appState.deviceId, game_name: gn, deadline: new Date(dl), updated_at: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }).catch(e => console.error(e)); } updateTournamentDisplay(); showModal('settingsCompleteModal'); }
+    function submitEntry() { if (!appState.tournament?.deadline) { showToast('締切日時が未設定です', 'error'); return; } const d = appState.tournament.deadline.toDate ? appState.tournament.deadline.toDate() : new Date(appState.tournament.deadline); if (new Date() > d) { showToast('締切を過ぎています', 'error'); return; } const n = document.getElementById('usernameInput').value.trim(); const e = document.getElementById('usernameError'); if (!n) { e.textContent = 'ユーザーネームを入力してください'; e.classList.add('visible'); return; } if (appState.entries.find(x => x.username === n)) { e.textContent = 'このユーザー名は既に使用されています'; e.classList.add('visible'); return; } if (appState.entries.find(x => x.device_id === appState.deviceId)) { e.textContent = 'このデバイスは既に登録済みです'; e.classList.add('visible'); return; } if (appState.entries.length >= 100) { updateSystemNotice('参加上限に達しました'); showToast('参加上限に達しました', 'error'); return; } e.classList.remove('visible'); const id = appState.entries.length + 1; const ic = document.getElementById('iconPreview').querySelector('img'); playClick(); const ne = { id: appState.deviceId, entry_id: id, username: n, device_id: appState.deviceId, icon_url: ic ? ic.src : null, status: 'ACTIVE' }; appState.entries.push(ne); appendLog(n + 'がエントリーしました'); if (db) { db.collection('entries').doc(appState.deviceId).set({ entry_id: id, username: n, device_id: appState.deviceId, icon_url: ic ? ic.src : null, status: 'ACTIVE', created_at: firebase.firestore.FieldValue.serverTimestamp() }).catch(x => console.error(x)); } updateEntriesDisplay(); updateTournamentDisplay(); document.getElementById('usernameInput').value = ''; clearIcon(); document.getElementById('entryCompleteInfo').textContent = n + ' (ID-' + String(id).padStart(2,'0') + ')'; showModal('entryCompleteModal'); }
     function cancelEntry() { const my = appState.entries.find(e => e.device_id === appState.deviceId); if (!my) { showToast('エントリーしていません', 'error'); return; } const dl = appState.tournament?.deadline; if (dl) { const d = dl.toDate ? dl.toDate() : new Date(dl); if (new Date() >= d) { showToast('締切日時を過ぎているため解除できません', 'error'); return; } } showModal('confirmCancelEntryModal'); }
-    function executeCancelEntry() { playClick(); const i = appState.entries.findIndex(e => e.device_id === appState.deviceId); if (i !== -1) appState.entries.splice(i, 1); if (db) db.collection('entries').doc(appState.deviceId).delete().catch(e => console.error(e)); updateEntriesDisplay(); updateTournamentDisplay(); updateEntryScreen(); updateCancelEntryButton(); hideModal('confirmCancelEntryModal'); showModal('cancelCompleteModal'); }
-    function spinRoulette() { if (appState.isSpinning) return; const a = appState.entries.filter(e => e.status !== 'LOST'); const f = a.filter(e => !appState.matches.some(m => (m.player1_id === e.entry_id || m.player2_id === e.entry_id) && !m.winner_id)); if (f.length < 2) { showToast('対戦可能な参加者が不足しています', 'error'); return; } appState.isSpinning = true; document.getElementById('spinBtn').disabled = true; const s = [...f].sort(() => Math.random() - 0.5); appState.selectedPlayer1 = s[0]; appState.selectedPlayer2 = s[1]; document.getElementById('wheelInner').style.transform = 'rotate(' + (1800 + Math.random() * 720) + 'deg)'; setTimeout(() => { updateVsDisplay(appState.selectedPlayer1, appState.selectedPlayer2); document.getElementById('confirmMatchBtn').disabled = false; appState.isSpinning = false; document.getElementById('spinBtn').disabled = false; }, 4000); }
+    function executeCancelEntry() { playClick(); const myEntry = appState.entries.find(e => e.device_id === appState.deviceId); const username = myEntry ? myEntry.username : '不明'; const i = appState.entries.findIndex(e => e.device_id === appState.deviceId); if (i !== -1) appState.entries.splice(i, 1); appendLog(username + 'が登録解除しました'); if (db) db.collection('entries').doc(appState.deviceId).delete().catch(e => console.error(e)); updateEntriesDisplay(); updateTournamentDisplay(); updateEntryScreen(); updateCancelEntryButton(); hideModal('confirmCancelEntryModal'); showModal('cancelCompleteModal'); }
+    function spinRoulette() { if (appState.isSpinning) return; const a = appState.entries.filter(e => e.status !== 'LOST'); const f = a.filter(e => !appState.matches.some(m => (m.player1_id === e.entry_id || m.player2_id === e.entry_id) && !m.winner_id)); if (f.length < 2) { showToast('対戦可能な参加者が不足しています', 'error'); return; } appState.isSpinning = true; document.getElementById('spinBtn').disabled = true; const s = [...f].sort(() => Math.random() - 0.5); appState.selectedPlayer1 = s[0]; appState.selectedPlayer2 = s[1]; document.getElementById('wheelInner').style.transform = 'rotate(' + (1800 + Math.random() * 720) + 'deg)'; setTimeout(() => { playVsSound(); updateVsDisplay(appState.selectedPlayer1, appState.selectedPlayer2); appendLog(appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username); document.getElementById('confirmMatchBtn').disabled = false; appState.isSpinning = false; document.getElementById('spinBtn').disabled = false; }, 4000); }
     function confirmMatch() { if (!appState.selectedPlayer1 || !appState.selectedPlayer2) return; document.getElementById('confirmMatchText').textContent = appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username; showModal('confirmMatchModal'); }
-    function executeConfirmMatch() { if (!db) return; playClick(); db.collection('matches').add({ player1_id: appState.selectedPlayer1.entry_id, player1_name: appState.selectedPlayer1.username, player2_id: appState.selectedPlayer2.entry_id, player2_name: appState.selectedPlayer2.username, winner_id: null, round: 1, created_at: firebase.firestore.FieldValue.serverTimestamp() }).then(() => { hideModal('confirmMatchModal'); document.getElementById('matchResultControls').style.display = 'flex'; document.getElementById('confirmMatchBtn').disabled = true; showToast('対戦を確定しました', 'success'); }).catch(e => showToast('エラー: ' + e.message, 'error')); }
+    function executeConfirmMatch() { if (!db) return; playClick(); appendLog(appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username + ' の対戦が確定'); db.collection('matches').add({ player1_id: appState.selectedPlayer1.entry_id, player1_name: appState.selectedPlayer1.username, player2_id: appState.selectedPlayer2.entry_id, player2_name: appState.selectedPlayer2.username, winner_id: null, round: 1, created_at: firebase.firestore.FieldValue.serverTimestamp() }).then(() => { hideModal('confirmMatchModal'); document.getElementById('matchResultControls').style.display = 'flex'; document.getElementById('confirmMatchBtn').disabled = true; showToast('対戦を確定しました', 'success'); }).catch(e => showToast('エラー: ' + e.message, 'error')); }
     function declareWinner(n) { appState.pendingWinner = { winner: n === 1 ? appState.selectedPlayer1 : appState.selectedPlayer2, loser: n === 1 ? appState.selectedPlayer2 : appState.selectedPlayer1 }; document.getElementById('confirmWinnerText').textContent = appState.pendingWinner.winner.username; showModal('confirmWinnerModal'); }
-    function executeWinner() { if (!db) return; const { winner, loser } = appState.pendingWinner; playClick(); const m = appState.matches.find(x => x.player1_id === appState.selectedPlayer1.entry_id && x.player2_id === appState.selectedPlayer2.entry_id && !x.winner_id); if (m) db.collection('matches').doc(m.id).update({ winner_id: winner.entry_id, winner_name: winner.username }); const le = appState.entries.find(e => e.entry_id === loser.entry_id); if (le) db.collection('entries').doc(le.id).update({ status: 'LOST' }); hideModal('confirmWinnerModal'); document.getElementById('matchResultControls').style.display = 'none'; appState.selectedPlayer1 = null; appState.selectedPlayer2 = null; updateVsDisplay(null, null); document.getElementById('wheelInner').style.transform = 'rotate(0deg)'; showToast('勝者を確定しました', 'success'); }
+    function executeWinner() { if (!db) return; const { winner, loser } = appState.pendingWinner; playClick(); appendLog(winner.username + 'が勝利（' + loser.username + '敗退）'); const m = appState.matches.find(x => x.player1_id === appState.selectedPlayer1.entry_id && x.player2_id === appState.selectedPlayer2.entry_id && !x.winner_id); if (m) db.collection('matches').doc(m.id).update({ winner_id: winner.entry_id, winner_name: winner.username }); const le = appState.entries.find(e => e.entry_id === loser.entry_id); if (le) db.collection('entries').doc(le.id).update({ status: 'LOST' }); hideModal('confirmWinnerModal'); document.getElementById('matchResultControls').style.display = 'none'; appState.selectedPlayer1 = null; appState.selectedPlayer2 = null; updateVsDisplay(null, null); document.getElementById('wheelInner').style.transform = 'rotate(0deg)'; showToast('勝者を確定しました', 'success'); checkAndUpdateStatus(); }
+
+    // 大会終了確認
+    function confirmEndTournament() {
+      const select = document.getElementById('championSelect');
+      select.innerHTML = '<option value="">-- 選択してください --</option>';
+      const active = appState.entries.filter(e => e.status !== 'LOST');
+      active.forEach(e => {
+        const opt = document.createElement('option');
+        opt.value = e.entry_id;
+        opt.textContent = e.username + ' (ID-' + String(e.entry_id).padStart(2,'0') + ')';
+        select.appendChild(opt);
+      });
+      showModal('endTournamentModal');
+    }
+
+    // 大会終了実行
+    function executeEndTournament() {
+      const select = document.getElementById('championSelect');
+      const championId = select.value;
+      if (!championId) {
+        showToast('優勝者を選択してください', 'error');
+        return;
+      }
+      const champion = appState.entries.find(e => e.entry_id === parseInt(championId));
+      if (!champion) {
+        showToast('優勝者が見つかりません', 'error');
+        return;
+      }
+      playClick();
+      appendLog('🏆 ' + champion.username + 'が優勝！大会終了');
+      
+      // 履歴に保存
+      if (db) {
+        db.collection('history').add({
+          game_name: appState.tournament?.game_name || '不明',
+          admin_name: appState.tournament?.admin_name || '不明',
+          champion_name: champion.username,
+          champion_id: champion.entry_id,
+          total_participants: appState.entries.length,
+          date: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+          // 現在の大会データをクリア
+          db.collection('tournaments').doc('current').delete();
+          db.collection('entries').get().then(snap => {
+            const batch = db.batch();
+            snap.forEach(doc => batch.delete(doc.ref));
+            batch.commit();
+          });
+          db.collection('matches').get().then(snap => {
+            const batch = db.batch();
+            snap.forEach(doc => batch.delete(doc.ref));
+            batch.commit();
+          });
+        });
+      }
+      
+      // BGMを通常に戻す
+      switchToNormalBGM();
+      updateTournamentStatus('end');
+      
+      hideModal('endTournamentModal');
+      showToast('大会が終了しました！優勝: ' + champion.username, 'success');
+      
+      // タイトルに戻る
+      setTimeout(() => {
+        goToTitle();
+        // アプリ状態をリセット
+        appState.tournament = null;
+        appState.entries = [];
+        appState.matches = [];
+        updateTournamentDisplay();
+      }, 2000);
+    }
     function loadHistory() { if (!db) { document.getElementById('historyList').innerHTML = '<p style="text-align:center;color:var(--text-dim);">データベース未接続</p>'; return; } db.collection('history').orderBy('date', 'desc').get().then(snap => { const l = document.getElementById('historyList'); if (snap.empty) { l.innerHTML = '<p style="text-align:center;color:var(--text-dim);">記録がありません</p>'; return; } l.innerHTML = snap.docs.map(d => { const x = d.data(); const dt = x.date?.toDate?.() || new Date(); return '<div class="history-card"><div class="history-date">' + dt.toLocaleDateString('ja-JP') + '</div><div class="history-game">' + escapeHtml(x.game_name || '不明') + '</div><div class="history-winner">👑 優勝: ' + escapeHtml(x.champion_name || '不明') + '</div><div style="font-size:0.8rem;color:var(--text-dim);margin-top:0.4rem;">管理者: ' + escapeHtml(x.admin_name || '不明') + ' / 参加者: ' + (x.total_participants || 0) + '名</div></div>'; }).join(''); }); }
   </script>
 </body>

@@ -5,25 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>トーナメント</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --matrix-green: #00ff41;
-      --matrix-green-dim: #00aa2a;
-      --matrix-green-dark: #003300;
-      --matrix-gold: #ffcc00;
-      --bg-dark: #0a120a;
-      --bg-card: rgba(0, 15, 5, 0.9);
+      --hud-green: #00ff41;
+      --hud-green-dim: #00aa2a;
+      --hud-green-glow: rgba(0, 255, 65, 0.6);
+      --hud-gold: #ffcc00;
+      --hud-red: #ff3366;
+      --bg-dark: #000a04;
+      --bg-panel: rgba(0, 20, 10, 0.85);
       --text-primary: #c0ffc0;
       --text-dim: #4a8a4a;
-      --border-glow: 0 0 10px rgba(0,255,65,0.3);
-      --error-red: #ff3333;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Noto Sans JP', sans-serif;
-      background: linear-gradient(180deg, #0a140a 0%, #061006 50%, #040804 100%);
+      background: #000a04;
       color: var(--text-primary);
       min-height: 100vh;
       overflow-x: hidden;
@@ -32,72 +30,101 @@
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      z-index: -1;
+      z-index: 0;
       pointer-events: none;
       overflow: hidden;
-      background: radial-gradient(ellipse at 50% 50%, rgba(0,40,10,0.3) 0%, transparent 70%);
     }
     .matrix-col {
       position: absolute;
-      top: -120%;
-      font-family: 'MS Gothic', 'Courier New', monospace;
-      font-size: 15px;
-      line-height: 1.3;
-      color: var(--matrix-green);
+      top: -100%;
+      font-family: 'MS Gothic', monospace;
+      font-size: 14px;
+      line-height: 1.2;
+      color: #00ff41;
       writing-mode: vertical-rl;
       animation: matrix-fall linear infinite;
-      opacity: 0.15;
-      text-shadow: 0 0 8px var(--matrix-green);
+      opacity: 0.12;
+      text-shadow: 0 0 3px #00ff41;
     }
     @keyframes matrix-fall {
       0% { transform: translateY(0); }
       100% { transform: translateY(220vh); }
     }
+    .hud-frame {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .hud-corner {
+      position: absolute;
+      width: 50px; height: 50px;
+      border-color: var(--hud-green);
+      border-style: solid;
+      border-width: 0;
+      box-shadow: 0 0 10px var(--hud-green-glow);
+    }
+    .hud-corner.tl { top: 8px; left: 8px; border-top-width: 3px; border-left-width: 3px; }
+    .hud-corner.tr { top: 8px; right: 8px; border-top-width: 3px; border-right-width: 3px; }
+    .hud-corner.bl { bottom: 8px; left: 8px; border-bottom-width: 3px; border-left-width: 3px; }
+    .hud-corner.br { bottom: 8px; right: 8px; border-bottom-width: 3px; border-right-width: 3px; }
+    .hud-line-h {
+      position: absolute;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--hud-green), transparent);
+      left: 70px; right: 70px;
+      box-shadow: 0 0 8px var(--hud-green-glow);
+    }
+    .hud-line-h.top { top: 8px; }
+    .hud-line-h.bottom { bottom: 8px; }
+    .hud-line-v {
+      position: absolute;
+      width: 2px;
+      background: linear-gradient(180deg, transparent, var(--hud-green), transparent);
+      top: 70px; bottom: 70px;
+      box-shadow: 0 0 8px var(--hud-green-glow);
+    }
+    .hud-line-v.left { left: 8px; }
+    .hud-line-v.right { right: 8px; }
     .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem 1.5rem;
-      background: rgba(0, 10, 5, 0.95);
-      border-bottom: 1px solid var(--matrix-green-dark);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .header.hidden {
+      position: relative;
+      z-index: 10;
       display: none;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      background: linear-gradient(180deg, rgba(0,30,15,0.95) 0%, rgba(0,15,8,0.9) 100%);
+      border-bottom: 2px solid var(--hud-green);
+      box-shadow: 0 0 20px var(--hud-green-glow);
     }
+    .header.visible { display: flex; }
     .back-btn {
       background: transparent;
-      border: 2px solid var(--matrix-green);
-      color: var(--matrix-green);
+      border: 2px solid var(--hud-green);
+      color: var(--hud-green);
       padding: 0.5rem 1rem;
-      border-radius: 4px;
-      cursor: pointer;
       font-weight: bold;
-      transition: all 0.3s;
+      cursor: pointer;
+      transition: all 0.2s;
       visibility: hidden;
     }
     .back-btn.visible { visibility: visible; }
-    .back-btn:hover { background: var(--matrix-green); color: var(--bg-dark); }
+    .back-btn:hover { background: var(--hud-green); color: var(--bg-dark); box-shadow: 0 0 15px var(--hud-green-glow); }
     .app-title {
-      font-family: 'Noto Serif JP', serif;
-      font-size: clamp(1.5rem, 5vw, 2rem);
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.3rem, 4vw, 1.8rem);
       font-weight: 900;
-      color: var(--matrix-green);
-      text-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+      color: var(--hud-green);
+      text-shadow: 0 0 10px var(--hud-green-glow);
       letter-spacing: 0.15em;
     }
-    .header-icons {
-      display: flex;
-      gap: 0.5rem;
-    }
+    .header-icons { display: flex; gap: 0.8rem; }
     .info-btn {
       background: transparent;
-      border: 2px solid var(--matrix-green);
-      color: var(--matrix-green);
-      width: 36px;
-      height: 36px;
+      border: 2px solid var(--hud-green);
+      color: var(--hud-green);
+      width: 38px; height: 38px;
       border-radius: 50%;
       cursor: pointer;
       font-size: 1rem;
@@ -106,757 +133,259 @@
       justify-content: center;
       transition: all 0.2s;
     }
-    .info-btn:hover {
-      background: var(--matrix-green);
-      color: var(--bg-dark);
-      box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
-      transform: scale(1.1);
-    }
-    .info-btn.admin-info {
-      border-color: var(--matrix-gold);
-      color: var(--matrix-gold);
-    }
-    .info-btn.admin-info:hover {
-      background: var(--matrix-gold);
-      color: var(--bg-dark);
-      box-shadow: 0 0 15px rgba(255, 204, 0, 0.5);
-    }
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 2rem 1rem;
-    }
+    .info-btn:hover { background: var(--hud-green); color: var(--bg-dark); box-shadow: 0 0 15px var(--hud-green-glow); transform: scale(1.1); }
+    .info-btn.admin-info { border-color: var(--hud-gold); color: var(--hud-gold); }
+    .info-btn.admin-info:hover { background: var(--hud-gold); box-shadow: 0 0 15px rgba(255,204,0,0.5); }
+    .main-container { position: relative; z-index: 5; min-height: 100vh; padding: 1rem; }
     .screen { display: none; }
     .screen.active { display: block; }
-
-    /* Title Screen */
-    .title-screen {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 70vh;
-      text-align: center;
-      position: relative;
+    .title-screen { min-height: 100vh; display: flex; flex-direction: column; }
+    @media (min-width: 900px) {
+      .title-screen { flex-direction: row; padding: 2rem; }
     }
-    .title-guide-icons {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      display: flex;
-      gap: 0.5rem;
+    .title-left-menu { display: flex; flex-direction: column; gap: 0.4rem; padding: 1rem; }
+    @media (min-width: 900px) {
+      .title-left-menu { width: 280px; padding-top: 4rem; }
+    }
+    .title-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; }
+    .title-right-info { padding: 1rem; }
+    @media (min-width: 900px) {
+      .title-right-info { width: 300px; padding-top: 4rem; }
     }
     .main-title {
-      font-family: 'Noto Serif JP', serif;
-      font-size: clamp(3.5rem, 12vw, 6rem);
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(2.5rem, 10vw, 4.5rem);
       font-weight: 900;
-      color: var(--matrix-green);
-      text-shadow: 0 0 15px rgba(0, 255, 65, 0.4);
-      letter-spacing: 0.2em;
-      margin-bottom: 3rem;
+      color: var(--hud-green);
+      text-shadow: 0 0 30px var(--hud-green-glow), 0 0 60px rgba(0,255,65,0.3);
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
     }
-    .menu-buttons {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      width: 100%;
-      max-width: 320px;
+    .title-guide-icons { position: fixed; top: 1.2rem; right: 1.5rem; display: flex; gap: 0.6rem; z-index: 20; }
+    .hud-panel {
+      background: var(--bg-panel);
+      border: 2px solid var(--hud-green);
+      position: relative;
+      padding: 1.2rem;
+      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+      box-shadow: 0 0 15px var(--hud-green-glow), inset 0 0 30px rgba(0,255,65,0.05);
+    }
+    .hud-panel-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.85rem;
+      color: var(--hud-green);
+      letter-spacing: 0.08em;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--hud-green-dim);
     }
     .menu-btn {
-      background: linear-gradient(180deg, rgba(0,50,20,0.9) 0%, rgba(0,30,10,0.95) 100%);
-      border: 2px solid var(--matrix-green);
-      color: var(--matrix-green);
-      padding: 1rem 2rem;
-      font-size: 1.1rem;
+      display: block;
+      width: 100%;
+      background: linear-gradient(90deg, rgba(0,40,20,0.9) 0%, rgba(0,60,30,0.8) 100%);
+      border: 2px solid var(--hud-green);
+      border-left: 4px solid var(--hud-green);
+      color: var(--hud-green);
+      padding: 0.9rem 1rem;
+      font-size: 0.95rem;
       font-weight: bold;
-      border-radius: 8px;
+      text-align: left;
       cursor: pointer;
       transition: all 0.2s;
-      text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
+      position: relative;
     }
     .menu-btn:hover:not(:disabled) {
-      background: var(--matrix-green);
+      background: linear-gradient(90deg, var(--hud-green) 0%, rgba(0,255,65,0.7) 100%);
       color: var(--bg-dark);
-      box-shadow: 0 0 25px rgba(0, 255, 65, 0.6);
-      transform: scale(1.02);
+      box-shadow: 0 0 20px var(--hud-green-glow);
+      transform: translateX(5px);
     }
-    .menu-btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-    .menu-btn.cancel-btn {
-      border-color: var(--error-red);
-      color: var(--error-red);
-    }
-    .menu-btn.cancel-btn:hover:not(:disabled) {
-      background: var(--error-red);
-      color: white;
-      box-shadow: 0 0 25px rgba(255, 50, 50, 0.6);
-    }
-
-    /* Form Styles */
-    .form-container {
-      background: var(--bg-card);
-      border: 2px solid var(--matrix-green);
-      border-radius: 12px;
-      padding: 2rem;
-      max-width: 500px;
-      margin: 0 auto;
-      box-shadow: var(--border-glow);
-    }
-    .form-title {
-      font-size: 1.5rem;
-      color: var(--matrix-green);
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
-    .form-group { margin-bottom: 1.5rem; }
-    .form-label {
-      display: block;
-      margin-bottom: 0.5rem;
-      color: var(--text-dim);
-      font-size: 0.9rem;
-    }
+    .menu-btn:disabled { opacity: 0.3; cursor: not-allowed; border-color: var(--text-dim); color: var(--text-dim); }
+    .menu-btn.cancel-btn { border-color: var(--hud-red); border-left-color: var(--hud-red); color: var(--hud-red); }
+    .menu-btn.cancel-btn:hover:not(:disabled) { background: linear-gradient(90deg, var(--hud-red) 0%, rgba(255,50,100,0.7) 100%); color: white; box-shadow: 0 0 20px rgba(255,50,100,0.5); }
+    .info-display { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; margin-bottom: 1rem; }
+    .info-item { background: rgba(0,30,15,0.6); border: 1px solid var(--hud-green-dim); padding: 0.6rem; text-align: center; }
+    .info-label { font-size: 0.7rem; color: var(--text-dim); margin-bottom: 0.2rem; }
+    .info-value { font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: var(--hud-green); }
+    .info-value.warning { color: var(--hud-red); }
+    .form-group { margin-bottom: 1.2rem; }
+    .form-label { display: block; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.4rem; }
     .form-input {
       width: 100%;
-      padding: 0.8rem 1rem;
-      background: rgba(0, 20, 10, 0.8);
-      border: 1px solid var(--matrix-green-dim);
-      border-radius: 6px;
+      padding: 0.7rem 0.9rem;
+      background: rgba(0, 20, 10, 0.9);
+      border: 2px solid var(--hud-green-dim);
       color: var(--text-primary);
       font-size: 1rem;
-    }
-    .form-input:focus {
-      outline: none;
-      border-color: var(--matrix-green);
-      box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
-    }
-    .submit-btn {
-      width: 100%;
-      padding: 1rem;
-      background: linear-gradient(180deg, var(--matrix-green-dim) 0%, var(--matrix-green-dark) 100%);
-      border: 2px solid var(--matrix-green);
-      color: var(--matrix-green);
-      font-size: 1.1rem;
-      font-weight: bold;
-      border-radius: 8px;
-      cursor: pointer;
       transition: all 0.2s;
     }
-    .submit-btn:hover:not(:disabled) {
-      background: var(--matrix-green);
-      color: var(--bg-dark);
-      box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
-      transform: scale(1.02);
-    }
-    .submit-btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
+    .form-input:focus { outline: none; border-color: var(--hud-green); box-shadow: 0 0 10px var(--hud-green-glow); }
     .error-message {
-      color: var(--error-red);
-      font-size: 0.85rem;
-      margin-top: 0.5rem;
+      background: rgba(255,50,100,0.2);
+      border: 1px solid var(--hud-red);
+      color: var(--hud-red);
+      padding: 0.4rem;
+      margin-top: 0.4rem;
+      font-size: 0.8rem;
       display: none;
     }
     .error-message.visible { display: block; }
-
-    /* Info Panel */
-    .info-panel {
-      background: var(--bg-card);
-      border: 2px solid var(--matrix-green);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
-    }
-    @media (min-width: 600px) {
-      .info-panel { grid-template-columns: repeat(4, 1fr); }
-    }
-    .info-item { text-align: center; }
-    .info-label {
-      font-size: 0.8rem;
-      color: var(--text-dim);
-      margin-bottom: 0.3rem;
-    }
-    .info-value {
-      font-size: 1.1rem;
-      color: var(--matrix-green);
-      font-weight: bold;
-    }
-    .info-value.warning { color: var(--error-red); }
-
-    /* Participant List */
-    .participant-list {
-      background: var(--bg-card);
-      border: 2px solid var(--matrix-green);
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    .list-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem 1.5rem;
-      border-bottom: 1px solid var(--matrix-green-dark);
-    }
-    .list-title {
-      color: var(--matrix-green);
-      font-size: 1.2rem;
-    }
-    .list-search {
-      padding: 0.5rem;
-      background: rgba(0, 20, 10, 0.8);
-      border: 1px solid var(--matrix-green-dim);
-      border-radius: 4px;
-      color: var(--text-primary);
-      width: 150px;
-    }
-    .list-table {
+    .submit-btn {
       width: 100%;
-      border-collapse: collapse;
-    }
-    .list-table th, .list-table td {
-      padding: 0.8rem 1rem;
-      text-align: left;
-      border-bottom: 1px solid var(--matrix-green-dark);
-    }
-    .list-table th {
-      background: rgba(0, 30, 15, 0.5);
-      color: var(--matrix-green);
-      font-weight: bold;
-    }
-    .list-table tr:hover { background: rgba(0, 255, 65, 0.05); }
-    .status-badge {
-      padding: 0.2rem 0.6rem;
-      border-radius: 4px;
-      font-size: 0.8rem;
-      font-weight: bold;
-    }
-    .status-active {
-      background: rgba(0, 255, 65, 0.2);
-      color: var(--matrix-green);
-      border: 1px solid var(--matrix-green);
-    }
-    .status-lost {
-      background: rgba(100, 100, 100, 0.2);
-      color: #666;
-      border: 1px solid #666;
-    }
-    .user-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--matrix-green-dark);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--matrix-green);
-      font-size: 0.9rem;
-    }
-    .user-icon img {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-
-    /* Modal */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.85);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-    }
-    .modal-overlay.active { display: flex; }
-    .modal-content {
-      background: var(--bg-card);
-      border: 2px solid var(--matrix-green);
-      border-radius: 12px;
-      padding: 2rem;
-      max-width: 500px;
-      width: 90%;
-      position: relative;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    .modal-close-btn {
-      position: absolute;
-      top: 10px; right: 10px;
-      background: transparent;
-      border: none;
-      color: var(--text-dim);
-      font-size: 1.8rem;
-      cursor: pointer;
-      width: 36px; height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      transition: all 0.3s;
-    }
-    .modal-close-btn:hover {
-      color: var(--matrix-green);
-      background: rgba(0, 255, 65, 0.1);
-    }
-    .modal-title {
-      color: var(--matrix-green);
-      font-size: 1.3rem;
-      margin-bottom: 1.5rem;
-      text-align: center;
-    }
-    .modal-buttons {
-      display: flex;
-      gap: 1rem;
-      margin-top: 1.5rem;
-    }
-    .modal-btn {
-      flex: 1;
-      padding: 0.8rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: all 0.2s;
-    }
-    .modal-btn-cancel {
-      background: transparent;
-      border: 1px solid var(--text-dim);
-      color: var(--text-dim);
-    }
-    .modal-btn-cancel:hover {
-      border-color: var(--matrix-green);
-      color: var(--matrix-green);
-      box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
-    }
-    .modal-btn-confirm {
-      background: var(--matrix-green);
-      border: none;
-      color: var(--bg-dark);
-    }
-    .modal-btn-confirm:hover {
-      box-shadow: 0 0 20px rgba(0, 255, 65, 0.6);
-      transform: scale(1.02);
-    }
-
-    /* Guide Modal */
-    .guide-content {
-      color: var(--text-primary);
-      line-height: 1.8;
-    }
-    .guide-content h4 {
-      color: var(--matrix-green);
-      margin: 1.5rem 0 0.5rem;
-      font-size: 1.1rem;
-    }
-    .guide-content h4:first-child {
-      margin-top: 0;
-    }
-    .guide-content p {
-      margin-bottom: 0.8rem;
-      color: var(--text-dim);
-    }
-    .guide-content ul {
-      margin-left: 1.5rem;
-      color: var(--text-dim);
-    }
-    .guide-content li {
-      margin-bottom: 0.5rem;
-    }
-
-    /* Toast */
-    .toast {
-      position: fixed;
-      bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      padding: 1rem 2rem;
-      border-radius: 8px;
-      font-weight: bold;
-      z-index: 2000;
-      transition: transform 0.3s;
-    }
-    .toast.visible { transform: translateX(-50%) translateY(0); }
-    .toast.success {
-      background: rgba(0, 255, 65, 0.9);
-      color: var(--bg-dark);
-    }
-    .toast.error {
-      background: rgba(255, 50, 50, 0.9);
-      color: white;
-    }
-
-    /* History */
-    .history-card {
-      background: var(--bg-card);
-      border: 1px solid var(--matrix-green-dim);
-      border-radius: 8px;
-      padding: 1.5rem;
-      margin-bottom: 1rem;
-    }
-    .history-date { color: var(--text-dim); font-size: 0.85rem; }
-    .history-game { color: var(--matrix-green); font-size: 1.2rem; font-weight: bold; margin: 0.5rem 0; }
-    .history-winner { color: var(--matrix-gold); }
-
-    /* Custom Calendar */
-    .calendar-modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.9);
-      z-index: 2000;
-      align-items: center;
-      justify-content: center;
-    }
-    .calendar-modal.active { display: flex; }
-    .calendar-container {
-      background: rgba(0, 20, 10, 0.95);
-      border: 2px solid var(--matrix-green);
-      border-radius: 16px;
-      padding: 1.5rem;
-      max-width: 380px;
-      width: 95%;
-      box-shadow: 0 0 40px rgba(0, 255, 65, 0.3);
-      position: relative;
-    }
-    .calendar-close {
-      position: absolute;
-      top: 10px; right: 10px;
-      background: transparent;
-      border: none;
-      color: var(--text-dim);
-      font-size: 1.8rem;
-      cursor: pointer;
-      width: 36px; height: 36px;
-      border-radius: 50%;
-      transition: all 0.3s;
-    }
-    .calendar-close:hover {
-      color: var(--matrix-green);
-      background: rgba(0, 255, 65, 0.1);
-    }
-    .calendar-title {
-      color: var(--matrix-green);
-      font-size: 1.2rem;
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-    .calendar-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-    .calendar-nav {
-      background: transparent;
-      border: 1px solid var(--matrix-green);
-      color: var(--matrix-green);
-      width: 40px; height: 40px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 1.2rem;
-      transition: all 0.2s;
-    }
-    .calendar-nav:hover {
-      background: var(--matrix-green);
-      color: var(--bg-dark);
-      box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
-      transform: scale(1.1);
-    }
-    .calendar-month-year {
-      color: var(--matrix-green);
-      font-size: 1.1rem;
-      font-weight: bold;
-    }
-    .calendar-weekdays {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 2px;
-      margin-bottom: 0.5rem;
-    }
-    .calendar-weekday {
-      text-align: center;
-      color: var(--text-dim);
-      font-size: 0.8rem;
-      padding: 0.5rem;
-    }
-    .calendar-days {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 4px;
-    }
-    .calendar-day {
-      aspect-ratio: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0, 40, 20, 0.5);
-      border: 1px solid transparent;
-      border-radius: 8px;
-      color: var(--text-primary);
-      cursor: pointer;
-      font-size: 0.95rem;
-      transition: all 0.2s;
-    }
-    .calendar-day:hover:not(.disabled):not(.empty) {
-      border-color: var(--matrix-green);
-      background: rgba(0, 255, 65, 0.2);
-      box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
-    }
-    .calendar-day.selected {
-      background: var(--matrix-green) !important;
-      color: var(--bg-dark) !important;
-      font-weight: bold;
-      box-shadow: 0 0 15px rgba(0, 255, 65, 0.6);
-      border-color: var(--matrix-green) !important;
-    }
-    .calendar-day.today:not(.selected) { 
-      border-color: var(--matrix-gold); 
-      box-shadow: 0 0 8px rgba(255, 204, 0, 0.3);
-    }
-    .calendar-day.disabled {
-      color: #333;
-      cursor: not-allowed;
-      background: rgba(0, 0, 0, 0.3);
-    }
-    .calendar-day.empty { background: transparent; cursor: default; }
-    .calendar-time {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 1rem;
-      justify-content: center;
-      align-items: center;
-    }
-    .calendar-time-input {
-      width: 70px;
-      padding: 0.6rem;
-      background: rgba(0, 20, 10, 0.8);
-      border: 1px solid var(--matrix-green-dim);
-      border-radius: 6px;
-      color: var(--text-primary);
-      font-size: 1.1rem;
-      text-align: center;
-    }
-    .calendar-time-label {
-      color: var(--text-dim);
-      font-size: 1.2rem;
-    }
-    .calendar-confirm {
-      width: 100%;
-      margin-top: 1rem;
-      padding: 1rem;
-      background: linear-gradient(180deg, var(--matrix-green-dim) 0%, var(--matrix-green-dark) 100%);
-      border: 2px solid var(--matrix-green);
-      color: var(--matrix-green);
-      font-size: 1.1rem;
-      font-weight: bold;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .calendar-confirm:hover {
-      background: var(--matrix-green);
-      color: var(--bg-dark);
-      box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
-      transform: scale(1.02);
-    }
-    .calendar-selected-display {
-      text-align: center;
-      color: var(--matrix-gold);
+      padding: 0.9rem;
+      background: linear-gradient(180deg, rgba(0,60,30,0.9) 0%, rgba(0,40,20,0.95) 100%);
+      border: 2px solid var(--hud-green);
+      color: var(--hud-green);
       font-size: 1rem;
-      margin-top: 1rem;
-      padding: 0.5rem;
-      background: rgba(255, 204, 0, 0.1);
-      border-radius: 6px;
-    }
-
-    /* Icon Preview with delete */
-    .icon-preview-container {
-      position: relative;
-      display: inline-block;
-    }
-    .icon-delete-btn {
-      position: absolute;
-      top: -5px;
-      right: -5px;
-      width: 20px;
-      height: 20px;
-      background: var(--error-red);
-      border: none;
-      border-radius: 50%;
-      color: white;
-      font-size: 12px;
-      cursor: pointer;
-      display: none;
-    }
-    .icon-preview-container.has-icon .icon-delete-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* My Entry Display */
-    .my-entry-box {
-      background: rgba(0, 255, 65, 0.1);
-      border: 2px solid var(--matrix-green);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-      text-align: center;
-    }
-    .my-entry-title {
-      color: var(--matrix-green);
-      font-size: 1.1rem;
-      margin-bottom: 1rem;
-    }
-    .my-entry-info {
-      font-size: 1.3rem;
-      color: var(--text-primary);
-      margin-bottom: 1rem;
-    }
-    .my-entry-id {
-      color: var(--matrix-gold);
       font-weight: bold;
-    }
-    .cancel-entry-btn {
-      background: transparent;
-      border: 1px solid var(--error-red);
-      color: var(--error-red);
-      padding: 0.5rem 1.5rem;
-      border-radius: 6px;
       cursor: pointer;
-      transition: all 0.3s;
-    }
-    .cancel-entry-btn:hover {
-      background: var(--error-red);
-      color: white;
-    }
-
-    /* Roulette */
-    .roulette-container {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      padding: 2rem;
-    }
-    .roulette-wheel {
-      width: 280px;
-      height: 280px;
-      border: 4px solid var(--matrix-green);
-      border-radius: 50%;
+      transition: all 0.2s;
       position: relative;
-      margin-bottom: 2rem;
-      background: radial-gradient(circle, var(--bg-card) 0%, var(--bg-dark) 100%);
     }
-    .wheel-inner {
-      width: 100%;
-      height: 100%;
-      transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
-    }
-    .wheel-segment {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      padding-top: 20px;
-      font-weight: bold;
-      color: var(--matrix-green);
-      font-size: 0.9rem;
-    }
-    .vs-display {
-      background: var(--bg-card);
-      border: 2px solid var(--matrix-green);
-      border-radius: 12px;
-      padding: 2rem;
-      text-align: center;
-      margin-bottom: 1.5rem;
-      min-width: 300px;
-    }
-    .vs-title { color: var(--text-dim); margin-bottom: 1rem; }
-    .vs-players {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 1.5rem;
-    }
+    .submit-btn::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: var(--hud-green); box-shadow: 0 0 10px var(--hud-green-glow); }
+    .submit-btn:hover:not(:disabled) { background: var(--hud-green); color: var(--bg-dark); box-shadow: 0 0 25px var(--hud-green-glow); }
+    .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .participant-panel { background: var(--bg-panel); border: 2px solid var(--hud-green); }
+    .participant-header { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; border-bottom: 1px solid var(--hud-green-dim); }
+    .participant-title { font-family: 'Orbitron', sans-serif; color: var(--hud-green); font-size: 0.9rem; }
+    .participant-search { padding: 0.4rem 0.6rem; background: rgba(0,20,10,0.8); border: 1px solid var(--hud-green-dim); color: var(--text-primary); font-size: 0.85rem; width: 140px; }
+    .participant-list { max-height: 350px; overflow-y: auto; }
+    .participant-row { display: grid; grid-template-columns: 55px 35px 1fr 70px; align-items: center; padding: 0.5rem 0.8rem; border-bottom: 1px solid rgba(0,255,65,0.1); font-size: 0.85rem; }
+    .participant-row:hover { background: rgba(0,255,65,0.05); }
+    .participant-row.header { background: rgba(0,40,20,0.5); font-size: 0.75rem; color: var(--text-dim); }
+    .participant-id { font-family: 'Orbitron', sans-serif; color: var(--hud-green); font-size: 0.8rem; }
+    .participant-icon { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--hud-green); background: var(--bg-dark); display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 0.8rem; }
+    .participant-icon img { width: 100%; height: 100%; object-fit: cover; }
+    .status-badge { padding: 0.15rem 0.4rem; font-size: 0.7rem; font-weight: bold; }
+    .status-active { background: rgba(0,255,65,0.2); border: 1px solid var(--hud-green); color: var(--hud-green); }
+    .status-lost { background: rgba(100,100,100,0.2); border: 1px solid #666; color: #666; }
+    .participant-count { padding: 0.6rem 0.8rem; text-align: right; color: var(--text-dim); font-size: 0.8rem; border-top: 1px solid var(--hud-green-dim); }
+    .participant-count span { color: var(--hud-gold); font-weight: bold; }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 5, 2, 0.92); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-overlay.active { display: flex; }
+    .modal-content { background: var(--bg-panel); border: 2px solid var(--hud-green); padding: 1.5rem; max-width: 450px; width: 90%; position: relative; clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15px 100%, 0 calc(100% - 15px)); box-shadow: 0 0 30px var(--hud-green-glow); }
+    .modal-close-btn { position: absolute; top: 8px; right: 12px; background: transparent; border: none; color: var(--text-dim); font-size: 1.5rem; cursor: pointer; }
+    .modal-close-btn:hover { color: var(--hud-green); }
+    .modal-title { font-family: 'Orbitron', sans-serif; color: var(--hud-green); font-size: 1.1rem; text-align: center; margin-bottom: 1.2rem; }
+    .modal-buttons { display: flex; gap: 0.8rem; margin-top: 1.2rem; }
+    .modal-btn { flex: 1; padding: 0.7rem; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+    .modal-btn-cancel { background: transparent; border: 1px solid var(--text-dim); color: var(--text-dim); }
+    .modal-btn-cancel:hover { border-color: var(--hud-green); color: var(--hud-green); }
+    .modal-btn-confirm { background: var(--hud-green); border: none; color: var(--bg-dark); }
+    .modal-btn-confirm:hover { box-shadow: 0 0 20px var(--hud-green-glow); }
+    .guide-content { color: var(--text-primary); line-height: 1.7; max-height: 55vh; overflow-y: auto; font-size: 0.9rem; }
+    .guide-content h4 { color: var(--hud-green); margin: 1rem 0 0.4rem; font-size: 0.95rem; }
+    .guide-content p { color: var(--text-dim); margin-bottom: 0.4rem; }
+    .guide-content ul { margin-left: 1rem; color: var(--text-dim); }
+    .guide-content li { margin-bottom: 0.2rem; }
+    .calendar-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 5, 2, 0.95); z-index: 2000; align-items: center; justify-content: center; }
+    .calendar-modal.active { display: flex; }
+    .calendar-container { background: var(--bg-panel); border: 2px solid var(--hud-green); padding: 1.2rem; max-width: 340px; width: 95%; box-shadow: 0 0 30px var(--hud-green-glow); position: relative; }
+    .calendar-close { position: absolute; top: 8px; right: 10px; background: transparent; border: none; color: var(--text-dim); font-size: 1.3rem; cursor: pointer; }
+    .calendar-title { font-family: 'Orbitron', sans-serif; color: var(--hud-green); text-align: center; margin-bottom: 0.8rem; font-size: 1rem; }
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
+    .calendar-nav { background: transparent; border: 1px solid var(--hud-green); color: var(--hud-green); width: 32px; height: 32px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; }
+    .calendar-nav:hover { background: var(--hud-green); color: var(--bg-dark); }
+    .calendar-month-year { font-family: 'Orbitron', sans-serif; color: var(--hud-green); font-size: 0.95rem; }
+    .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 0.3rem; }
+    .calendar-weekday { text-align: center; color: var(--text-dim); font-size: 0.75rem; padding: 0.2rem; }
+    .calendar-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+    .calendar-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: rgba(0,30,15,0.5); border: 1px solid transparent; color: var(--text-primary); cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+    .calendar-day:hover:not(.disabled):not(.empty) { border-color: var(--hud-green); background: rgba(0,255,65,0.2); }
+    .calendar-day.selected { background: var(--hud-green) !important; color: var(--bg-dark) !important; font-weight: bold; box-shadow: 0 0 10px var(--hud-green-glow); }
+    .calendar-day.today:not(.selected) { border-color: var(--hud-gold); }
+    .calendar-day.disabled { color: #333; cursor: not-allowed; }
+    .calendar-day.empty { background: transparent; cursor: default; }
+    .calendar-time { display: flex; justify-content: center; align-items: center; gap: 0.4rem; margin-top: 0.8rem; }
+    .calendar-time-input { width: 55px; padding: 0.4rem; background: rgba(0,20,10,0.8); border: 1px solid var(--hud-green-dim); color: var(--text-primary); text-align: center; font-size: 1rem; }
+    .calendar-selected-display { text-align: center; color: var(--hud-gold); margin-top: 0.8rem; padding: 0.4rem; background: rgba(255,204,0,0.1); border: 1px solid var(--hud-gold); font-size: 0.9rem; }
+    .calendar-confirm { width: 100%; margin-top: 0.8rem; padding: 0.7rem; background: var(--hud-green); border: none; color: var(--bg-dark); font-weight: bold; cursor: pointer; }
+    .calendar-confirm:hover { box-shadow: 0 0 20px var(--hud-green-glow); }
+    .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(100px); padding: 0.8rem 1.5rem; font-weight: bold; z-index: 3000; transition: transform 0.3s; border: 2px solid; font-size: 0.9rem; }
+    .toast.visible { transform: translateX(-50%) translateY(0); }
+    .toast.success { background: rgba(0,40,20,0.95); border-color: var(--hud-green); color: var(--hud-green); }
+    .toast.error { background: rgba(40,10,20,0.95); border-color: var(--hud-red); color: var(--hud-red); }
+    .my-entry-box { background: rgba(0,255,65,0.1); border: 2px solid var(--hud-green); padding: 1.2rem; text-align: center; }
+    .my-entry-title { color: var(--hud-green); font-size: 1rem; margin-bottom: 0.8rem; }
+    .my-entry-info { font-size: 1.1rem; color: var(--text-primary); }
+    .my-entry-id { color: var(--hud-gold); font-weight: bold; }
+    .roulette-container { display: none; flex-direction: column; align-items: center; padding: 1.5rem; }
+    .roulette-wheel { width: 240px; height: 240px; border: 3px solid var(--hud-green); border-radius: 50%; position: relative; margin-bottom: 1.5rem; background: radial-gradient(circle, rgba(0,40,20,0.8) 0%, var(--bg-dark) 100%); box-shadow: 0 0 25px var(--hud-green-glow); }
+    .wheel-inner { width: 100%; height: 100%; transition: transform 4s cubic-bezier(0.17,0.67,0.12,0.99); }
+    .wheel-segment { position: absolute; width: 100%; height: 100%; display: flex; align-items: flex-start; justify-content: center; padding-top: 12px; font-family: 'Orbitron', sans-serif; font-size: 0.75rem; color: var(--hud-green); }
+    .vs-display { background: var(--bg-panel); border: 2px solid var(--hud-green); padding: 1.2rem 1.5rem; text-align: center; margin-bottom: 1rem; }
+    .vs-title { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 0.8rem; }
+    .vs-players { display: flex; align-items: center; justify-content: center; gap: 1.2rem; }
     .vs-player { text-align: center; }
-    .vs-player-icon {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      background: var(--matrix-green-dark);
-      margin: 0 auto 0.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      color: var(--matrix-green);
-    }
-    .vs-player-id { color: var(--text-dim); font-size: 0.85rem; }
-    .vs-player-name { color: var(--matrix-green); font-weight: bold; }
-    .vs-text { font-size: 2rem; font-weight: bold; color: var(--matrix-gold); }
-    .roulette-controls {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    .roulette-btn {
-      padding: 0.8rem 1.5rem;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
+    .vs-player-icon { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--hud-green); margin: 0 auto 0.4rem; display: flex; align-items: center; justify-content: center; background: var(--bg-dark); overflow: hidden; }
+    .vs-player-id { color: var(--text-dim); font-size: 0.75rem; }
+    .vs-player-name { color: var(--hud-green); font-weight: bold; font-size: 0.9rem; }
+    .vs-text { font-family: 'Orbitron', sans-serif; font-size: 1.8rem; color: var(--hud-gold); text-shadow: 0 0 10px rgba(255,204,0,0.5); }
+    .roulette-controls { display: flex; gap: 0.8rem; flex-wrap: wrap; justify-content: center; }
+    .roulette-btn { padding: 0.7rem 1.2rem; font-weight: bold; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; }
     .roulette-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    #spinBtn { background: var(--matrix-green); border: none; color: var(--bg-dark); }
-    #confirmMatchBtn { background: transparent; border: 2px solid var(--matrix-gold); color: var(--matrix-gold); }
+    #spinBtn { background: var(--hud-green); border: none; color: var(--bg-dark); }
+    #confirmMatchBtn { background: transparent; border: 2px solid var(--hud-gold); color: var(--hud-gold); }
+    .history-card { background: var(--bg-panel); border: 1px solid var(--hud-green-dim); padding: 1rem; margin-bottom: 0.8rem; }
+    .history-date { color: var(--text-dim); font-size: 0.8rem; }
+    .history-game { color: var(--hud-green); font-size: 1.1rem; font-weight: bold; margin: 0.4rem 0; }
+    .history-winner { color: var(--hud-gold); }
   </style>
 </head>
 <body>
   <div class="matrix-bg" id="matrixBg"></div>
-
-  <header class="header hidden" id="mainHeader">
-    <button class="back-btn" id="backBtn" onclick="goBack()">< 戻る</button>
+  <div class="hud-frame">
+    <div class="hud-corner tl"></div>
+    <div class="hud-corner tr"></div>
+    <div class="hud-corner bl"></div>
+    <div class="hud-corner br"></div>
+    <div class="hud-line-h top"></div>
+    <div class="hud-line-h bottom"></div>
+    <div class="hud-line-v left"></div>
+    <div class="hud-line-v right"></div>
+  </div>
+  <header class="header" id="mainHeader">
+    <button class="back-btn" id="backBtn" onclick="goBack()">◀ 戻る</button>
     <h1 class="app-title">トーナメント</h1>
     <div class="header-icons">
-      <button class="info-btn" onclick="showGuide('user')" title="使い方ガイド">?</button>
-      <button class="info-btn admin-info" onclick="showGuide('admin')" title="管理者ガイド">👑</button>
+      <button class="info-btn" onclick="showGuide('user')">?</button>
+      <button class="info-btn admin-info" onclick="showGuide('admin')">👑</button>
     </div>
   </header>
-
-  <div class="container">
-    <!-- Title Screen -->
+  <div class="main-container">
     <div class="screen active" id="titleScreen">
       <div class="title-screen">
         <div class="title-guide-icons">
-          <button class="info-btn" onclick="showGuide('user')" title="使い方ガイド">?</button>
-          <button class="info-btn admin-info" onclick="showGuide('admin')" title="管理者ガイド">👑</button>
+          <button class="info-btn" onclick="showGuide('user')">?</button>
+          <button class="info-btn admin-info" onclick="showGuide('admin')">👑</button>
         </div>
-        <h1 class="main-title">トーナメント</h1>
-        <div class="menu-buttons">
-          <button class="menu-btn" id="entryBtn" onclick="navigateTo('entryScreen')" disabled>エントリー登録</button>
+        <div class="title-left-menu">
+          <button class="menu-btn" id="entryBtn" onclick="navigateTo('entryScreen')" disabled>エントリー登録する</button>
           <button class="menu-btn" onclick="navigateTo('tournamentScreen')">トーナメントを見る</button>
           <button class="menu-btn" onclick="navigateTo('historyScreen')">過去の大会記録を見る</button>
           <button class="menu-btn" onclick="navigateTo('adminScreen')">管理者登録をする</button>
           <button class="menu-btn cancel-btn" id="cancelEntryBtn" onclick="cancelEntry()" disabled>登録解除</button>
         </div>
+        <div class="title-center">
+          <h1 class="main-title">トーナメント</h1>
+        </div>
+        <div class="title-right-info">
+          <div class="hud-panel">
+            <div class="hud-panel-title">◆ 大会情報</div>
+            <div class="info-display">
+              <div class="info-item"><div class="info-label">ゲーム名</div><div class="info-value" id="titleGameName">未設定</div></div>
+              <div class="info-item"><div class="info-label">締切日時</div><div class="info-value" id="titleDeadline">未設定</div></div>
+              <div class="info-item"><div class="info-label">管理者</div><div class="info-value" id="titleAdmin">-</div></div>
+              <div class="info-item"><div class="info-label">参加者</div><div class="info-value" id="titleCount">0名</div></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-
-    <!-- Admin Registration Screen -->
     <div class="screen" id="adminScreen">
-      <div class="form-container">
-        <h2 class="form-title">管理者登録</h2>
-        <p style="margin-bottom: 1.5rem; color: var(--text-dim);">管理者登録すると、トーナメント管理やルーレット操作が可能になります。</p>
+      <div class="hud-panel" style="max-width:480px;margin:2rem auto;">
+        <div class="hud-panel-title">◆ 管理者登録</div>
+        <p style="margin-bottom:1.2rem;color:var(--text-dim);font-size:0.9rem;">管理者として登録すると、大会の設定・運営が可能になります。</p>
         <div class="form-group">
           <label class="form-label">管理者名</label>
           <input type="text" class="form-input" id="adminNameInput" placeholder="管理者名を入力" maxlength="20">
@@ -865,58 +394,39 @@
         <button class="submit-btn" onclick="registerAdmin()">管理者として登録</button>
       </div>
     </div>
-
-    <!-- Admin Setup Screen -->
     <div class="screen" id="adminSetupScreen">
-      <div class="form-container">
-        <h2 class="form-title">大会設定</h2>
-        <p style="margin-bottom: 1.5rem; color: var(--text-dim);">締切日時を設定すると、参加者がエントリーできるようになります。</p>
-        
+      <div class="hud-panel" style="max-width:480px;margin:2rem auto;">
+        <div class="hud-panel-title">◆ 大会設定</div>
+        <p style="margin-bottom:1.2rem;color:var(--text-dim);font-size:0.9rem;">締切日時を設定すると、参加者がエントリーできるようになります。</p>
         <div class="form-group">
-          <label class="form-label">ゲーム名（大会名）<span style="color:var(--error-red);"> *必須</span></label>
+          <label class="form-label">ゲーム名（大会名）<span style="color:var(--hud-red);"> *必須</span></label>
           <input type="text" class="form-input" id="setupGameName" placeholder="例: スマブラSP大会">
           <div class="error-message" id="setupGameNameError"></div>
         </div>
-        
         <div class="form-group">
-          <label class="form-label">エントリー締切日時 <span style="color:var(--error-red);">*必須</span></label>
-          <button type="button" class="form-input" id="setupDeadlineBtn" onclick="openCalendar('setup')" style="text-align:left;cursor:pointer;">
-            クリックして日時を選択
-          </button>
+          <label class="form-label">エントリー締切日時 <span style="color:var(--hud-red);">*必須</span></label>
+          <button type="button" class="form-input" id="setupDeadlineBtn" onclick="openCalendar('setup')" style="text-align:left;cursor:pointer;">クリックして日時を選択</button>
           <input type="hidden" id="setupDeadline">
           <div class="error-message" id="setupDeadlineError"></div>
         </div>
-
         <div class="form-group">
           <label class="form-label">対戦相手を決める</label>
-          <button type="button" class="form-input" id="matchmakingBtn" onclick="showMatchmakingInfo()" style="text-align:center;cursor:pointer;opacity:0.5;">
-            🎲 対戦カード抽選（締切後に有効化）
-          </button>
-          <p style="font-size:0.8rem;color:var(--text-dim);margin-top:0.5rem;">※大会当日（締切日時以降）に有効化されます</p>
+          <button type="button" class="form-input" id="matchmakingBtn" onclick="showMatchmakingInfo()" style="text-align:center;cursor:pointer;opacity:0.5;">🎲 対戦カード抽選（締切後に有効化）</button>
+          <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;">※締切日時以降に有効化されます</p>
         </div>
-        
         <button class="submit-btn" onclick="saveTournamentSettings()">設定を保存</button>
       </div>
     </div>
-
-    <!-- Entry Screen -->
     <div class="screen" id="entryScreen">
-      <div class="form-container">
-        <h2 class="form-title">エントリー登録</h2>
-        
-        <!-- 既にエントリー済みの場合 -->
+      <div class="hud-panel" style="max-width:480px;margin:2rem auto;">
+        <div class="hud-panel-title">◆ エントリー登録</div>
         <div id="myEntryDisplay" style="display:none;">
           <div class="my-entry-box">
             <div class="my-entry-title">✓ エントリー済み</div>
-            <div class="my-entry-info">
-              <span id="myEntryName"></span>
-              <span class="my-entry-id" id="myEntryId"></span>
-            </div>
-            <p style="font-size:0.85rem;color:var(--text-dim);margin-top:1rem;">※解除はタイトル画面の「登録解除」から行えます</p>
+            <div class="my-entry-info"><span id="myEntryName"></span><span class="my-entry-id" id="myEntryId"></span></div>
+            <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.8rem;">※解除はタイトル画面の「登録解除」から</p>
           </div>
         </div>
-        
-        <!-- 未エントリーの場合 -->
         <div id="entryForm">
           <div class="form-group">
             <label class="form-label">ユーザーネーム</label>
@@ -926,61 +436,30 @@
           <div class="form-group">
             <label class="form-label">アイコン（任意）</label>
             <input type="file" accept="image/*" onchange="previewIcon(this)" style="display:none" id="iconInput">
-            <div style="display:flex;align-items:center;gap:1rem;">
-              <div class="icon-preview-container" id="iconPreviewContainer">
-                <div id="iconPreview" style="width:60px;height:60px;border-radius:50%;background:var(--matrix-green-dark);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;" onclick="document.getElementById('iconInput').click()">
-                  <span style="color:var(--text-dim);">+</span>
-                </div>
-                <button type="button" class="icon-delete-btn" onclick="clearIcon()">×</button>
-              </div>
-              <span style="color:var(--text-dim);font-size:0.85rem;">クリックして画像を選択</span>
+            <div style="display:flex;align-items:center;gap:0.8rem;">
+              <div id="iconPreview" style="width:55px;height:55px;border-radius:50%;border:2px solid var(--hud-green-dim);background:var(--bg-dark);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;" onclick="document.getElementById('iconInput').click()"><span style="color:var(--text-dim);font-size:1.3rem;">+</span></div>
+              <span style="color:var(--text-dim);font-size:0.8rem;">クリックして画像を選択</span>
             </div>
           </div>
-          <button class="submit-btn" onclick="submitEntry()">登録する</button>
+          <button class="submit-btn" onclick="submitEntry()">エントリー登録</button>
         </div>
       </div>
     </div>
-
-    <!-- Tournament Screen (観覧用、管理者パネルなし) -->
     <div class="screen" id="tournamentScreen">
-      <div class="info-panel">
-        <div class="info-item">
-          <div class="info-label">ゲーム名</div>
-          <div class="info-value" id="tournamentGameName">未設定</div>
-        </div>
-        <div class="info-item">
-          <div class="info-label">大会管理者</div>
-          <div class="info-value" id="tournamentAdmin">-</div>
-        </div>
-        <div class="info-item">
-          <div class="info-label">締切日時</div>
-          <div class="info-value" id="tournamentDeadline">未設定</div>
-        </div>
-        <div class="info-item">
-          <div class="info-label">参加者数</div>
-          <div class="info-value" id="tournamentCount">0名</div>
-        </div>
+      <div class="info-display" style="max-width:700px;margin:1rem auto;">
+        <div class="info-item"><div class="info-label">ゲーム名</div><div class="info-value" id="tournamentGameName">未設定</div></div>
+        <div class="info-item"><div class="info-label">管理者</div><div class="info-value" id="tournamentAdmin">-</div></div>
+        <div class="info-item"><div class="info-label">締切日時</div><div class="info-value" id="tournamentDeadline">未設定</div></div>
+        <div class="info-item"><div class="info-label">参加者</div><div class="info-value" id="tournamentCount">0名</div></div>
       </div>
-
-      <!-- Roulette Container (管理者が開始した場合のみ表示) -->
       <div class="roulette-container" id="rouletteContainer">
-        <div class="roulette-wheel">
-          <div class="wheel-inner" id="wheelInner"></div>
-        </div>
+        <div class="roulette-wheel"><div class="wheel-inner" id="wheelInner"></div></div>
         <div class="vs-display">
           <div class="vs-title">対戦カード</div>
           <div class="vs-players">
-            <div class="vs-player">
-              <div class="vs-player-icon" id="vsPlayer1Icon"><span>?</span></div>
-              <div class="vs-player-id" id="vsPlayer1Id">-</div>
-              <div class="vs-player-name" id="vsPlayer1Name">-</div>
-            </div>
+            <div class="vs-player"><div class="vs-player-icon" id="vsPlayer1Icon"><span>?</span></div><div class="vs-player-id" id="vsPlayer1Id">-</div><div class="vs-player-name" id="vsPlayer1Name">-</div></div>
             <div class="vs-text">VS</div>
-            <div class="vs-player">
-              <div class="vs-player-icon" id="vsPlayer2Icon"><span>?</span></div>
-              <div class="vs-player-id" id="vsPlayer2Id">-</div>
-              <div class="vs-player-name" id="vsPlayer2Name">-</div>
-            </div>
+            <div class="vs-player"><div class="vs-player-icon" id="vsPlayer2Icon"><span>?</span></div><div class="vs-player-id" id="vsPlayer2Id">-</div><div class="vs-player-name" id="vsPlayer2Name">-</div></div>
           </div>
         </div>
         <div class="roulette-controls" id="rouletteAdminControls" style="display:none;">
@@ -992,185 +471,103 @@
           <button class="roulette-btn" onclick="declareWinner(2)">勝利 →</button>
         </div>
       </div>
-
-      <!-- Participant List -->
-      <div class="participant-list">
-        <div class="list-header">
-          <h3 class="list-title">参加者リスト</h3>
-          <input type="text" class="list-search" placeholder="検索..." oninput="filterParticipants(this.value)">
+      <div class="participant-panel" style="max-width:700px;margin:1rem auto;">
+        <div class="participant-header">
+          <h3 class="participant-title">◆ 参加者リスト</h3>
+          <input type="text" class="participant-search" placeholder="🔍 検索" oninput="filterParticipants(this.value)">
         </div>
-        <table class="list-table">
-          <thead>
-            <tr><th>ID</th><th>Icon</th><th>ユーザー名</th><th>状態</th></tr>
-          </thead>
-          <tbody id="participantList"></tbody>
-        </table>
+        <div class="participant-row header"><div>ID</div><div>Icon</div><div>ユーザー名</div><div>状態</div></div>
+        <div class="participant-list" id="participantList"></div>
+        <div class="participant-count">参加者数: <span id="listCount">0</span>/100（最大100人）</div>
       </div>
     </div>
-
-    <!-- History Screen -->
     <div class="screen" id="historyScreen">
-      <h2 style="color:var(--matrix-green);margin-bottom:1.5rem;">過去の大会記録</h2>
-      <div id="historyList"></div>
+      <div class="hud-panel" style="max-width:600px;margin:2rem auto;">
+        <div class="hud-panel-title">◆ 過去の大会記録</div>
+        <div id="historyList"></div>
+      </div>
     </div>
   </div>
-
-  <!-- User Guide Modal -->
   <div class="modal-overlay" id="userGuideModal">
     <div class="modal-content">
       <button class="modal-close-btn" onclick="hideModal('userGuideModal')">×</button>
-      <h3 class="modal-title">📖 使い方ガイド</h3>
+      <h3 class="modal-title">◆ 使い方ガイド</h3>
       <div class="guide-content">
-        <h4>🎮 トーナメントとは</h4>
-        <p>参加者同士が対戦し、勝ち残った人が優勝する大会形式です。</p>
-        
-        <h4>📝 エントリー方法</h4>
-        <ul>
-          <li>管理者が締切日時を設定すると「エントリー登録」が有効になります</li>
-          <li>ユーザーネームを入力して登録してください</li>
-          <li>アイコンは任意で設定できます</li>
-          <li>締切日時までならエントリー解除も可能です</li>
-        </ul>
-        
-        <h4>👀 トーナメントを見る</h4>
-        <p>大会情報や参加者リストを確認できます。対戦が始まると、ルーレットの結果もリアルタイムで表示されます。</p>
-        
-        <h4>📚 過去の記録</h4>
-        <p>過去に開催された大会の結果を閲覧できます。</p>
+        <h4>🎮 トーナメントとは</h4><p>参加者同士が対戦し、勝ち残った人が優勝する大会形式です。</p>
+        <h4>📝 エントリー方法</h4><ul><li>管理者が締切日時を設定すると「エントリー登録する」が有効になります</li><li>ユーザーネームを入力して登録してください</li><li>締切日時までなら「登録解除」で解除可能です</li></ul>
+        <h4>👀 トーナメントを見る</h4><p>大会情報や参加者リストを確認できます。</p>
       </div>
     </div>
   </div>
-
-  <!-- Admin Guide Modal -->
   <div class="modal-overlay" id="adminGuideModal">
     <div class="modal-content">
       <button class="modal-close-btn" onclick="hideModal('adminGuideModal')">×</button>
-      <h3 class="modal-title" style="color:var(--matrix-gold);">👑 管理者ガイド</h3>
+      <h3 class="modal-title" style="color:var(--hud-gold);">◆ 管理者ガイド</h3>
       <div class="guide-content">
-        <h4>🔐 管理者登録</h4>
-        <p>「管理者登録をする」から管理者名を入力して登録します。</p>
-        
-        <h4>⚙️ 大会設定</h4>
-        <ul>
-          <li>ゲーム名（大会名）を入力</li>
-          <li>エントリー締切日時を設定</li>
-          <li>設定を保存するとエントリー登録が有効化されます</li>
-        </ul>
-        
-        <h4>🎲 対戦カード抽選</h4>
-        <ul>
-          <li>締切日時を過ぎると「対戦相手を決める」が有効化されます</li>
-          <li>ルーレットで対戦カードを決定します</li>
-          <li>勝敗を確定すると、敗者は名簿でグレー表示になります</li>
-        </ul>
-        
-        <h4>🏆 大会終了</h4>
-        <p>最後の1人が決まったら「記録して終了」で大会を記録・リセットできます。</p>
-        
-        <h4>⚠️ 注意事項</h4>
-        <ul>
-          <li>勝敗確定は取り消しできません。慎重に操作してください</li>
-          <li>大会終了後は管理者状態もリセットされます</li>
-        </ul>
+        <h4>🔐 管理者登録</h4><p>「管理者登録をする」から管理者名を入力して登録します。</p>
+        <h4>⚙️ 大会設定</h4><ul><li>ゲーム名（大会名）を入力</li><li>エントリー締切日時を設定</li><li>設定保存でエントリー登録が有効化されます</li></ul>
+        <h4>🎲 対戦カード抽選</h4><p>締切日時後、ルーレットで対戦カードを決定します。</p>
       </div>
     </div>
   </div>
-
-  <!-- Confirm Modals -->
+  <div class="modal-overlay" id="confirmCancelEntryModal">
+    <div class="modal-content">
+      <button class="modal-close-btn" onclick="hideModal('confirmCancelEntryModal')">×</button>
+      <h3 class="modal-title">◆ エントリー解除</h3>
+      <p style="text-align:center;margin:0.8rem 0;">エントリーを解除しますか？</p>
+      <p style="text-align:center;color:var(--text-dim);font-size:0.85rem;">参加者リストから削除されます。</p>
+      <div class="modal-buttons">
+        <button class="modal-btn modal-btn-cancel" onclick="hideModal('confirmCancelEntryModal')">キャンセル</button>
+        <button class="modal-btn modal-btn-confirm" style="background:var(--hud-red);" onclick="executeCancelEntry()">解除する</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="cancelCompleteModal">
+    <div class="modal-content">
+      <h3 class="modal-title">✅ 解除完了</h3>
+      <p style="text-align:center;margin:0.8rem 0;">エントリーを解除しました。</p>
+      <div class="modal-buttons"><button class="modal-btn modal-btn-confirm" onclick="hideModal('cancelCompleteModal')">OK</button></div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="settingsCompleteModal">
+    <div class="modal-content">
+      <h3 class="modal-title">✅ 設定完了</h3>
+      <p style="text-align:center;margin:0.8rem 0;">大会設定が保存されました。</p>
+      <p style="text-align:center;color:var(--text-dim);font-size:0.85rem;">締切日時まで、参加者のエントリーを待ちましょう。</p>
+      <div class="modal-buttons"><button class="modal-btn modal-btn-confirm" onclick="hideModal('settingsCompleteModal');navigateTo('tournamentScreen',true)">確認する</button></div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="entryCompleteModal">
+    <div class="modal-content">
+      <h3 class="modal-title">🎉 エントリー完了</h3>
+      <p style="text-align:center;margin:0.8rem 0;">エントリーが完了しました！</p>
+      <p style="text-align:center;color:var(--hud-gold);font-size:1rem;" id="entryCompleteInfo"></p>
+      <div class="modal-buttons"><button class="modal-btn modal-btn-confirm" onclick="hideModal('entryCompleteModal');navigateTo('tournamentScreen',true)">確認する</button></div>
+    </div>
+  </div>
   <div class="modal-overlay" id="confirmMatchModal">
     <div class="modal-content">
       <button class="modal-close-btn" onclick="hideModal('confirmMatchModal')">×</button>
       <h3 class="modal-title">対戦を確定しますか？</h3>
-      <p style="text-align:center;margin:1rem 0;" id="confirmMatchText"></p>
+      <p style="text-align:center;margin:0.8rem 0;" id="confirmMatchText"></p>
       <div class="modal-buttons">
         <button class="modal-btn modal-btn-cancel" onclick="hideModal('confirmMatchModal')">キャンセル</button>
         <button class="modal-btn modal-btn-confirm" onclick="executeConfirmMatch()">確定</button>
       </div>
     </div>
   </div>
-
   <div class="modal-overlay" id="confirmWinnerModal">
     <div class="modal-content">
       <button class="modal-close-btn" onclick="hideModal('confirmWinnerModal')">×</button>
       <h3 class="modal-title">勝者を確定しますか？</h3>
-      <p style="text-align:center;margin:1rem 0;color:var(--matrix-gold);font-size:1.3rem;" id="confirmWinnerText"></p>
+      <p style="text-align:center;margin:0.8rem 0;color:var(--hud-gold);font-size:1.2rem;" id="confirmWinnerText"></p>
       <div class="modal-buttons">
         <button class="modal-btn modal-btn-cancel" onclick="hideModal('confirmWinnerModal')">キャンセル</button>
         <button class="modal-btn modal-btn-confirm" onclick="executeWinner()">確定</button>
       </div>
     </div>
   </div>
-
-  <div class="modal-overlay" id="confirmRecordModal">
-    <div class="modal-content">
-      <button class="modal-close-btn" onclick="hideModal('confirmRecordModal')">×</button>
-      <h3 class="modal-title">大会を記録して終了しますか？</h3>
-      <p style="text-align:center;color:var(--text-dim);">全データがリセットされます</p>
-      <div class="modal-buttons">
-        <button class="modal-btn modal-btn-cancel" onclick="hideModal('confirmRecordModal')">キャンセル</button>
-        <button class="modal-btn modal-btn-confirm" onclick="recordAndReset()">記録して終了</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="tournamentEndModal">
-    <div class="modal-content">
-      <h3 class="modal-title">🎉 大会終了</h3>
-      <p style="text-align:center;margin:1rem 0;">お疲れ様でした。大会は終了しました。</p>
-      <div class="modal-buttons">
-        <button class="modal-btn modal-btn-confirm" onclick="hideModal('tournamentEndModal');navigateTo('titleScreen')">タイトルに戻る</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="confirmCancelEntryModal">
-    <div class="modal-content">
-      <button class="modal-close-btn" onclick="hideModal('confirmCancelEntryModal')">×</button>
-      <h3 class="modal-title">エントリー解除</h3>
-      <p style="text-align:center;margin:1rem 0;color:var(--text-primary);">エントリーを解除しますか？</p>
-      <p style="text-align:center;color:var(--text-dim);font-size:0.9rem;">参加者リストから削除されます。</p>
-      <div class="modal-buttons">
-        <button class="modal-btn modal-btn-cancel" onclick="hideModal('confirmCancelEntryModal')">キャンセル</button>
-        <button class="modal-btn modal-btn-confirm" style="background:var(--error-red);" onclick="executeCancelEntry()">解除する</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="cancelCompleteModal">
-    <div class="modal-content">
-      <h3 class="modal-title">✅ 解除完了</h3>
-      <p style="text-align:center;margin:1rem 0;color:var(--text-primary);">エントリーを解除しました。</p>
-      <div class="modal-buttons">
-        <button class="modal-btn modal-btn-confirm" onclick="hideModal('cancelCompleteModal')">OK</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="settingsCompleteModal">
-    <div class="modal-content">
-      <h3 class="modal-title">✅ 設定完了</h3>
-      <p style="text-align:center;margin:1rem 0;color:var(--text-primary);">大会設定が保存されました。</p>
-      <p style="text-align:center;color:var(--text-dim);font-size:0.9rem;">締切日時まで、参加者のエントリーを待ちましょう。</p>
-      <div class="modal-buttons">
-        <button class="modal-btn modal-btn-confirm" onclick="hideModal('settingsCompleteModal');navigateTo('tournamentScreen', true)">確認する</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="entryCompleteModal">
-    <div class="modal-content">
-      <h3 class="modal-title">🎉 エントリー完了</h3>
-      <p style="text-align:center;margin:1rem 0;color:var(--text-primary);">エントリーが完了しました！</p>
-      <p style="text-align:center;color:var(--matrix-gold);font-size:1.1rem;" id="entryCompleteInfo"></p>
-      <div class="modal-buttons">
-        <button class="modal-btn modal-btn-confirm" onclick="hideModal('entryCompleteModal');navigateTo('tournamentScreen', true)">確認する</button>
-      </div>
-    </div>
-  </div>
-
   <div class="toast" id="toast"></div>
-
-  <!-- Custom Calendar -->
   <div class="calendar-modal" id="calendarModal">
     <div class="calendar-container">
       <button class="calendar-close" onclick="closeCalendar()">×</button>
@@ -1180,35 +577,20 @@
         <span class="calendar-month-year" id="calendarMonthYear"></span>
         <button class="calendar-nav" onclick="changeMonth(1)">▶</button>
       </div>
-      <div class="calendar-weekdays">
-        <div class="calendar-weekday">日</div>
-        <div class="calendar-weekday">月</div>
-        <div class="calendar-weekday">火</div>
-        <div class="calendar-weekday">水</div>
-        <div class="calendar-weekday">木</div>
-        <div class="calendar-weekday">金</div>
-        <div class="calendar-weekday">土</div>
-      </div>
+      <div class="calendar-weekdays"><div class="calendar-weekday">日</div><div class="calendar-weekday">月</div><div class="calendar-weekday">火</div><div class="calendar-weekday">水</div><div class="calendar-weekday">木</div><div class="calendar-weekday">金</div><div class="calendar-weekday">土</div></div>
       <div class="calendar-days" id="calendarDays"></div>
       <div class="calendar-time">
         <input type="number" class="calendar-time-input" id="calendarHour" min="0" max="23" value="12">
-        <span class="calendar-time-label">:</span>
+        <span style="color:var(--text-dim);">:</span>
         <input type="number" class="calendar-time-input" id="calendarMinute" min="0" max="59" value="00" step="5">
       </div>
       <div class="calendar-selected-display" id="calendarSelectedDisplay">日付を選択してください</div>
       <button class="calendar-confirm" onclick="confirmCalendar()">この日時で設定</button>
     </div>
   </div>
-
-  <!-- Audio -->
-  <audio id="clickSound" preload="auto">
-    <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJOqr5mAZ1xqgJuqpYZ2bHKJoKSlkYJ6e4iTnaKekYl/hI+YnZ2Xj4qIjJSZm5mVkI6MjpOXmJeUko+OjpGVl5aUkpCPjpCTlZWUk5GPj4+RkpSUk5KQkJCQkZKTk5OSkJCQkJGSk5OSkpGRkZGRkpKSkpKRkZGRkZKSkpKSkZGRkZGRkpKSkpGRkZGRkZGSkpKSkZGRkZGRkZKSkpKRkZGRkZGRkpKSkpGRkZGRkZGRkpKRkZGRkZGRkZGRkpKRkZGRkZGRkZGRkZKRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZE=" type="audio/wav">
-  </audio>
-
   <script>
-    // App State
     const appState = {
-      deviceId: localStorage.getItem('tournament_device_id') || generateDeviceId(),
+      deviceId: localStorage.getItem('tournament_device_id') || (() => { const id = 'dev_' + Math.random().toString(36).substr(2,9) + Date.now().toString(36); localStorage.setItem('tournament_device_id', id); return id; })(),
       isAdmin: false,
       adminName: localStorage.getItem('tournament_admin_name') || null,
       tournament: null,
@@ -1219,938 +601,139 @@
       isSpinning: false,
       pendingWinner: null
     };
-
-    function generateDeviceId() {
-      const id = 'dev_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-      localStorage.setItem('tournament_device_id', id);
-      return id;
-    }
-
     if (appState.adminName) appState.isAdmin = true;
 
-    // Sound
-    function playClick() {
-      try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        oscillator.frequency.value = 800;
-        oscillator.type = 'sine';
-        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-        oscillator.start(audioCtx.currentTime);
-        oscillator.stop(audioCtx.currentTime + 0.1);
-      } catch(e) {}
-    }
+    function playClick() { try { const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=800;o.type='sine';g.gain.setValueAtTime(0.25,c.currentTime);g.gain.exponentialRampToValueAtTime(0.01,c.currentTime+0.1);o.start(c.currentTime);o.stop(c.currentTime+0.1);} catch(e){} }
+    function playHover() { try { const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=600;o.type='sine';g.gain.setValueAtTime(0.06,c.currentTime);g.gain.exponentialRampToValueAtTime(0.01,c.currentTime+0.04);o.start(c.currentTime);o.stop(c.currentTime+0.04);} catch(e){} }
+    function addSounds() { document.querySelectorAll('button').forEach(b => { b.addEventListener('mouseenter', () => { if(!b.disabled) playHover(); }); b.addEventListener('click', () => { if(!b.disabled) playClick(); }); }); }
 
-    function playHover() {
-      try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        oscillator.frequency.value = 600;
-        oscillator.type = 'sine';
-        gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-        oscillator.start(audioCtx.currentTime);
-        oscillator.stop(audioCtx.currentTime + 0.05);
-      } catch(e) {}
-    }
-
-    // ボタンにホバー効果音を追加
-    function addHoverSounds() {
-      const buttons = document.querySelectorAll('button:not(.calendar-day), .menu-btn, .submit-btn, .modal-btn, .admin-btn, .roulette-btn, .info-btn, .calendar-nav, .calendar-confirm');
-      buttons.forEach(btn => {
-        btn.addEventListener('mouseenter', () => {
-          if (!btn.disabled) playHover();
-        });
-      });
-    }
-
-    // 全てのボタンにクリック音を追加
-    function addClickSounds() {
-      const buttons = document.querySelectorAll('button, .menu-btn, .submit-btn, .modal-btn, .admin-btn, .roulette-btn, .info-btn, .calendar-nav, .calendar-confirm, .back-btn, .cancel-entry-btn');
-      buttons.forEach(btn => {
-        btn.addEventListener('click', () => {
-          if (!btn.disabled) playClick();
-        });
-        // スマホのタップ対応
-        btn.addEventListener('touchstart', () => {
-          if (!btn.disabled) playClick();
-        }, { passive: true });
-      });
-    }
-
-    // カレンダーの日付にもホバー効果音を追加
-    function addCalendarHoverSounds() {
-      const days = document.querySelectorAll('.calendar-day:not(.disabled):not(.empty)');
-      days.forEach(day => {
-        day.addEventListener('mouseenter', playHover);
-      });
-    }
-
-    // カレンダーの日付にクリック音を追加
-    function addCalendarClickSounds() {
-      const days = document.querySelectorAll('.calendar-day:not(.disabled):not(.empty)');
-      days.forEach(day => {
-        day.addEventListener('click', playClick);
-        day.addEventListener('touchstart', playClick, { passive: true });
-      });
-    }
-
-    // Matrix Background
     function createMatrixBg() {
       const bg = document.getElementById('matrixBg');
-      const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789';
-      for (let i = 0; i < 20; i++) {
+      const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF';
+      for (let i = 0; i < 35; i++) {
         const col = document.createElement('div');
         col.className = 'matrix-col';
-        col.style.left = (i * 5 + Math.random() * 2) + '%';
-        col.style.animationDuration = (15 + Math.random() * 20) + 's';
-        col.style.animationDelay = (Math.random() * -30) + 's';
+        col.style.left = (i * 2.9 + Math.random()) + '%';
+        col.style.animationDuration = (8 + Math.random() * 12) + 's';
+        col.style.animationDelay = (Math.random() * -15) + 's';
         let text = '';
-        for (let j = 0; j < 30; j++) text += chars[Math.floor(Math.random() * chars.length)] + '\n';
+        for (let j = 0; j < 45; j++) text += chars[Math.floor(Math.random() * chars.length)] + '\n';
         col.textContent = text;
         bg.appendChild(col);
       }
     }
     createMatrixBg();
 
-    // ホバー効果音とクリック音を初期化
-    document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(() => {
-        addHoverSounds();
-        addClickSounds();
-      }, 100);
-    });
-
-    // Navigation
     let currentScreen = 'titleScreen';
     let screenHistory = [];
 
     function navigateTo(screenId, directToTitle = false) {
-      if (screenId === 'entryScreen') {
-        if (!appState.tournament?.deadline) {
-          showToast('締切日時が設定されていません', 'error');
-          return;
-        }
-        updateEntryScreen();
-      }
+      if (screenId === 'entryScreen') { if (!appState.tournament?.deadline) { showToast('締切日時が設定されていません', 'error'); return; } updateEntryScreen(); }
       if (screenId === 'historyScreen') loadHistory();
-      
       screenHistory.push(currentScreen);
       document.getElementById(currentScreen).classList.remove('active');
       document.getElementById(screenId).classList.add('active');
       currentScreen = screenId;
-      
-      // ヘッダーの表示制御（タイトル画面以外で表示）
       const header = document.getElementById('mainHeader');
       const backBtn = document.getElementById('backBtn');
-      
-      if (screenId === 'titleScreen') {
-        header.classList.add('hidden');
-      } else {
-        header.classList.remove('hidden');
-      }
-      
-      // 確認画面からの遷移の場合は「タイトルに戻る」
-      if (directToTitle) {
-        backBtn.textContent = '< タイトルに戻る';
-        backBtn.onclick = () => {
-          goToTitle();
-        };
-      } else {
-        backBtn.textContent = '< 戻る';
-        backBtn.onclick = goBack;
-      }
-      
+      if (screenId === 'titleScreen') { header.classList.remove('visible'); } else { header.classList.add('visible'); }
+      if (directToTitle) { backBtn.textContent = '◀ タイトルに戻る'; backBtn.onclick = goToTitle; } else { backBtn.textContent = '◀ 戻る'; backBtn.onclick = goBack; }
       backBtn.classList.toggle('visible', screenId !== 'titleScreen');
     }
-    
-    function goToTitle() {
-      document.getElementById(currentScreen).classList.remove('active');
-      document.getElementById('titleScreen').classList.add('active');
-      currentScreen = 'titleScreen';
-      screenHistory = [];
-      
-      const header = document.getElementById('mainHeader');
-      header.classList.add('hidden');
-      document.getElementById('backBtn').classList.remove('visible');
-    }
-
-    function goBack() {
-      if (screenHistory.length > 0) {
-        const prevScreen = screenHistory.pop();
-        document.getElementById(currentScreen).classList.remove('active');
-        document.getElementById(prevScreen).classList.add('active');
-        currentScreen = prevScreen;
-        
-        // ヘッダーの表示制御
-        const header = document.getElementById('mainHeader');
-        if (currentScreen === 'titleScreen') {
-          header.classList.add('hidden');
-        } else {
-          header.classList.remove('hidden');
-        }
-        
-        document.getElementById('backBtn').classList.toggle('visible', currentScreen !== 'titleScreen');
-      }
-    }
-
+    function goBack() { if (screenHistory.length > 0) { const prev = screenHistory.pop(); document.getElementById(currentScreen).classList.remove('active'); document.getElementById(prev).classList.add('active'); currentScreen = prev; const header = document.getElementById('mainHeader'); if (currentScreen === 'titleScreen') header.classList.remove('visible'); else header.classList.add('visible'); document.getElementById('backBtn').classList.toggle('visible', currentScreen !== 'titleScreen'); } }
+    function goToTitle() { document.getElementById(currentScreen).classList.remove('active'); document.getElementById('titleScreen').classList.add('active'); currentScreen = 'titleScreen'; screenHistory = []; document.getElementById('mainHeader').classList.remove('visible'); }
     function showModal(id) { document.getElementById(id).classList.add('active'); }
     function hideModal(id) { document.getElementById(id).classList.remove('active'); }
+    function showToast(msg, type = 'success') { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast ' + type + ' visible'; setTimeout(() => t.classList.remove('visible'), 3000); }
+    function showGuide(type) { showModal(type === 'admin' ? 'adminGuideModal' : 'userGuideModal'); }
+    function showMatchmakingInfo() { const dl = appState.tournament?.deadline; if (dl) { const d = dl.toDate ? dl.toDate() : new Date(dl); if (new Date() >= d) { navigateTo('tournamentScreen'); document.getElementById('rouletteContainer').style.display = 'flex'; document.getElementById('rouletteAdminControls').style.display = 'flex'; return; } } showToast('締切日時以降に有効化されます', 'error'); }
+    function previewIcon(input) { if (input.files && input.files[0]) { const r = new FileReader(); r.onload = e => { document.getElementById('iconPreview').innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;">'; }; r.readAsDataURL(input.files[0]); } }
+    function clearIcon() { document.getElementById('iconPreview').innerHTML = '<span style="color:var(--text-dim);font-size:1.3rem;">+</span>'; document.getElementById('iconInput').value = ''; }
+    function escapeHtml(s) { return s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''; }
 
-    function showToast(message, type = 'success') {
-      const toast = document.getElementById('toast');
-      toast.textContent = message;
-      toast.className = 'toast ' + type + ' visible';
-      setTimeout(() => toast.classList.remove('visible'), 3000);
-    }
-
-    function showGuide(type) {
-      if (type === 'admin') showModal('adminGuideModal');
-      else showModal('userGuideModal');
-    }
-
-    function showMatchmakingInfo() {
-      const dl = appState.tournament?.deadline;
-      if (dl) {
-        const deadline = dl.toDate ? dl.toDate() : new Date(dl);
-        if (new Date() >= deadline) {
-          // 締切後 - ルーレット画面に遷移
-          navigateTo('tournamentScreen');
-          document.getElementById('rouletteContainer').style.display = 'flex';
-          document.getElementById('rouletteAdminControls').style.display = 'flex';
-          return;
-        }
-      }
-      showToast('大会当日（締切日時以降）に有効化されます', 'error');
-    }
-
-    // Icon
-    function previewIcon(input) {
-      if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = e => {
-          document.getElementById('iconPreview').innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;">';
-          document.getElementById('iconPreviewContainer').classList.add('has-icon');
-        };
-        reader.readAsDataURL(input.files[0]);
-      }
-    }
-
-    function clearIcon() {
-      document.getElementById('iconPreview').innerHTML = '<span style="color:var(--text-dim);">+</span>';
-      document.getElementById('iconPreviewContainer').classList.remove('has-icon');
-      document.getElementById('iconInput').value = '';
-    }
-
-    function escapeHtml(str) {
-      if (!str) return '';
-      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
-
-    // Update displays
     function updateTournamentDisplay() {
       const t = appState.tournament;
-      document.getElementById('tournamentGameName').textContent = t?.game_name || '未設定';
-      document.getElementById('tournamentAdmin').textContent = t?.admin_name || '-';
-      
-      if (t?.deadline) {
-        const dl = t.deadline.toDate ? t.deadline.toDate() : new Date(t.deadline);
-        document.getElementById('tournamentDeadline').textContent = dl.toLocaleString('ja-JP', {year:'numeric',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
-        document.getElementById('tournamentDeadline').classList.remove('warning');
-      } else {
-        document.getElementById('tournamentDeadline').textContent = '未設定';
-        document.getElementById('tournamentDeadline').classList.add('warning');
-      }
-      
+      const gn = t?.game_name || '未設定';
+      const ad = t?.admin_name || '-';
+      let dl = '未設定';
+      if (t?.deadline) { const d = t.deadline.toDate ? t.deadline.toDate() : new Date(t.deadline); dl = d.toLocaleString('ja-JP', {year:'numeric',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}); }
+      document.getElementById('titleGameName').textContent = gn;
+      document.getElementById('titleDeadline').textContent = dl;
+      document.getElementById('titleDeadline').classList.toggle('warning', dl === '未設定');
+      document.getElementById('titleAdmin').textContent = ad;
+      document.getElementById('titleCount').textContent = appState.entries.length + '名';
+      document.getElementById('tournamentGameName').textContent = gn;
+      document.getElementById('tournamentDeadline').textContent = dl;
+      document.getElementById('tournamentDeadline').classList.toggle('warning', dl === '未設定');
+      document.getElementById('tournamentAdmin').textContent = ad;
       document.getElementById('tournamentCount').textContent = appState.entries.length + '名';
       updateEntryButton();
-      updateMatchmakingButton();
       updateCancelEntryButton();
+      updateMatchmakingButton();
     }
-
-    function updateEntryButton() {
-      const btn = document.getElementById('entryBtn');
-      if (!appState.tournament?.deadline) {
-        btn.disabled = true;
-      } else {
-        const dl = appState.tournament.deadline.toDate ? appState.tournament.deadline.toDate() : new Date(appState.tournament.deadline);
-        btn.disabled = new Date() > dl;
-      }
-    }
-
-    function updateMatchmakingButton() {
-      const btn = document.getElementById('matchmakingBtn');
-      if (!btn) return;
-      const dl = appState.tournament?.deadline;
-      if (dl) {
-        const deadline = dl.toDate ? dl.toDate() : new Date(dl);
-        if (new Date() >= deadline) {
-          btn.style.opacity = '1';
-          btn.textContent = '🎲 対戦カード抽選を開始';
-        }
-      }
-    }
-
+    function updateEntryButton() { const b = document.getElementById('entryBtn'); if (!appState.tournament?.deadline) { b.disabled = true; } else { const d = appState.tournament.deadline.toDate ? appState.tournament.deadline.toDate() : new Date(appState.tournament.deadline); b.disabled = new Date() > d; } }
+    function updateCancelEntryButton() { const b = document.getElementById('cancelEntryBtn'); if (!b) return; const my = appState.entries.find(e => e.device_id === appState.deviceId); let can = !!my; const dl = appState.tournament?.deadline; if (dl) { const d = dl.toDate ? dl.toDate() : new Date(dl); if (new Date() >= d) can = false; } b.disabled = !can; }
+    function updateMatchmakingButton() { const b = document.getElementById('matchmakingBtn'); if (!b) return; const dl = appState.tournament?.deadline; if (dl) { const d = dl.toDate ? dl.toDate() : new Date(dl); if (new Date() >= d) { b.style.opacity = '1'; b.textContent = '🎲 対戦カード抽選を開始'; } } }
     function updateEntriesDisplay() {
       const list = document.getElementById('participantList');
-      if (appState.entries.length === 0) {
-        list.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-dim);">参加者はいません</td></tr>';
-        return;
-      }
-      list.innerHTML = appState.entries.map(e => {
-        const statusClass = e.status === 'LOST' ? 'status-lost' : 'status-active';
-        return '<tr>' +
-          '<td>ID-' + String(e.entry_id).padStart(2, '0') + '</td>' +
-          '<td><div class="user-icon">' + (e.icon_url ? '<img src="' + e.icon_url + '">' : '👤') + '</div></td>' +
-          '<td>' + escapeHtml(e.username) + '</td>' +
-          '<td><span class="status-badge ' + statusClass + '">' + (e.status || 'ACTIVE') + '</span></td>' +
-          '</tr>';
-      }).join('');
+      document.getElementById('listCount').textContent = appState.entries.length;
+      if (appState.entries.length === 0) { list.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--text-dim);">参加者はいません</div>'; return; }
+      list.innerHTML = appState.entries.map(e => '<div class="participant-row"><div class="participant-id">ID-' + String(e.entry_id).padStart(2,'0') + '</div><div class="participant-icon">' + (e.icon_url ? '<img src="' + e.icon_url + '">' : '👤') + '</div><div>' + escapeHtml(e.username) + '</div><div><span class="status-badge ' + (e.status === 'LOST' ? 'status-lost' : 'status-active') + '">' + (e.status || 'ACTIVE') + '</span></div></div>').join('');
     }
-
     function updateEntryScreen() {
-      const myEntry = appState.entries.find(e => e.device_id === appState.deviceId);
+      const my = appState.entries.find(e => e.device_id === appState.deviceId);
       const dl = appState.tournament?.deadline;
-      const isPastDeadline = dl && new Date() > (dl.toDate ? dl.toDate() : new Date(dl));
-      
-      if (myEntry) {
-        document.getElementById('myEntryDisplay').style.display = 'block';
-        document.getElementById('entryForm').style.display = 'none';
-        document.getElementById('myEntryName').textContent = myEntry.username;
-        document.getElementById('myEntryId').textContent = ' (ID-' + String(myEntry.entry_id).padStart(2, '0') + ')';
-        
-        // 締切後は解除ボタンを非表示
-        const cancelBtn = document.querySelector('.cancel-entry-btn');
-        if (cancelBtn) cancelBtn.style.display = isPastDeadline ? 'none' : 'inline-block';
-      } else {
-        document.getElementById('myEntryDisplay').style.display = 'none';
-        document.getElementById('entryForm').style.display = isPastDeadline ? 'none' : 'block';
-        
-        if (isPastDeadline) {
-          document.getElementById('myEntryDisplay').style.display = 'block';
-          document.getElementById('myEntryDisplay').innerHTML = '<div class="my-entry-box"><p style="color:var(--error-red);">締切日時を過ぎています</p></div>';
-        }
-      }
+      const past = dl && new Date() > (dl.toDate ? dl.toDate() : new Date(dl));
+      if (my) { document.getElementById('myEntryDisplay').style.display = 'block'; document.getElementById('entryForm').style.display = 'none'; document.getElementById('myEntryName').textContent = my.username; document.getElementById('myEntryId').textContent = ' (ID-' + String(my.entry_id).padStart(2,'0') + ')'; }
+      else { document.getElementById('myEntryDisplay').style.display = past ? 'block' : 'none'; document.getElementById('entryForm').style.display = past ? 'none' : 'block'; if (past) document.getElementById('myEntryDisplay').innerHTML = '<div class="my-entry-box"><p style="color:var(--hud-red);">締切日時を過ぎています</p></div>'; }
     }
+    function updateRouletteWheel() { const w = document.getElementById('wheelInner'); const a = appState.entries.filter(e => e.status !== 'LOST'); if (a.length === 0) { w.innerHTML = ''; return; } w.innerHTML = a.map((e,i) => '<div class="wheel-segment" style="transform:rotate(' + ((360/a.length)*i) + 'deg);">ID-' + String(e.entry_id).padStart(2,'0') + '</div>').join(''); }
+    function updateVsDisplay(p1, p2) { document.getElementById('vsPlayer1Id').textContent = p1 ? 'ID-' + String(p1.entry_id).padStart(2,'0') : '-'; document.getElementById('vsPlayer1Name').textContent = p1 ? p1.username : '-'; document.getElementById('vsPlayer1Icon').innerHTML = p1?.icon_url ? '<img src="' + p1.icon_url + '" style="width:100%;height:100%;object-fit:cover;">' : '<span>?</span>'; document.getElementById('vsPlayer2Id').textContent = p2 ? 'ID-' + String(p2.entry_id).padStart(2,'0') : '-'; document.getElementById('vsPlayer2Name').textContent = p2 ? p2.username : '-'; document.getElementById('vsPlayer2Icon').innerHTML = p2?.icon_url ? '<img src="' + p2.icon_url + '" style="width:100%;height:100%;object-fit:cover;">' : '<span>?</span>'; }
+    function filterParticipants(q) { document.querySelectorAll('#participantList .participant-row').forEach(r => { r.style.display = r.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none'; }); }
 
-    function updateRouletteWheel() {
-      const wheel = document.getElementById('wheelInner');
-      const active = appState.entries.filter(e => e.status !== 'LOST');
-      if (active.length === 0) { wheel.innerHTML = ''; return; }
-      wheel.innerHTML = active.map((e, i) => {
-        const angle = (360 / active.length) * i;
-        return '<div class="wheel-segment" style="transform:rotate(' + angle + 'deg);">ID-' + String(e.entry_id).padStart(2, '0') + '</div>';
-      }).join('');
-    }
-
-    function updateVsDisplay(p1, p2) {
-      document.getElementById('vsPlayer1Id').textContent = p1 ? 'ID-' + String(p1.entry_id).padStart(2, '0') : '-';
-      document.getElementById('vsPlayer1Name').textContent = p1 ? p1.username : '-';
-      document.getElementById('vsPlayer1Icon').innerHTML = p1?.icon_url ? '<img src="' + p1.icon_url + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">' : '<span>?</span>';
-      document.getElementById('vsPlayer2Id').textContent = p2 ? 'ID-' + String(p2.entry_id).padStart(2, '0') : '-';
-      document.getElementById('vsPlayer2Name').textContent = p2 ? p2.username : '-';
-      document.getElementById('vsPlayer2Icon').innerHTML = p2?.icon_url ? '<img src="' + p2.icon_url + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">' : '<span>?</span>';
-    }
-
-    function filterParticipants(query) {
-      const rows = document.querySelectorAll('#participantList tr');
-      rows.forEach(row => {
-        row.style.display = row.textContent.toLowerCase().includes(query.toLowerCase()) ? '' : 'none';
-      });
-    }
-
-    // ===== Calendar =====
-    let calendarDate = new Date();
-    let calendarSelectedDate = null;
-    let calendarTarget = null;
-
-    function openCalendar(target) {
-      calendarTarget = target;
-      calendarDate = new Date();
-      calendarSelectedDate = null;
-      document.getElementById('calendarHour').value = '12';
-      document.getElementById('calendarMinute').value = '00';
-      renderCalendar();
-      updateCalendarDisplay();
-      document.getElementById('calendarModal').classList.add('active');
-    }
-
-    function closeCalendar() {
-      document.getElementById('calendarModal').classList.remove('active');
-    }
-
-    function changeMonth(delta) {
-      calendarDate.setMonth(calendarDate.getMonth() + delta);
-      renderCalendar();
-    }
-
+    let calendarDate = new Date(), calendarSelectedDate = null, calendarTarget = null;
+    function openCalendar(target) { calendarTarget = target; calendarDate = new Date(); calendarSelectedDate = null; document.getElementById('calendarHour').value = '12'; document.getElementById('calendarMinute').value = '00'; renderCalendar(); updateCalendarDisplay(); document.getElementById('calendarModal').classList.add('active'); }
+    function closeCalendar() { document.getElementById('calendarModal').classList.remove('active'); }
+    function changeMonth(d) { calendarDate.setMonth(calendarDate.getMonth() + d); renderCalendar(); }
     function renderCalendar() {
-      const year = calendarDate.getFullYear();
-      const month = calendarDate.getMonth();
-      const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
-      document.getElementById('calendarMonthYear').textContent = year + '年 ' + monthNames[month];
-      
-      const daysContainer = document.getElementById('calendarDays');
-      daysContainer.innerHTML = '';
-      
-      const firstDay = new Date(year, month, 1).getDay();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      for (let i = 0; i < firstDay; i++) {
-        const emptyCell = document.createElement('div');
-        emptyCell.className = 'calendar-day empty';
-        daysContainer.appendChild(emptyCell);
-      }
-      
-      for (let day = 1; day <= daysInMonth; day++) {
-        const cell = document.createElement('div');
-        cell.className = 'calendar-day';
-        cell.textContent = day;
-        
-        const cellDate = new Date(year, month, day);
-        cellDate.setHours(0, 0, 0, 0);
-        
-        if (cellDate < today) {
-          cell.classList.add('disabled');
-        } else {
-          cell.onclick = () => selectDate(year, month, day);
-        }
-        
-        if (cellDate.getTime() === today.getTime()) cell.classList.add('today');
-        
-        if (calendarSelectedDate && 
-            calendarSelectedDate.getFullYear() === year && 
-            calendarSelectedDate.getMonth() === month && 
-            calendarSelectedDate.getDate() === day) {
-          cell.classList.add('selected');
-        }
-        
-        daysContainer.appendChild(cell);
-      }
-      
-      // カレンダー日付のホバー効果音とクリック音を追加
-      setTimeout(() => {
-        addCalendarHoverSounds();
-        addCalendarClickSounds();
-      }, 10);
-    }
-
-    function selectDate(year, month, day) {
-      calendarSelectedDate = new Date(year, month, day);
-      renderCalendar();
-      updateCalendarDisplay();
-    }
-
-    function updateCalendarDisplay() {
-      const display = document.getElementById('calendarSelectedDisplay');
-      if (calendarSelectedDate) {
-        const hour = document.getElementById('calendarHour').value.padStart(2, '0');
-        const minute = document.getElementById('calendarMinute').value.padStart(2, '0');
-        const dateStr = calendarSelectedDate.getFullYear() + '/' + 
-                       String(calendarSelectedDate.getMonth() + 1).padStart(2, '0') + '/' + 
-                       String(calendarSelectedDate.getDate()).padStart(2, '0');
-        display.textContent = dateStr + ' ' + hour + ':' + minute;
-      } else {
-        display.textContent = '日付を選択してください';
+      const y = calendarDate.getFullYear(), m = calendarDate.getMonth();
+      document.getElementById('calendarMonthYear').textContent = y + '年 ' + (m + 1) + '月';
+      const c = document.getElementById('calendarDays'); c.innerHTML = '';
+      const first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate(), today = new Date(); today.setHours(0,0,0,0);
+      for (let i = 0; i < first; i++) { const e = document.createElement('div'); e.className = 'calendar-day empty'; c.appendChild(e); }
+      for (let d = 1; d <= days; d++) {
+        const cell = document.createElement('div'); cell.className = 'calendar-day'; cell.textContent = d;
+        const cd = new Date(y, m, d); cd.setHours(0,0,0,0);
+        if (cd < today) { cell.classList.add('disabled'); } else { cell.onclick = () => { calendarSelectedDate = new Date(y, m, d); renderCalendar(); updateCalendarDisplay(); playClick(); }; cell.onmouseenter = playHover; }
+        if (cd.getTime() === today.getTime()) cell.classList.add('today');
+        if (calendarSelectedDate && calendarSelectedDate.getFullYear() === y && calendarSelectedDate.getMonth() === m && calendarSelectedDate.getDate() === d) cell.classList.add('selected');
+        c.appendChild(cell);
       }
     }
-
+    function updateCalendarDisplay() { const disp = document.getElementById('calendarSelectedDisplay'); if (calendarSelectedDate) { const h = document.getElementById('calendarHour').value.padStart(2,'0'), mi = document.getElementById('calendarMinute').value.padStart(2,'0'); disp.textContent = calendarSelectedDate.getFullYear() + '/' + String(calendarSelectedDate.getMonth()+1).padStart(2,'0') + '/' + String(calendarSelectedDate.getDate()).padStart(2,'0') + ' ' + h + ':' + mi; } else { disp.textContent = '日付を選択してください'; } }
     document.getElementById('calendarHour')?.addEventListener('input', updateCalendarDisplay);
     document.getElementById('calendarMinute')?.addEventListener('input', updateCalendarDisplay);
-
-    function confirmCalendar() {
-      if (!calendarSelectedDate) {
-        showToast('日付を選択してください', 'error');
-        return;
-      }
-      
-      const hour = parseInt(document.getElementById('calendarHour').value) || 0;
-      const minute = parseInt(document.getElementById('calendarMinute').value) || 0;
-      
-      const selectedDateTime = new Date(
-        calendarSelectedDate.getFullYear(),
-        calendarSelectedDate.getMonth(),
-        calendarSelectedDate.getDate(),
-        hour, minute
-      );
-      
-      if (selectedDateTime <= new Date()) {
-        showToast('現在より後の日時を選択してください', 'error');
-        return;
-      }
-      
-      const dateTimeStr = selectedDateTime.toLocaleString('ja-JP', {year:'numeric',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
-      
-      if (calendarTarget === 'setup') {
-        document.getElementById('setupDeadline').value = selectedDateTime.toISOString();
-        document.getElementById('setupDeadlineBtn').textContent = dateTimeStr;
-      } else if (calendarTarget === 'modal') {
-        document.getElementById('deadlineInput').value = selectedDateTime.toISOString();
-        document.getElementById('modalDeadlineBtn').textContent = dateTimeStr;
-      }
-      
-      playClick();
-      closeCalendar();
-    }
+    function confirmCalendar() { if (!calendarSelectedDate) { showToast('日付を選択してください', 'error'); return; } const h = parseInt(document.getElementById('calendarHour').value) || 0, mi = parseInt(document.getElementById('calendarMinute').value) || 0; const dt = new Date(calendarSelectedDate.getFullYear(), calendarSelectedDate.getMonth(), calendarSelectedDate.getDate(), h, mi); if (dt <= new Date()) { showToast('現在より後の日時を選択してください', 'error'); return; } const str = dt.toLocaleString('ja-JP', {year:'numeric',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}); if (calendarTarget === 'setup') { document.getElementById('setupDeadline').value = dt.toISOString(); document.getElementById('setupDeadlineBtn').textContent = str; } playClick(); closeCalendar(); }
+    document.addEventListener('DOMContentLoaded', () => { setTimeout(addSounds, 100); initFirebase(); });
   </script>
-
-  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCNGRa4DCOM595aM5Exor5BF6oPUvg1TIY",
-      authDomain: "tournament-app-a0837.firebaseapp.com",
-      projectId: "tournament-app-a0837",
-      storageBucket: "tournament-app-a0837.firebasestorage.app",
-      messagingSenderId: "514905483124",
-      appId: "1:514905483124:web:1882493de273598b0a2e21"
-    };
-
+    const firebaseConfig = { apiKey: "AIzaSyCNGRa4DCOM595aM5Exor5BF6oPUvg1TIY", authDomain: "tournament-app-a0837.firebaseapp.com", projectId: "tournament-app-a0837", storageBucket: "tournament-app-a0837.firebasestorage.app", messagingSenderId: "514905483124", appId: "1:514905483124:web:1882493de273598b0a2e21" };
     let db = null;
-
-    function initFirebase() {
-      try {
-        firebase.initializeApp(firebaseConfig);
-        db = firebase.firestore();
-        console.log('Firebase OK');
-        loadData();
-      } catch (e) { console.error('Firebase error:', e); }
-    }
-
-    function loadData() {
-      if (!db) return;
-      
-      db.collection('tournaments').doc('current').onSnapshot(doc => {
-        if (doc.exists) {
-          appState.tournament = doc.data();
-          if (appState.tournament.admin_device === appState.deviceId) {
-            appState.isAdmin = true;
-            appState.adminName = appState.tournament.admin_name;
-          }
-          updateTournamentDisplay();
-        }
-      });
-      
-      db.collection('entries').orderBy('entry_id', 'asc').onSnapshot(snap => {
-        appState.entries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        updateEntriesDisplay();
-        updateRouletteWheel();
-        updateTournamentDisplay();
-      });
-      
-      db.collection('matches').orderBy('created_at', 'asc').onSnapshot(snap => {
-        appState.matches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      });
-    }
-
-    function registerAdmin() {
-      const name = document.getElementById('adminNameInput').value.trim();
-      const err = document.getElementById('adminNameError');
-      
-      if (!name) {
-        err.textContent = '管理者名を入力してください';
-        err.classList.add('visible');
-        return;
-      }
-      err.classList.remove('visible');
-      
-      localStorage.setItem('tournament_admin_name', name);
-      appState.adminName = name;
-      appState.isAdmin = true;
-      
-      playClick();
-      
-      screenHistory.push(currentScreen);
-      document.getElementById(currentScreen).classList.remove('active');
-      document.getElementById('adminSetupScreen').classList.add('active');
-      currentScreen = 'adminSetupScreen';
-      
-      // ヘッダーを表示
-      const header = document.getElementById('mainHeader');
-      header.classList.remove('hidden');
-      document.getElementById('backBtn').classList.add('visible');
-    }
-
-    function saveTournamentSettings() {
-      const gameName = document.getElementById('setupGameName').value.trim();
-      const deadline = document.getElementById('setupDeadline').value;
-      const gameErr = document.getElementById('setupGameNameError');
-      const deadlineErr = document.getElementById('setupDeadlineError');
-      
-      gameErr.classList.remove('visible');
-      deadlineErr.classList.remove('visible');
-      
-      let hasError = false;
-      
-      if (!gameName) {
-        gameErr.textContent = 'ゲーム名を入力してください';
-        gameErr.classList.add('visible');
-        hasError = true;
-      }
-      
-      if (!deadline) {
-        deadlineErr.textContent = '締切日時を選択してください';
-        deadlineErr.classList.add('visible');
-        hasError = true;
-      }
-      
-      if (hasError) return;
-      
-      playClick();
-      
-      // ローカルステートを更新
-      appState.tournament = {
-        admin_name: appState.adminName,
-        admin_device: appState.deviceId,
-        game_name: gameName,
-        deadline: new Date(deadline)
-      };
-      
-      // Firebase保存を試みる（失敗してもローカルは更新済み）
-      if (db) {
-        db.collection('tournaments').doc('current').set({
-          admin_name: appState.adminName,
-          admin_device: appState.deviceId,
-          game_name: gameName,
-          deadline: new Date(deadline),
-          updated_at: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true })
-        .then(() => {
-          console.log('Firebase保存成功');
-        })
-        .catch(e => {
-          console.error('Firebase保存エラー:', e);
-        });
-      }
-      
-      // 表示を更新
-      updateTournamentDisplay();
-      
-      // 完了モーダルを表示
-      showModal('settingsCompleteModal');
-    }
-
-    function submitEntry() {
-      if (!appState.tournament?.deadline) {
-        showToast('締切日時が未設定です', 'error');
-        return;
-      }
-      
-      const dl = appState.tournament.deadline.toDate ? appState.tournament.deadline.toDate() : new Date(appState.tournament.deadline);
-      if (new Date() > dl) {
-        showToast('締切を過ぎています', 'error');
-        return;
-      }
-      
-      const name = document.getElementById('usernameInput').value.trim();
-      const err = document.getElementById('usernameError');
-      
-      if (!name) { 
-        err.textContent = 'ユーザーネームを入力してください'; 
-        err.classList.add('visible'); 
-        return; 
-      }
-      if (appState.entries.find(e => e.username === name)) { 
-        err.textContent = 'このユーザーネームは使用されています'; 
-        err.classList.add('visible'); 
-        return; 
-      }
-      if (appState.entries.find(e => e.device_id === appState.deviceId)) { 
-        err.textContent = 'このデバイスは既に登録済みです'; 
-        err.classList.add('visible'); 
-        return; 
-      }
-      
-      err.classList.remove('visible');
-      
-      const entryId = appState.entries.length + 1;
-      const icon = document.getElementById('iconPreview').querySelector('img');
-      
-      playClick();
-      
-      // ローカルステートを更新
-      const newEntry = {
-        id: appState.deviceId,
-        entry_id: entryId,
-        username: name,
-        device_id: appState.deviceId,
-        icon_url: icon ? icon.src : null,
-        status: 'ACTIVE'
-      };
-      appState.entries.push(newEntry);
-      
-      // Firebase保存を試みる
-      if (db) {
-        db.collection('entries').doc(appState.deviceId).set({
-          entry_id: entryId,
-          username: name,
-          device_id: appState.deviceId,
-          icon_url: icon ? icon.src : null,
-          status: 'ACTIVE',
-          created_at: firebase.firestore.FieldValue.serverTimestamp()
-        })
-        .then(() => {
-          console.log('Firebase登録成功');
-        })
-        .catch(e => {
-          console.error('Firebase登録エラー:', e);
-        });
-      }
-      
-      // 表示を更新
-      updateEntriesDisplay();
-      updateTournamentDisplay();
-      
-      document.getElementById('usernameInput').value = '';
-      clearIcon();
-      
-      // エントリー完了モーダルを表示
-      document.getElementById('entryCompleteInfo').textContent = name + ' (ID-' + String(entryId).padStart(2, '0') + ')';
-      showModal('entryCompleteModal');
-    }
-
-    function cancelEntry() {
-      // 自分がエントリーしているか確認
-      const myEntry = appState.entries.find(e => e.device_id === appState.deviceId);
-      if (!myEntry) {
-        showToast('エントリーしていません', 'error');
-        return;
-      }
-      
-      // 締切日チェック
-      const dl = appState.tournament?.deadline;
-      if (dl) {
-        const deadline = dl.toDate ? dl.toDate() : new Date(dl);
-        if (new Date() >= deadline) {
-          showToast('締切日時を過ぎているため解除できません', 'error');
-          return;
-        }
-      }
-      
-      // 確認モーダルを表示
-      showModal('confirmCancelEntryModal');
-    }
-
-    function executeCancelEntry() {
-      playClick();
-      
-      // ローカルステートから削除
-      const index = appState.entries.findIndex(e => e.device_id === appState.deviceId);
-      if (index !== -1) {
-        appState.entries.splice(index, 1);
-      }
-      
-      // Firebase から削除を試みる
-      if (db) {
-        db.collection('entries').doc(appState.deviceId).delete()
-        .then(() => {
-          console.log('Firebase削除成功');
-        })
-        .catch(e => {
-          console.error('Firebase削除エラー:', e);
-        });
-      }
-      
-      // 表示を更新
-      updateEntriesDisplay();
-      updateTournamentDisplay();
-      updateEntryScreen();
-      updateCancelEntryButton();
-      
-      hideModal('confirmCancelEntryModal');
-      showModal('cancelCompleteModal');
-    }
-
-    function updateCancelEntryButton() {
-      const btn = document.getElementById('cancelEntryBtn');
-      if (!btn) return;
-      
-      const myEntry = appState.entries.find(e => e.device_id === appState.deviceId);
-      const dl = appState.tournament?.deadline;
-      let canCancel = !!myEntry;
-      
-      // 締切後は解除不可
-      if (dl) {
-        const deadline = dl.toDate ? dl.toDate() : new Date(dl);
-        if (new Date() >= deadline) {
-          canCancel = false;
-        }
-      }
-      
-      btn.disabled = !canCancel;
-    }
-
-    function spinRoulette() {
-      if (appState.isSpinning) return;
-      const active = appState.entries.filter(e => e.status !== 'LOST');
-      const free = active.filter(e => !appState.matches.some(m => (m.player1_id === e.entry_id || m.player2_id === e.entry_id) && !m.winner_id));
-      if (free.length < 2) { showToast('対戦可能な参加者が不足しています', 'error'); return; }
-      
-      appState.isSpinning = true;
-      document.getElementById('spinBtn').disabled = true;
-      
-      const shuffled = [...free].sort(() => Math.random() - 0.5);
-      appState.selectedPlayer1 = shuffled[0];
-      appState.selectedPlayer2 = shuffled[1];
-      
-      document.getElementById('wheelInner').style.transform = 'rotate(' + (1800 + Math.random() * 720) + 'deg)';
-      
-      setTimeout(() => {
-        updateVsDisplay(appState.selectedPlayer1, appState.selectedPlayer2);
-        document.getElementById('confirmMatchBtn').disabled = false;
-        appState.isSpinning = false;
-        document.getElementById('spinBtn').disabled = false;
-      }, 4000);
-    }
-
-    function confirmMatch() {
-      if (!appState.selectedPlayer1 || !appState.selectedPlayer2) return;
-      document.getElementById('confirmMatchText').textContent = 
-        appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username;
-      showModal('confirmMatchModal');
-    }
-
-    function executeConfirmMatch() {
-      if (!db) return;
-      playClick();
-      db.collection('matches').add({
-        player1_id: appState.selectedPlayer1.entry_id,
-        player1_name: appState.selectedPlayer1.username,
-        player2_id: appState.selectedPlayer2.entry_id,
-        player2_name: appState.selectedPlayer2.username,
-        winner_id: null,
-        round: 1,
-        created_at: firebase.firestore.FieldValue.serverTimestamp()
-      })
-      .then(() => {
-        hideModal('confirmMatchModal');
-        document.getElementById('matchResultControls').style.display = 'flex';
-        document.getElementById('confirmMatchBtn').disabled = true;
-        showToast('対戦を確定しました', 'success');
-      })
-      .catch(e => showToast('エラー: ' + e.message, 'error'));
-    }
-
-    function declareWinner(n) {
-      appState.pendingWinner = {
-        n: n,
-        winner: n === 1 ? appState.selectedPlayer1 : appState.selectedPlayer2,
-        loser: n === 1 ? appState.selectedPlayer2 : appState.selectedPlayer1
-      };
-      document.getElementById('confirmWinnerText').textContent = appState.pendingWinner.winner.username;
-      showModal('confirmWinnerModal');
-    }
-
-    function executeWinner() {
-      if (!db) return;
-      const { winner, loser } = appState.pendingWinner;
-      
-      playClick();
-      
-      const match = appState.matches.find(m => 
-        m.player1_id === appState.selectedPlayer1.entry_id && 
-        m.player2_id === appState.selectedPlayer2.entry_id && 
-        !m.winner_id
-      );
-      
-      if (match) {
-        db.collection('matches').doc(match.id).update({
-          winner_id: winner.entry_id,
-          winner_name: winner.username
-        });
-      }
-      
-      const loserEntry = appState.entries.find(e => e.entry_id === loser.entry_id);
-      if (loserEntry) {
-        db.collection('entries').doc(loserEntry.id).update({ status: 'LOST' });
-      }
-      
-      hideModal('confirmWinnerModal');
-      document.getElementById('matchResultControls').style.display = 'none';
-      appState.selectedPlayer1 = null;
-      appState.selectedPlayer2 = null;
-      updateVsDisplay(null, null);
-      document.getElementById('wheelInner').style.transform = 'rotate(0deg)';
-      showToast('勝者を確定しました', 'success');
-    }
-
-    function recordAndReset() {
-      if (!db) return;
-      const t = appState.tournament;
-      const champion = appState.entries.find(e => e.status !== 'LOST');
-      
-      playClick();
-      
-      db.collection('history').add({
-        year: new Date().getFullYear(),
-        date: firebase.firestore.FieldValue.serverTimestamp(),
-        game_name: t?.game_name || '未設定',
-        champion_name: champion?.username || '未確定',
-        admin_name: t?.admin_name || '不明',
-        participants: appState.entries.map(e => ({
-          entry_id: e.entry_id,
-          username: e.username,
-          status: e.status
-        })),
-        total_participants: appState.entries.length
-      })
-      .then(() => {
-        const batch = db.batch();
-        appState.entries.forEach(e => batch.delete(db.collection('entries').doc(e.id)));
-        appState.matches.forEach(m => batch.delete(db.collection('matches').doc(m.id)));
-        batch.set(db.collection('tournaments').doc('current'), {
-          admin_name: null,
-          admin_device: null,
-          game_name: null,
-          deadline: null,
-          updated_at: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        return batch.commit();
-      })
-      .then(() => {
-        hideModal('confirmRecordModal');
-        showModal('tournamentEndModal');
-        appState.isAdmin = false;
-        appState.adminName = null;
-        localStorage.removeItem('tournament_admin_name');
-      })
-      .catch(e => showToast('エラー: ' + e.message, 'error'));
-    }
-
-    function loadHistory() {
-      if (!db) return;
-      db.collection('history').orderBy('date', 'desc').get()
-      .then(snap => {
-        const list = document.getElementById('historyList');
-        if (snap.empty) {
-          list.innerHTML = '<p style="text-align:center;color:var(--text-dim);">記録がありません</p>';
-          return;
-        }
-        list.innerHTML = snap.docs.map(d => {
-          const data = d.data();
-          const date = data.date?.toDate?.() || new Date();
-          return '<div class="history-card">' +
-            '<div class="history-date">' + date.toLocaleDateString('ja-JP') + '</div>' +
-            '<div class="history-game">' + escapeHtml(data.game_name || '不明') + '</div>' +
-            '<div class="history-winner">👑 優勝: ' + escapeHtml(data.champion_name || '不明') + '</div>' +
-            '<div style="font-size:0.85rem;color:var(--text-dim);margin-top:0.5rem;">管理者: ' + escapeHtml(data.admin_name || '不明') + '</div>' +
-            '<div style="font-size:0.85rem;color:var(--text-dim);">参加者: ' + (data.total_participants || 0) + '名</div>' +
-            '</div>';
-        }).join('');
-      });
-    }
-
-    document.addEventListener('DOMContentLoaded', initFirebase);
+    function initFirebase() { try { firebase.initializeApp(firebaseConfig); db = firebase.firestore(); console.log('Firebase OK'); loadData(); } catch (e) { console.error('Firebase error:', e); updateTournamentDisplay(); } }
+    function loadData() { if (!db) return; db.collection('tournaments').doc('current').onSnapshot(doc => { if (doc.exists) { appState.tournament = doc.data(); if (appState.tournament.admin_device === appState.deviceId) { appState.isAdmin = true; appState.adminName = appState.tournament.admin_name; } updateTournamentDisplay(); } }); db.collection('entries').orderBy('entry_id', 'asc').onSnapshot(snap => { appState.entries = snap.docs.map(d => ({ id: d.id, ...d.data() })); updateEntriesDisplay(); updateRouletteWheel(); updateTournamentDisplay(); }); db.collection('matches').orderBy('created_at', 'asc').onSnapshot(snap => { appState.matches = snap.docs.map(d => ({ id: d.id, ...d.data() })); }); }
+    function registerAdmin() { const n = document.getElementById('adminNameInput').value.trim(); const e = document.getElementById('adminNameError'); if (!n) { e.textContent = '管理者名を入力してください'; e.classList.add('visible'); return; } e.classList.remove('visible'); localStorage.setItem('tournament_admin_name', n); appState.adminName = n; appState.isAdmin = true; playClick(); screenHistory.push(currentScreen); document.getElementById(currentScreen).classList.remove('active'); document.getElementById('adminSetupScreen').classList.add('active'); currentScreen = 'adminSetupScreen'; document.getElementById('mainHeader').classList.add('visible'); document.getElementById('backBtn').classList.add('visible'); }
+    function saveTournamentSettings() { const gn = document.getElementById('setupGameName').value.trim(); const dl = document.getElementById('setupDeadline').value; const ge = document.getElementById('setupGameNameError'); const de = document.getElementById('setupDeadlineError'); ge.classList.remove('visible'); de.classList.remove('visible'); let err = false; if (!gn) { ge.textContent = 'ゲーム名を入力してください'; ge.classList.add('visible'); err = true; } if (!dl) { de.textContent = '締切日時を選択してください'; de.classList.add('visible'); err = true; } if (err) return; playClick(); appState.tournament = { admin_name: appState.adminName, admin_device: appState.deviceId, game_name: gn, deadline: new Date(dl) }; if (db) { db.collection('tournaments').doc('current').set({ admin_name: appState.adminName, admin_device: appState.deviceId, game_name: gn, deadline: new Date(dl), updated_at: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }).catch(e => console.error(e)); } updateTournamentDisplay(); showModal('settingsCompleteModal'); }
+    function submitEntry() { if (!appState.tournament?.deadline) { showToast('締切日時が未設定です', 'error'); return; } const d = appState.tournament.deadline.toDate ? appState.tournament.deadline.toDate() : new Date(appState.tournament.deadline); if (new Date() > d) { showToast('締切を過ぎています', 'error'); return; } const n = document.getElementById('usernameInput').value.trim(); const e = document.getElementById('usernameError'); if (!n) { e.textContent = 'ユーザーネームを入力してください'; e.classList.add('visible'); return; } if (appState.entries.find(x => x.username === n)) { e.textContent = 'このユーザー名は既に使用されています'; e.classList.add('visible'); return; } if (appState.entries.find(x => x.device_id === appState.deviceId)) { e.textContent = 'このデバイスは既に登録済みです'; e.classList.add('visible'); return; } e.classList.remove('visible'); const id = appState.entries.length + 1; const ic = document.getElementById('iconPreview').querySelector('img'); playClick(); const ne = { id: appState.deviceId, entry_id: id, username: n, device_id: appState.deviceId, icon_url: ic ? ic.src : null, status: 'ACTIVE' }; appState.entries.push(ne); if (db) { db.collection('entries').doc(appState.deviceId).set({ entry_id: id, username: n, device_id: appState.deviceId, icon_url: ic ? ic.src : null, status: 'ACTIVE', created_at: firebase.firestore.FieldValue.serverTimestamp() }).catch(x => console.error(x)); } updateEntriesDisplay(); updateTournamentDisplay(); document.getElementById('usernameInput').value = ''; clearIcon(); document.getElementById('entryCompleteInfo').textContent = n + ' (ID-' + String(id).padStart(2,'0') + ')'; showModal('entryCompleteModal'); }
+    function cancelEntry() { const my = appState.entries.find(e => e.device_id === appState.deviceId); if (!my) { showToast('エントリーしていません', 'error'); return; } const dl = appState.tournament?.deadline; if (dl) { const d = dl.toDate ? dl.toDate() : new Date(dl); if (new Date() >= d) { showToast('締切日時を過ぎているため解除できません', 'error'); return; } } showModal('confirmCancelEntryModal'); }
+    function executeCancelEntry() { playClick(); const i = appState.entries.findIndex(e => e.device_id === appState.deviceId); if (i !== -1) appState.entries.splice(i, 1); if (db) db.collection('entries').doc(appState.deviceId).delete().catch(e => console.error(e)); updateEntriesDisplay(); updateTournamentDisplay(); updateEntryScreen(); updateCancelEntryButton(); hideModal('confirmCancelEntryModal'); showModal('cancelCompleteModal'); }
+    function spinRoulette() { if (appState.isSpinning) return; const a = appState.entries.filter(e => e.status !== 'LOST'); const f = a.filter(e => !appState.matches.some(m => (m.player1_id === e.entry_id || m.player2_id === e.entry_id) && !m.winner_id)); if (f.length < 2) { showToast('対戦可能な参加者が不足しています', 'error'); return; } appState.isSpinning = true; document.getElementById('spinBtn').disabled = true; const s = [...f].sort(() => Math.random() - 0.5); appState.selectedPlayer1 = s[0]; appState.selectedPlayer2 = s[1]; document.getElementById('wheelInner').style.transform = 'rotate(' + (1800 + Math.random() * 720) + 'deg)'; setTimeout(() => { updateVsDisplay(appState.selectedPlayer1, appState.selectedPlayer2); document.getElementById('confirmMatchBtn').disabled = false; appState.isSpinning = false; document.getElementById('spinBtn').disabled = false; }, 4000); }
+    function confirmMatch() { if (!appState.selectedPlayer1 || !appState.selectedPlayer2) return; document.getElementById('confirmMatchText').textContent = appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username; showModal('confirmMatchModal'); }
+    function executeConfirmMatch() { if (!db) return; playClick(); db.collection('matches').add({ player1_id: appState.selectedPlayer1.entry_id, player1_name: appState.selectedPlayer1.username, player2_id: appState.selectedPlayer2.entry_id, player2_name: appState.selectedPlayer2.username, winner_id: null, round: 1, created_at: firebase.firestore.FieldValue.serverTimestamp() }).then(() => { hideModal('confirmMatchModal'); document.getElementById('matchResultControls').style.display = 'flex'; document.getElementById('confirmMatchBtn').disabled = true; showToast('対戦を確定しました', 'success'); }).catch(e => showToast('エラー: ' + e.message, 'error')); }
+    function declareWinner(n) { appState.pendingWinner = { winner: n === 1 ? appState.selectedPlayer1 : appState.selectedPlayer2, loser: n === 1 ? appState.selectedPlayer2 : appState.selectedPlayer1 }; document.getElementById('confirmWinnerText').textContent = appState.pendingWinner.winner.username; showModal('confirmWinnerModal'); }
+    function executeWinner() { if (!db) return; const { winner, loser } = appState.pendingWinner; playClick(); const m = appState.matches.find(x => x.player1_id === appState.selectedPlayer1.entry_id && x.player2_id === appState.selectedPlayer2.entry_id && !x.winner_id); if (m) db.collection('matches').doc(m.id).update({ winner_id: winner.entry_id, winner_name: winner.username }); const le = appState.entries.find(e => e.entry_id === loser.entry_id); if (le) db.collection('entries').doc(le.id).update({ status: 'LOST' }); hideModal('confirmWinnerModal'); document.getElementById('matchResultControls').style.display = 'none'; appState.selectedPlayer1 = null; appState.selectedPlayer2 = null; updateVsDisplay(null, null); document.getElementById('wheelInner').style.transform = 'rotate(0deg)'; showToast('勝者を確定しました', 'success'); }
+    function loadHistory() { if (!db) { document.getElementById('historyList').innerHTML = '<p style="text-align:center;color:var(--text-dim);">データベース未接続</p>'; return; } db.collection('history').orderBy('date', 'desc').get().then(snap => { const l = document.getElementById('historyList'); if (snap.empty) { l.innerHTML = '<p style="text-align:center;color:var(--text-dim);">記録がありません</p>'; return; } l.innerHTML = snap.docs.map(d => { const x = d.data(); const dt = x.date?.toDate?.() || new Date(); return '<div class="history-card"><div class="history-date">' + dt.toLocaleDateString('ja-JP') + '</div><div class="history-game">' + escapeHtml(x.game_name || '不明') + '</div><div class="history-winner">👑 優勝: ' + escapeHtml(x.champion_name || '不明') + '</div><div style="font-size:0.8rem;color:var(--text-dim);margin-top:0.4rem;">管理者: ' + escapeHtml(x.admin_name || '不明') + ' / 参加者: ' + (x.total_participants || 0) + '名</div></div>'; }).join(''); }); }
   </script>
 </body>
 </html>

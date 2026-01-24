@@ -1248,11 +1248,25 @@
 
     // 管理者登録
     window.registerAsAdmin = async function() {
-      console.log('registerAsAdmin called');
-      if (!db) { alert('データベース未接続'); return; }
+      console.log('=== registerAsAdmin START ===');
       
-      const username = document.getElementById('adminUsernameInput').value.trim();
+      // DB接続確認
+      if (!db) { 
+        alert('データベース未接続です。ページを再読み込みしてください。'); 
+        return; 
+      }
+      console.log('DB connected');
+      
+      const usernameInput = document.getElementById('adminUsernameInput');
       const err = document.getElementById('adminUsernameError');
+      
+      if (!usernameInput) {
+        alert('入力フィールドが見つかりません');
+        return;
+      }
+      
+      const username = usernameInput.value.trim();
+      console.log('Username:', username);
       
       if (!username) {
         err.textContent = 'ユーザーネームを入力してください';
@@ -1271,8 +1285,20 @@
       }
       err.classList.remove('visible');
       
+      // ボタンを無効化
+      const btn = document.getElementById('adminRegisterBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = '登録中...';
+      }
+      
+      console.log('DeviceId:', appState.deviceId);
+      
       try {
+        // 1. エントリー登録
         const entryId = appState.entries.length + 1;
+        console.log('Creating entry with ID:', entryId);
+        
         await db.collection('entries').doc(appState.deviceId).set({
           entry_id: entryId,
           username: username,
@@ -1282,27 +1308,41 @@
           is_admin: true,
           created_at: firebase.firestore.FieldValue.serverTimestamp()
         });
+        console.log('Entry created');
         
-        const d = await db.collection('tournaments').doc('current').get();
-        let adminDevices = d.exists ? (d.data().admin_devices || []) : [];
+        // 2. 管理者登録
+        const tournamentDoc = await db.collection('tournaments').doc('current').get();
+        let adminDevices = tournamentDoc.exists ? (tournamentDoc.data().admin_devices || []) : [];
         if (!adminDevices.includes(appState.deviceId)) {
           adminDevices.push(appState.deviceId);
         }
+        
         await db.collection('tournaments').doc('current').set({ 
           admin_devices: adminDevices, 
           updated_at: firebase.firestore.FieldValue.serverTimestamp() 
         }, { merge: true });
+        console.log('Admin registered');
         
         appState.isAdmin = true;
         updateAdminUI();
-        showToast('管理者登録完了！', 'success');
+        
+        alert('管理者登録が完了しました！\n次の画面で締切日時とゲーム名を設定してください。');
         
         // 設定画面に遷移
-        setTimeout(() => navigateTo('tournamentScreen'), 500);
+        navigateTo('tournamentScreen');
+        
       } catch (e) { 
-        console.error('Error:', e);
-        alert('登録エラー: ' + e.message);
+        console.error('Registration error:', e);
+        alert('登録エラー: ' + e.message + '\n\nFirebaseコンソールでセキュリティルールを確認してください。');
+        
+        // ボタンを元に戻す
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = '管理者として登録';
+        }
       }
+      
+      console.log('=== registerAsAdmin END ===');
     };
 
     // エントリー登録

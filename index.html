@@ -1178,19 +1178,6 @@
     }
     function loadHistory() { document.getElementById('historyList').innerHTML = '<p style="text-align:center;color:var(--text-dim)">読み込み中...</p>'; }
 
-    // Placeholders - will be overwritten when Firebase loads
-    window.submitEntry = () => { showToast('読み込み中...', 'info'); };
-    window.cancelEntry = () => { showToast('読み込み中...', 'info'); };
-    window.registerAsAdmin = () => { showToast('読み込み中...', 'info'); };
-    window.setDeadline = () => { hideModal('setDeadlineModal'); };
-    window.setGameName = () => { hideModal('setGameNameModal'); };
-    window.startRoulette = () => {};
-    window.spinRoulette = () => {};
-    window.confirmMatch = () => {};
-    window.executeConfirmMatch = () => hideModal('confirmMatchModal');
-    window.declareWinner = () => {};
-    window.executeWinner = () => hideModal('confirmWinnerModal');
-    window.recordAndReset = () => { hideModal('confirmRecordModal'); };
   </script>
 
   <!-- Firebase SDK -->
@@ -1206,21 +1193,26 @@
       appId: "1:514905483124:web:1882493de273598b0a2e21"
     };
 
-    let db;
-    try {
-      firebase.initializeApp(firebaseConfig);
-      db = firebase.firestore();
-      console.log('Firebase Firestore initialized');
-      
-      // 即座にデータ読み込み開始
-      loadData();
-      checkAdmin();
-    } catch (e) { 
-      console.error('Firebase init error:', e);
-      showToast('Firebase接続エラー: ' + e.message, 'error');
+    let db = null;
+
+    // Firebase初期化
+    function initFirebase() {
+      try {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        console.log('Firebase initialized successfully');
+        loadData();
+        return true;
+      } catch (e) { 
+        console.error('Firebase init error:', e);
+        alert('Firebase接続エラー: ' + e.message);
+        return false;
+      }
     }
 
+    // 管理者チェック
     async function checkAdmin() {
+      if (!db) return;
       try {
         const d = await db.collection('tournaments').doc('current').get();
         if (d.exists) {
@@ -1231,31 +1223,34 @@
       } catch (e) { console.error('checkAdmin error:', e); }
     }
 
+    // データ読み込み
     function loadData() {
-      // tournaments
+      if (!db) return;
+      
       db.collection('tournaments').doc('current').onSnapshot(d => {
         if (d.exists) { 
           appState.tournament = d.data(); 
-          updateTournamentDisplay(); 
+          updateTournamentDisplay();
+          checkAdmin();
         }
-      }, e => console.error('tournaments snapshot error:', e));
+      }, e => console.error('tournaments error:', e));
       
-      // entries
       db.collection('entries').orderBy('entry_id', 'asc').onSnapshot(snap => {
         appState.entries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         updateEntriesDisplay();
         updateRouletteWheel();
-        checkAdmin(); // エントリー更新時に管理者状態も再チェック
-      }, e => console.error('entries snapshot error:', e));
+      }, e => console.error('entries error:', e));
       
-      // matches
       db.collection('matches').orderBy('created_at', 'asc').onSnapshot(snap => {
         appState.matches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      }, e => console.error('matches snapshot error:', e));
+      }, e => console.error('matches error:', e));
     }
 
-    window.registerAsAdmin = async () => {
-      // ユーザー名チェック
+    // 管理者登録
+    window.registerAsAdmin = async function() {
+      console.log('registerAsAdmin called');
+      if (!db) { alert('データベース未接続'); return; }
+      
       const username = document.getElementById('adminUsernameInput').value.trim();
       const err = document.getElementById('adminUsernameError');
       
@@ -1264,26 +1259,19 @@
         err.classList.add('visible');
         return;
       }
-      
-      // 同名チェック
       if (appState.entries.find(e => e.username === username)) {
-        err.textContent = 'このユーザーネームは既に使用されています';
+        err.textContent = 'このユーザーネームは使用されています';
         err.classList.add('visible');
         return;
       }
-      
-      // 既にこのデバイスで登録済みかチェック
       if (appState.entries.find(e => e.device_id === appState.deviceId)) {
-        err.textContent = 'このデバイスは既に登録済みです';
+        err.textContent = 'このデバイスは登録済みです';
         err.classList.add('visible');
         return;
       }
-      
       err.classList.remove('visible');
       
-      console.log('Registering admin with deviceId:', appState.deviceId);
       try {
-        // 1. ユーザーとしてエントリー登録
         const entryId = appState.entries.length + 1;
         await db.collection('entries').doc(appState.deviceId).set({
           entry_id: entryId,
@@ -1294,9 +1282,7 @@
           is_admin: true,
           created_at: firebase.firestore.FieldValue.serverTimestamp()
         });
-        console.log('Entry registered');
         
-        // 2. 管理者デバイスとして登録
         const d = await db.collection('tournaments').doc('current').get();
         let adminDevices = d.exists ? (d.data().admin_devices || []) : [];
         if (!adminDevices.includes(appState.deviceId)) {
@@ -1306,66 +1292,62 @@
           admin_devices: adminDevices, 
           updated_at: firebase.firestore.FieldValue.serverTimestamp() 
         }, { merge: true });
-        console.log('Admin registered');
         
         appState.isAdmin = true;
         updateAdminUI();
         showToast('管理者登録完了！', 'success');
         
-        // タイトル画面に戻る
-        setTimeout(() => navigateTo('titleScreen'), 1000);
+        // 設定画面に遷移
+        setTimeout(() => navigateTo('tournamentScreen'), 500);
       } catch (e) { 
-        console.error('Admin registration error:', e);
-        showErrorPopup('登録エラー', '登録に失敗しました: ' + e.message);
+        console.error('Error:', e);
+        alert('登録エラー: ' + e.message);
       }
     };
 
-    window.submitEntry = async () => {
-      // 締切日が設定されていない場合は登録不可
+    // エントリー登録
+    window.submitEntry = async function() {
+      if (!db) { showToast('接続中...', 'info'); return; }
       if (!appState.tournament?.deadline) {
-        showToast('締切日時が設定されていません。管理者の設定をお待ちください。', 'error');
+        showToast('締切日時が未設定です', 'error');
         return;
       }
-      // 締切日を過ぎている場合は登録不可
-      const deadline = appState.tournament.deadline.toDate ? appState.tournament.deadline.toDate() : new Date(appState.tournament.deadline);
-      if (new Date() > deadline) {
-        showToast('締切日時を過ぎています。', 'error');
+      const dl = appState.tournament.deadline.toDate ? appState.tournament.deadline.toDate() : new Date(appState.tournament.deadline);
+      if (new Date() > dl) {
+        showToast('締切を過ぎています', 'error');
         return;
       }
       
       const name = document.getElementById('usernameInput').value.trim();
       const err = document.getElementById('usernameError');
-      if (!name) { err.textContent = 'ユーザーネームを入力'; err.classList.add('visible'); return; }
+      if (!name) { err.textContent = '入力してください'; err.classList.add('visible'); return; }
       if (appState.entries.find(e => e.username === name)) { err.textContent = '同名禁止'; err.classList.add('visible'); return; }
       if (appState.entries.find(e => e.device_id === appState.deviceId)) { err.textContent = '登録済み'; err.classList.add('visible'); return; }
-      if (appState.entries.length >= 100) { err.textContent = '定員（100名）に達しています'; err.classList.add('visible'); return; }
       err.classList.remove('visible');
+      
       try {
         const id = appState.entries.length + 1;
         const icon = document.getElementById('iconPreview').querySelector('img');
         await db.collection('entries').doc(appState.deviceId).set({
-          entry_id: id, 
-          username: name, 
-          device_id: appState.deviceId,
-          icon_url: icon ? icon.src : null, 
-          status: 'ACTIVE', 
+          entry_id: id, username: name, device_id: appState.deviceId,
+          icon_url: icon ? icon.src : null, status: 'ACTIVE', 
           created_at: firebase.firestore.FieldValue.serverTimestamp()
         });
-        showToast('登録完了', 'success');
+        showToast('登録完了！', 'success');
         document.getElementById('usernameInput').value = '';
       } catch (e) { showToast('失敗: ' + e.message, 'error'); }
     };
 
-    window.cancelEntry = async () => {
-      if (!confirm('キャンセルしますか？')) return;
+    window.cancelEntry = async function() {
+      if (!db || !confirm('キャンセルしますか？')) return;
       try { 
         await db.collection('entries').doc(appState.deviceId).delete(); 
         showToast('キャンセル完了', 'success'); 
-      }
-      catch (e) { showToast('失敗: ' + e.message, 'error'); }
+      } catch (e) { showToast('失敗', 'error'); }
     };
 
-    window.setDeadline = async () => {
+    window.setDeadline = async function() {
+      if (!db) return;
       const v = document.getElementById('deadlineInput').value;
       if (!v) { showToast('日時を入力', 'error'); return; }
       try {
@@ -1374,31 +1356,34 @@
           updated_at: firebase.firestore.FieldValue.serverTimestamp() 
         }, { merge: true });
         hideModal('setDeadlineModal'); 
-        showToast('設定完了', 'success');
-      } catch (e) { showToast('失敗: ' + e.message, 'error'); }
+        showToast('締切日時を設定しました', 'success');
+      } catch (e) { showToast('失敗', 'error'); }
     };
 
-    window.setGameName = async () => {
+    window.setGameName = async function() {
+      if (!db) return;
       const v = document.getElementById('gameNameInput').value.trim();
-      if (!v) { showToast('ゲーム名を入力', 'error'); return; }
+      if (!v) { showToast('入力してください', 'error'); return; }
       try {
         await db.collection('tournaments').doc('current').set({ 
           game_name: v, 
           updated_at: firebase.firestore.FieldValue.serverTimestamp() 
         }, { merge: true });
         hideModal('setGameNameModal'); 
-        showToast('設定完了', 'success');
-      } catch (e) { showToast('失敗: ' + e.message, 'error'); }
+        showToast('ゲーム名を設定しました', 'success');
+      } catch (e) { showToast('失敗', 'error'); }
     };
 
-    window.startRoulette = () => {
+    window.startRoulette = function() {
       const dl = appState.tournament?.deadline;
       if (!dl) { showToast('締切日時を設定してください', 'error'); return; }
-      if (new Date() < (dl.toDate ? dl.toDate() : new Date(dl))) { showToast('締切後にルーレット可能', 'error'); return; }
+      if (new Date() < (dl.toDate ? dl.toDate() : new Date(dl))) { 
+        showToast('締切後にルーレット可能', 'error'); return; 
+      }
       document.getElementById('rouletteContainer').style.display = 'flex';
     };
 
-    window.spinRoulette = () => {
+    window.spinRoulette = function() {
       if (appState.isSpinning) return;
       const active = appState.entries.filter(e => e.status === 'ACTIVE' || !e.status);
       const free = active.filter(e => !appState.matches.some(m => (m.player1_id === e.entry_id || m.player2_id === e.entry_id) && !m.winner_id));
@@ -1417,103 +1402,83 @@
       }, 4000);
     };
 
-    window.confirmMatch = () => {
+    window.confirmMatch = function() {
       if (!appState.selectedPlayer1 || !appState.selectedPlayer2) return;
       document.getElementById('confirmMatchText').textContent = appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username;
       showModal('confirmMatchModal');
     };
 
-    window.executeConfirmMatch = async () => {
+    window.executeConfirmMatch = async function() {
+      if (!db) return;
       try {
         await db.collection('matches').add({
-          player1_id: appState.selectedPlayer1.entry_id, 
-          player1_name: appState.selectedPlayer1.username,
-          player2_id: appState.selectedPlayer2.entry_id, 
-          player2_name: appState.selectedPlayer2.username,
-          winner_id: null, 
-          round: 1, 
-          created_at: firebase.firestore.FieldValue.serverTimestamp()
+          player1_id: appState.selectedPlayer1.entry_id, player1_name: appState.selectedPlayer1.username,
+          player2_id: appState.selectedPlayer2.entry_id, player2_name: appState.selectedPlayer2.username,
+          winner_id: null, round: 1, created_at: firebase.firestore.FieldValue.serverTimestamp()
         });
         hideModal('confirmMatchModal');
         document.getElementById('matchResultControls').style.display = 'flex';
         document.getElementById('confirmMatchBtn').disabled = true;
         showToast('対戦確定', 'success');
-      } catch (e) { showToast('失敗: ' + e.message, 'error'); }
+      } catch (e) { showToast('失敗', 'error'); }
     };
 
-    window.declareWinner = n => {
-      appState.pendingWinner = { n, w: n === 1 ? appState.selectedPlayer1 : appState.selectedPlayer2 };
+    window.declareWinner = function(n) {
+      appState.pendingWinner = { n: n, w: n === 1 ? appState.selectedPlayer1 : appState.selectedPlayer2 };
       document.getElementById('confirmWinnerText').textContent = appState.pendingWinner.w.username;
       showModal('confirmWinnerModal');
     };
 
-    window.executeWinner = async () => {
+    window.executeWinner = async function() {
+      if (!db) return;
       try {
         const { n, w } = appState.pendingWinner;
         const loser = n === 1 ? appState.selectedPlayer2 : appState.selectedPlayer1;
         const m = appState.matches.find(x => x.player1_id === appState.selectedPlayer1.entry_id && x.player2_id === appState.selectedPlayer2.entry_id && !x.winner_id);
-        if (m) {
-          await db.collection('matches').doc(m.id).update({ 
-            winner_id: w.entry_id, 
-            winner_name: w.username 
-          });
-        }
+        if (m) await db.collection('matches').doc(m.id).update({ winner_id: w.entry_id, winner_name: w.username });
         const le = appState.entries.find(e => e.entry_id === loser.entry_id);
-        if (le) {
-          await db.collection('entries').doc(le.id).update({ status: 'LOST' });
-        }
+        if (le) await db.collection('entries').doc(le.id).update({ status: 'LOST' });
         hideModal('confirmWinnerModal');
         document.getElementById('matchResultControls').style.display = 'none';
         appState.selectedPlayer1 = null; appState.selectedPlayer2 = null;
         updateVsDisplay(null, null);
         document.getElementById('wheelInner').style.transform = 'rotate(0deg)';
         showToast('勝者確定', 'success');
-      } catch (e) { showToast('失敗: ' + e.message, 'error'); }
+      } catch (e) { showToast('失敗', 'error'); }
     };
 
-    window.recordAndReset = async () => {
+    window.recordAndReset = async function() {
+      if (!db) return;
       try {
         const t = appState.tournament;
         const champ = appState.entries.find(e => e.status === 'ACTIVE' || !e.status);
         const admins = appState.entries.filter(e => e.is_admin);
-        const adminNames = admins.map(a => a.username);
         
         await db.collection('history').add({
           year: new Date().getFullYear(), 
           date: firebase.firestore.FieldValue.serverTimestamp(),
           game_name: t?.game_name || '未設定', 
           champion_name: champ?.username || '未確定',
-          champion_id: champ?.entry_id || null,
-          admin_names: adminNames,
-          participants: appState.entries.map(e => ({ 
-            entry_id: e.entry_id, 
-            username: e.username, 
-            status: e.status,
-            is_admin: e.is_admin || false
-          })),
-          matches: appState.matches.map(m => ({...m})),
+          admin_names: admins.map(a => a.username),
+          participants: appState.entries.map(e => ({ entry_id: e.entry_id, username: e.username, status: e.status, is_admin: e.is_admin || false })),
           total_participants: appState.entries.length
         });
         
         const batch = db.batch();
         appState.entries.forEach(e => batch.delete(db.collection('entries').doc(e.id)));
         appState.matches.forEach(m => batch.delete(db.collection('matches').doc(m.id)));
-        batch.set(db.collection('tournaments').doc('current'), { 
-          admin_devices: [], 
-          game_name: null, 
-          deadline: null, 
-          updated_at: firebase.firestore.FieldValue.serverTimestamp() 
-        });
+        batch.set(db.collection('tournaments').doc('current'), { admin_devices: [], game_name: null, deadline: null, updated_at: firebase.firestore.FieldValue.serverTimestamp() });
         await batch.commit();
         
         hideModal('confirmRecordModal');
         showModal('tournamentEndModal');
         appState.isAdmin = false;
         updateAdminUI();
-      } catch (e) { showToast('失敗: ' + e.message, 'error'); }
+      } catch (e) { showToast('失敗', 'error'); }
     };
 
-    window.loadHistory = async () => {
+    window.loadHistory = async function() {
+      if (!db) return;
       try {
         const snap = await db.collection('history').orderBy('date', 'desc').get();
         const list = document.getElementById('historyList');
@@ -1521,18 +1486,21 @@
         list.innerHTML = snap.docs.map(d => {
           const data = d.data();
           const date = data.date?.toDate?.() || new Date();
-          const adminNames = data.admin_names?.join(', ') || '不明';
-          const totalParticipants = data.total_participants || data.participants?.length || 0;
           return '<div class="history-card">' +
             '<div class="history-date">' + date.toLocaleDateString('ja-JP') + '</div>' +
             '<div class="history-game">' + escapeHtml(data.game_name||'不明') + '</div>' +
             '<div class="history-winner">👑 優勝: ' + escapeHtml(data.champion_name||'不明') + '</div>' +
-            '<div style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-dim);">参加者: ' + totalParticipants + '名</div>' +
-            '<div style="font-size:0.85rem;color:var(--text-dim);">管理者: ' + escapeHtml(adminNames) + '</div>' +
+            '<div style="font-size:0.85rem;color:var(--text-dim);">管理者: ' + escapeHtml((data.admin_names||[]).join(', ')||'不明') + '</div>' +
             '</div>';
         }).join('');
       } catch (e) { console.error(e); }
     };
+
+    // ページ読み込み時
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM loaded');
+      initFirebase();
+    });
   </script>
 </body>
 </html>

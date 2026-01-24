@@ -199,6 +199,184 @@
       filter: invert(1) sepia(1) saturate(5) hue-rotate(85deg);
       cursor: pointer;
     }
+
+    /* Custom Calendar Modal */
+    .calendar-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+    .calendar-modal.active { display: flex; }
+    .calendar-container {
+      background: rgba(0, 20, 10, 0.95);
+      border: 2px solid var(--matrix-green);
+      border-radius: 16px;
+      padding: 1.5rem;
+      max-width: 380px;
+      width: 95%;
+      box-shadow: 0 0 40px rgba(0, 255, 65, 0.3);
+      position: relative;
+    }
+    .calendar-close {
+      position: absolute;
+      top: 10px; right: 10px;
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-size: 1.8rem;
+      cursor: pointer;
+      width: 36px; height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.3s;
+    }
+    .calendar-close:hover {
+      color: var(--matrix-green);
+      background: rgba(0, 255, 65, 0.1);
+    }
+    .calendar-title {
+      color: var(--matrix-green);
+      font-size: 1.2rem;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .calendar-nav {
+      background: transparent;
+      border: 1px solid var(--matrix-green);
+      color: var(--matrix-green);
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+    .calendar-nav:hover {
+      background: var(--matrix-green);
+      color: var(--bg-dark);
+    }
+    .calendar-month-year {
+      color: var(--matrix-green);
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+    .calendar-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      margin-bottom: 0.5rem;
+    }
+    .calendar-weekday {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      padding: 0.5rem;
+    }
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+    }
+    .calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 40, 20, 0.5);
+      border: 1px solid transparent;
+      border-radius: 8px;
+      color: var(--text-primary);
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+    }
+    .calendar-day:hover:not(.disabled):not(.empty) {
+      border-color: var(--matrix-green);
+      background: rgba(0, 255, 65, 0.1);
+    }
+    .calendar-day.selected {
+      background: var(--matrix-green);
+      color: var(--bg-dark);
+      font-weight: bold;
+    }
+    .calendar-day.today {
+      border-color: var(--matrix-gold);
+    }
+    .calendar-day.disabled {
+      color: #333;
+      cursor: not-allowed;
+      background: rgba(0, 0, 0, 0.3);
+    }
+    .calendar-day.empty {
+      background: transparent;
+      cursor: default;
+    }
+    .calendar-time {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+      justify-content: center;
+      align-items: center;
+    }
+    .calendar-time-input {
+      width: 70px;
+      padding: 0.5rem;
+      background: rgba(0, 20, 10, 0.8);
+      border: 1px solid var(--matrix-green-dim);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 1.1rem;
+      text-align: center;
+    }
+    .calendar-time-input:focus {
+      outline: none;
+      border-color: var(--matrix-green);
+    }
+    .calendar-time-label {
+      color: var(--text-dim);
+      font-size: 1.2rem;
+    }
+    .calendar-confirm {
+      width: 100%;
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: linear-gradient(180deg, var(--matrix-green-dim) 0%, var(--matrix-green-dark) 100%);
+      border: 2px solid var(--matrix-green);
+      color: var(--matrix-green);
+      font-size: 1.1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .calendar-confirm:hover {
+      background: var(--matrix-green);
+      color: var(--bg-dark);
+    }
+    .calendar-selected-display {
+      text-align: center;
+      color: var(--matrix-gold);
+      font-size: 1rem;
+      margin-top: 1rem;
+      padding: 0.5rem;
+      background: rgba(255, 204, 0, 0.1);
+      border-radius: 6px;
+    }
     .submit-btn {
       width: 100%;
       padding: 1rem;
@@ -605,7 +783,7 @@
       <div class="title-screen">
         <h1 class="main-title">トーナメント</h1>
         <div class="menu-buttons">
-          <button class="menu-btn" id="entryBtn" onclick="navigateTo('entryScreen')">エントリー登録する</button>
+          <button class="menu-btn" id="entryBtn" onclick="navigateTo('entryScreen')" disabled>エントリー登録</button>
           <button class="menu-btn" onclick="navigateTo('tournamentScreen')">トーナメントを見る</button>
           <button class="menu-btn" onclick="navigateTo('historyScreen')">過去の大会記録を見る</button>
           <button class="menu-btn" onclick="navigateTo('adminScreen')">管理者登録をする</button>
@@ -634,14 +812,17 @@
         <p style="margin-bottom: 1.5rem; color: var(--text-dim);">締切日時を設定すると、参加者がエントリーできるようになります。</p>
         
         <div class="form-group">
-          <label class="form-label">ゲーム名（大会名）<span style="color:var(--error-red);">*必須</span></label>
+          <label class="form-label">ゲーム名（大会名）<span style="color:var(--error-red);"> *必須</span></label>
           <input type="text" class="form-input" id="setupGameName" placeholder="例: スマブラSP大会">
           <div class="error-message" id="setupGameNameError"></div>
         </div>
         
         <div class="form-group">
           <label class="form-label">エントリー締切日時 <span style="color:var(--error-red);">*必須</span></label>
-          <input type="datetime-local" class="form-input" id="setupDeadline">
+          <button type="button" class="form-input" id="setupDeadlineBtn" onclick="openCalendar('setup')" style="text-align:left;cursor:pointer;">
+            クリックして日時を選択
+          </button>
+          <input type="hidden" id="setupDeadline">
           <div class="error-message" id="setupDeadlineError"></div>
         </div>
         
@@ -765,7 +946,10 @@
     <div class="modal-content">
       <button class="modal-close-btn" onclick="hideModal('setDeadlineModal')">×</button>
       <h3 class="modal-title">締切日時設定</h3>
-      <input type="datetime-local" class="form-input" id="deadlineInput">
+      <button type="button" class="form-input" id="modalDeadlineBtn" onclick="openCalendar('modal')" style="text-align:left;cursor:pointer;width:100%;">
+        クリックして日時を選択
+      </button>
+      <input type="hidden" id="deadlineInput">
       <div class="modal-buttons">
         <button class="modal-btn modal-btn-cancel" onclick="hideModal('setDeadlineModal')">キャンセル</button>
         <button class="modal-btn modal-btn-confirm" onclick="setDeadline()">設定</button>
@@ -829,6 +1013,42 @@
   </div>
 
   <div class="toast" id="toast"></div>
+
+  <!-- Custom Calendar Modal -->
+  <div class="calendar-modal" id="calendarModal">
+    <div class="calendar-container">
+      <button class="calendar-close" onclick="closeCalendar()">×</button>
+      <h3 class="calendar-title">締切日時を選択</h3>
+      
+      <div class="calendar-header">
+        <button class="calendar-nav" onclick="changeMonth(-1)">◀</button>
+        <span class="calendar-month-year" id="calendarMonthYear"></span>
+        <button class="calendar-nav" onclick="changeMonth(1)">▶</button>
+      </div>
+      
+      <div class="calendar-weekdays">
+        <div class="calendar-weekday">日</div>
+        <div class="calendar-weekday">月</div>
+        <div class="calendar-weekday">火</div>
+        <div class="calendar-weekday">水</div>
+        <div class="calendar-weekday">木</div>
+        <div class="calendar-weekday">金</div>
+        <div class="calendar-weekday">土</div>
+      </div>
+      
+      <div class="calendar-days" id="calendarDays"></div>
+      
+      <div class="calendar-time">
+        <input type="number" class="calendar-time-input" id="calendarHour" min="0" max="23" value="12">
+        <span class="calendar-time-label">:</span>
+        <input type="number" class="calendar-time-input" id="calendarMinute" min="0" max="59" value="00" step="5">
+      </div>
+      
+      <div class="calendar-selected-display" id="calendarSelectedDisplay">日付を選択してください</div>
+      
+      <button class="calendar-confirm" onclick="confirmCalendar()">この日時で設定</button>
+    </div>
+  </div>
 
   <script>
     // App State
@@ -912,10 +1132,6 @@
     // Modals
     function showModal(id) { 
       document.getElementById(id).classList.add('active'); 
-      // 締切日時モーダルの場合はmin値を設定
-      if (id === 'setDeadlineModal') {
-        setDateTimeMinimum();
-      }
     }
     function hideModal(id) { document.getElementById(id).classList.remove('active'); }
 
@@ -975,15 +1191,12 @@
       const btn = document.getElementById('entryBtn');
       if (!appState.tournament?.deadline) {
         btn.disabled = true;
-        btn.textContent = 'エントリー登録する（締切未設定）';
       } else {
         const dl = appState.tournament.deadline.toDate ? appState.tournament.deadline.toDate() : new Date(appState.tournament.deadline);
         if (new Date() > dl) {
           btn.disabled = true;
-          btn.textContent = 'エントリー登録する（締切済）';
         } else {
           btn.disabled = false;
-          btn.textContent = 'エントリー登録する';
         }
       }
     }
@@ -1047,28 +1260,6 @@
     function showInfo() {
       alert('トーナメント管理アプリ\n\n・参加者はエントリー登録から参加できます\n・管理者は締切日時とゲーム名を設定します\n・締切後、管理者がルーレットで対戦を決定します');
     }
-
-    // datetime-localの最小値を現在時刻に設定
-    function setDateTimeMinimum() {
-      const now = new Date();
-      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-      const minDateTime = now.toISOString().slice(0, 16);
-      
-      const setupDeadline = document.getElementById('setupDeadline');
-      const deadlineInput = document.getElementById('deadlineInput');
-      
-      if (setupDeadline) setupDeadline.min = minDateTime;
-      if (deadlineInput) deadlineInput.min = minDateTime;
-    }
-
-    // 画面遷移時にmin値を更新
-    const originalNavigateTo = navigateTo;
-    navigateTo = function(screenId) {
-      originalNavigateTo(screenId);
-      if (screenId === 'adminSetupScreen') {
-        setDateTimeMinimum();
-      }
-    };
   </script>
 
   <!-- Firebase -->
@@ -1152,9 +1343,6 @@
       document.getElementById('adminSetupScreen').classList.add('active');
       currentScreen = 'adminSetupScreen';
       document.getElementById('backBtn').classList.add('visible');
-      
-      // 日時の最小値を設定
-      setDateTimeMinimum();
     }
 
     // 大会設定保存
@@ -1177,16 +1365,9 @@
       }
       
       if (!deadline) {
-        deadlineErr.textContent = '締切日時を入力してください';
+        deadlineErr.textContent = '締切日時を選択してください';
         deadlineErr.classList.add('visible');
         hasError = true;
-      } else {
-        // 過去の日付チェック
-        if (new Date(deadline) <= new Date()) {
-          deadlineErr.textContent = '締切日時は現在より後の日時を設定してください';
-          deadlineErr.classList.add('visible');
-          hasError = true;
-        }
       }
       
       if (hasError) return;
@@ -1273,14 +1454,8 @@
       if (!db) return;
       const v = document.getElementById('deadlineInput').value;
       if (!v) { 
-        showToast('日時を入力してください', 'error'); 
+        showToast('日時を選択してください', 'error'); 
         return; 
-      }
-      
-      // 過去の日付チェック
-      if (new Date(v) <= new Date()) {
-        showToast('現在より後の日時を設定してください', 'error');
-        return;
       }
       
       db.collection('tournaments').doc('current').set({
@@ -1289,6 +1464,8 @@
       }, { merge: true })
       .then(() => {
         hideModal('setDeadlineModal');
+        // ボタンテキストをリセット
+        document.getElementById('modalDeadlineBtn').textContent = 'クリックして日時を選択';
         showToast('締切日時を設定しました', 'success');
       })
       .catch(e => showToast('エラー: ' + e.message, 'error'));
@@ -1482,6 +1659,151 @@
 
     // Initialize
     document.addEventListener('DOMContentLoaded', initFirebase);
+
+    // ===== Custom Calendar =====
+    let calendarDate = new Date();
+    let calendarSelectedDate = null;
+    let calendarTarget = null; // 'setup' or 'modal'
+
+    function openCalendar(target) {
+      calendarTarget = target;
+      calendarDate = new Date();
+      calendarSelectedDate = null;
+      
+      // 時刻をデフォルトに
+      document.getElementById('calendarHour').value = '12';
+      document.getElementById('calendarMinute').value = '00';
+      
+      renderCalendar();
+      updateCalendarDisplay();
+      document.getElementById('calendarModal').classList.add('active');
+    }
+
+    function closeCalendar() {
+      document.getElementById('calendarModal').classList.remove('active');
+    }
+
+    function changeMonth(delta) {
+      calendarDate.setMonth(calendarDate.getMonth() + delta);
+      renderCalendar();
+    }
+
+    function renderCalendar() {
+      const year = calendarDate.getFullYear();
+      const month = calendarDate.getMonth();
+      
+      // 月表示
+      const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+      document.getElementById('calendarMonthYear').textContent = year + '年 ' + monthNames[month];
+      
+      // 日付グリッド
+      const daysContainer = document.getElementById('calendarDays');
+      daysContainer.innerHTML = '';
+      
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // 空のセル
+      for (let i = 0; i < firstDay; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'calendar-day empty';
+        daysContainer.appendChild(emptyCell);
+      }
+      
+      // 日付セル
+      for (let day = 1; day <= daysInMonth; day++) {
+        const cell = document.createElement('div');
+        cell.className = 'calendar-day';
+        cell.textContent = day;
+        
+        const cellDate = new Date(year, month, day);
+        cellDate.setHours(0, 0, 0, 0);
+        
+        // 過去の日付は無効
+        if (cellDate < today) {
+          cell.classList.add('disabled');
+        } else {
+          cell.onclick = () => selectDate(year, month, day);
+        }
+        
+        // 今日
+        if (cellDate.getTime() === today.getTime()) {
+          cell.classList.add('today');
+        }
+        
+        // 選択中
+        if (calendarSelectedDate && 
+            calendarSelectedDate.getFullYear() === year && 
+            calendarSelectedDate.getMonth() === month && 
+            calendarSelectedDate.getDate() === day) {
+          cell.classList.add('selected');
+        }
+        
+        daysContainer.appendChild(cell);
+      }
+    }
+
+    function selectDate(year, month, day) {
+      calendarSelectedDate = new Date(year, month, day);
+      renderCalendar();
+      updateCalendarDisplay();
+    }
+
+    function updateCalendarDisplay() {
+      const display = document.getElementById('calendarSelectedDisplay');
+      if (calendarSelectedDate) {
+        const hour = document.getElementById('calendarHour').value.padStart(2, '0');
+        const minute = document.getElementById('calendarMinute').value.padStart(2, '0');
+        const dateStr = calendarSelectedDate.getFullYear() + '/' + 
+                       String(calendarSelectedDate.getMonth() + 1).padStart(2, '0') + '/' + 
+                       String(calendarSelectedDate.getDate()).padStart(2, '0');
+        display.textContent = dateStr + ' ' + hour + ':' + minute;
+      } else {
+        display.textContent = '日付を選択してください';
+      }
+    }
+
+    // 時刻変更時に表示更新
+    document.getElementById('calendarHour')?.addEventListener('input', updateCalendarDisplay);
+    document.getElementById('calendarMinute')?.addEventListener('input', updateCalendarDisplay);
+
+    function confirmCalendar() {
+      if (!calendarSelectedDate) {
+        showToast('日付を選択してください', 'error');
+        return;
+      }
+      
+      const hour = parseInt(document.getElementById('calendarHour').value) || 0;
+      const minute = parseInt(document.getElementById('calendarMinute').value) || 0;
+      
+      const selectedDateTime = new Date(
+        calendarSelectedDate.getFullYear(),
+        calendarSelectedDate.getMonth(),
+        calendarSelectedDate.getDate(),
+        hour,
+        minute
+      );
+      
+      // 現在時刻より後かチェック
+      if (selectedDateTime <= new Date()) {
+        showToast('現在より後の日時を選択してください', 'error');
+        return;
+      }
+      
+      const dateTimeStr = selectedDateTime.toLocaleString('ja-JP');
+      
+      if (calendarTarget === 'setup') {
+        document.getElementById('setupDeadline').value = selectedDateTime.toISOString();
+        document.getElementById('setupDeadlineBtn').textContent = dateTimeStr;
+      } else if (calendarTarget === 'modal') {
+        document.getElementById('deadlineInput').value = selectedDateTime.toISOString();
+        document.getElementById('modalDeadlineBtn').textContent = dateTimeStr;
+      }
+      
+      closeCalendar();
+    }
   </script>
 </body>
 </html>

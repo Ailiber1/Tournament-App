@@ -149,6 +149,45 @@
       padding: 1.5rem 1rem 1rem;
     }
     .title-guide-icons { position: fixed; top: 1.2rem; right: 1.5rem; display: flex; gap: 0.6rem; z-index: 20; }
+    
+    /* PC Layout */
+    .title-layout {
+      display: flex;
+      flex-direction: column;
+      min-height: calc(100vh - 100px);
+    }
+    @media (min-width: 900px) {
+      .title-layout {
+        flex-direction: row;
+        padding: 0 2rem;
+      }
+      .title-layout .left-menu {
+        width: 280px;
+        flex-shrink: 0;
+        padding: 1rem 1rem 1rem 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+      .title-layout .center-content {
+        flex: 1;
+        padding: 1rem 2rem;
+        display: flex;
+        flex-direction: column;
+      }
+    }
+    @media (max-width: 899px) {
+      .title-layout .left-menu {
+        order: 2;
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 0 1rem;
+        width: 100%;
+      }
+      .title-layout .center-content {
+        order: 1;
+      }
+    }
     .hud-panel {
       background: var(--bg-panel);
       border: 2px solid var(--hud-green);
@@ -203,11 +242,17 @@
     .info-value { font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: var(--hud-green); }
     .info-value.warning { color: var(--hud-red); }
     .title-info-panel {
-      max-width: 800px;
-      margin: 0 auto 1.5rem;
+      max-width: 100%;
+      margin: 0 0 1.5rem 0;
       background: var(--bg-panel);
       border: 2px solid var(--hud-green);
       padding: 1rem 1.5rem;
+    }
+    @media (max-width: 899px) {
+      .title-info-panel {
+        max-width: 800px;
+        margin: 0 auto 1.5rem;
+      }
     }
     .title-info-panel .hud-panel-title {
       font-family: 'Orbitron', sans-serif;
@@ -424,19 +469,31 @@
       padding: 2rem 1rem;
       margin-top: 1.5rem;
     }
+    @media (min-width: 900px) {
+      .participant-status {
+        text-align: left;
+        padding: 1rem 0;
+      }
+    }
     .participant-status-main {
       font-family: 'Orbitron', sans-serif;
-      font-size: 1.1rem;
+      font-size: 1rem;
       color: var(--hud-green);
       margin-bottom: 0.5rem;
+    }
+    @media (min-width: 900px) {
+      .participant-status-main { font-size: 0.9rem; }
     }
     .participant-status-main span {
       color: var(--hud-gold);
       font-weight: bold;
     }
     .participant-status-sub {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       color: var(--text-dim);
+    }
+    @media (min-width: 900px) {
+      .participant-status-sub { font-size: 0.75rem; }
     }
   </style>
 </head>
@@ -462,30 +519,36 @@
         <h1 class="main-title">トーナメント</h1>
       </div>
       
-      <!-- 大会情報（タイトル直下、横長） -->
-      <div class="title-info-panel">
-        <div class="hud-panel-title">◆ 大会情報</div>
-        <div class="title-info-grid">
-          <div class="title-info-item"><div class="title-info-label">ゲーム名</div><div class="title-info-value" id="titleGameName">未設定</div></div>
-          <div class="title-info-item"><div class="title-info-label">締切日時</div><div class="title-info-value" id="titleDeadline">未設定</div></div>
-          <div class="title-info-item"><div class="title-info-label">管理者</div><div class="title-info-value" id="titleAdmin">-</div></div>
-          <div class="title-info-item"><div class="title-info-label">参加者</div><div class="title-info-value" id="titleCount">0名</div></div>
+      <!-- PC: 左メニュー + 中央コンテンツ / スマホ: 縦積み -->
+      <div class="title-layout">
+        <!-- 左メニュー（PC時）/ 下部メニュー（スマホ時） -->
+        <div class="left-menu">
+          <button class="menu-btn" id="entryBtn" onclick="navigateTo('entryScreen')" disabled>エントリー登録する</button>
+          <button class="menu-btn" onclick="navigateTo('tournamentScreen')">トーナメントを見る</button>
+          <button class="menu-btn" onclick="navigateTo('historyScreen')">過去の大会記録を見る</button>
+          <button class="menu-btn" onclick="navigateTo('adminScreen')">管理者登録をする</button>
+          <button class="menu-btn cancel-btn" id="cancelEntryBtn" onclick="cancelEntry()" disabled>登録解除</button>
+          
+          <!-- 参加者数表示（メニュー下） -->
+          <div class="participant-status" style="margin-top:1.5rem;padding:1rem 0;">
+            <div class="participant-status-main">参加者数：<span id="titleParticipantCount">0</span>/100（最大100人）</div>
+            <div class="participant-status-sub">参加人数が上限に達するとエントリーは締め切られます。</div>
+          </div>
         </div>
-      </div>
-      
-      <!-- メニューボタン（中央） -->
-      <div style="max-width:320px;margin:0 auto;padding:0 1rem;">
-        <button class="menu-btn" id="entryBtn" onclick="navigateTo('entryScreen')" disabled>エントリー登録する</button>
-        <button class="menu-btn" onclick="navigateTo('tournamentScreen')">トーナメントを見る</button>
-        <button class="menu-btn" onclick="navigateTo('historyScreen')">過去の大会記録を見る</button>
-        <button class="menu-btn" onclick="navigateTo('adminScreen')">管理者登録をする</button>
-        <button class="menu-btn cancel-btn" id="cancelEntryBtn" onclick="cancelEntry()" disabled>登録解除</button>
-      </div>
-      
-      <!-- 参加者数表示（最下部） -->
-      <div class="participant-status">
-        <div class="participant-status-main">参加者数：<span id="titleParticipantCount">0</span>/100（最大100人）</div>
-        <div class="participant-status-sub">参加人数が上限に達するとエントリーは締め切られます。</div>
+        
+        <!-- 中央コンテンツ -->
+        <div class="center-content">
+          <!-- 大会情報（横長） -->
+          <div class="title-info-panel">
+            <div class="hud-panel-title">◆ 大会情報</div>
+            <div class="title-info-grid">
+              <div class="title-info-item"><div class="title-info-label">ゲーム名</div><div class="title-info-value" id="titleGameName">未設定</div></div>
+              <div class="title-info-item"><div class="title-info-label">締切日時</div><div class="title-info-value" id="titleDeadline">未設定</div></div>
+              <div class="title-info-item"><div class="title-info-label">管理者</div><div class="title-info-value" id="titleAdmin">-</div></div>
+              <div class="title-info-item"><div class="title-info-label">参加者</div><div class="title-info-value" id="titleCount">0名</div></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="screen" id="adminScreen">

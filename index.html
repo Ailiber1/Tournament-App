@@ -1412,18 +1412,154 @@
   <script>
     const firebaseConfig = { apiKey: "AIzaSyCNGRa4DCOM595aM5Exor5BF6oPUvg1TIY", authDomain: "tournament-app-a0837.firebaseapp.com", projectId: "tournament-app-a0837", storageBucket: "tournament-app-a0837.firebasestorage.app", messagingSenderId: "514905483124", appId: "1:514905483124:web:1882493de273598b0a2e21" };
     let db = null;
-    function initFirebase() { try { firebase.initializeApp(firebaseConfig); db = firebase.firestore(); console.log('Firebase OK'); loadData(); initLogListener(); } catch (e) { console.error('Firebase error:', e); updateTournamentDisplay(); } }
+    
+    // スパム対策：クールダウン管理
+    const COOLDOWN_TIME = 5 * 60 * 1000; // 5分（ミリ秒）
+    const COOLDOWN_THRESHOLD = 3; // 3回
+    const COOLDOWN_WINDOW = 5 * 60 * 1000; // 5分以内
+    
+    // クールダウン状態チェック
+    async function checkCooldown(type) {
+      if (!db) return { blocked: false };
+      const docId = type === 'user' ? appState.deviceId : 'admin_' + appState.deviceId;
+      try {
+        const doc = await db.collection('cooldowns').doc(docId).get();
+        if (doc.exists) {
+          const data = doc.data();
+          const expiry = data.expiry?.toDate?.() || new Date(data.expiry);
+          if (new Date() < expiry) {
+            const remaining = Math.ceil((expiry - new Date()) / 1000 / 60);
+            return { blocked: true, remaining: remaining };
+          } else {
+            // 期限切れなら削除
+            await db.collection('cooldowns').doc(docId).delete();
+          }
+        }
+      } catch (e) { console.error('Cooldown check error:', e); }
+      return { blocked: false };
+    }
+    
+    // 操作ログを記録して異常検知
+    async function recordAction(type, actionName) {
+      if (!db) return false;
+      const docId = type === 'user' ? appState.deviceId : 'admin_' + appState.deviceId;
+      const now = new Date();
+      const windowStart = new Date(now.getTime() - COOLDOWN_WINDOW);
+      
+      try {
+        // 操作ログを追加
+        await db.collection('action_logs').add({
+          device_id: appState.deviceId,
+          type: type,
+          action: actionName,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        // 5分以内の操作回数をカウント
+        const snap = await db.collection('action_logs')
+          .where('device_id', '==', appState.deviceId)
+          .where('type', '==', type)
+          .where('timestamp', '>=', windowStart)
+          .get();
+        
+        if (snap.size >= COOLDOWN_THRESHOLD) {
+          // クールダウン発動
+          const expiry = new Date(now.getTime() + COOLDOWN_TIME);
+          await db.collection('cooldowns').doc(docId).set({
+            device_id: appState.deviceId,
+            type: type,
+            reason: actionName,
+            expiry: expiry,
+            created_at: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          
+          // 異常通知をログに記録（管理者向け）
+          await db.collection('spam_alerts').add({
+            device_id: appState.deviceId,
+            type: type,
+            username: type === 'user' ? (appState.entries.find(e => e.device_id === appState.deviceId)?.username || '不明') : appState.adminName,
+            action_count: snap.size,
+            cooldown_minutes: 5,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          
+          appendLog('⚠️ 異常検知: クールダウン発動');
+          return true; // クールダウン発動
+        }
+      } catch (e) { console.error('Record action error:', e); }
+      return false;
+    }
+    
+    // 古い操作ログをクリーンアップ（5分以上前のもの）
+    async function cleanupOldActionLogs() {
+      if (!db) return;
+      const cutoff = new Date(Date.now() - COOLDOWN_WINDOW - 60000);
+      try {
+        const snap = await db.collection('action_logs')
+          .where('timestamp', '<', cutoff)
+          .limit(50)
+          .get();
+        if (!snap.empty) {
+          const batch = db.batch();
+          snap.forEach(doc => batch.delete(doc.ref));
+          await batch.commit();
+        }
+      } catch (e) { console.error('Cleanup error:', e); }
+    }
+    
+    function initFirebase() { try { firebase.initializeApp(firebaseConfig); db = firebase.firestore(); console.log('Firebase OK'); loadData(); initLogListener(); setInterval(cleanupOldActionLogs, 60000); } catch (e) { console.error('Firebase error:', e); updateTournamentDisplay(); } }
     function loadData() { if (!db) return; db.collection('tournaments').doc('current').onSnapshot(doc => { if (doc.exists) { appState.tournament = doc.data(); if (appState.tournament.admin_device === appState.deviceId) { appState.isAdmin = true; appState.adminName = appState.tournament.admin_name; } updateTournamentDisplay(); } }); db.collection('entries').orderBy('entry_id', 'asc').onSnapshot(snap => { appState.entries = snap.docs.map(d => ({ id: d.id, ...d.data() })); updateEntriesDisplay(); updateRouletteWheel(); updateTournamentDisplay(); }); db.collection('matches').orderBy('created_at', 'asc').onSnapshot(snap => { appState.matches = snap.docs.map(d => ({ id: d.id, ...d.data() })); }); }
-    function registerAdmin() { const n = document.getElementById('adminNameInput').value.trim(); const e = document.getElementById('adminNameError'); if (!n) { e.textContent = '管理者名を入力してください'; e.classList.add('visible'); return; } e.classList.remove('visible'); localStorage.setItem('tournament_admin_name', n); appState.adminName = n; appState.isAdmin = true; appendLog(n + 'が管理者になりました'); playClick(); screenHistory.push(currentScreen); document.getElementById(currentScreen).classList.remove('active'); document.getElementById('adminSetupScreen').classList.add('active'); currentScreen = 'adminSetupScreen'; document.getElementById('mainHeader').classList.add('visible'); document.getElementById('backBtn').classList.add('visible'); }
+    async function registerAdmin() { 
+      // クールダウンチェック
+      const cd = await checkCooldown('admin');
+      if (cd.blocked) { showToast('短時間で登録・解除を繰り返したため、しばらくお待ちください（残り' + cd.remaining + '分）', 'error'); return; }
+      
+      const n = document.getElementById('adminNameInput').value.trim(); const e = document.getElementById('adminNameError'); if (!n) { e.textContent = '管理者名を入力してください'; e.classList.add('visible'); return; } e.classList.remove('visible'); localStorage.setItem('tournament_admin_name', n); appState.adminName = n; appState.isAdmin = true; 
+      
+      // 操作記録
+      await recordAction('admin', 'register_admin');
+      
+      appendLog(n + 'が管理者になりました'); playClick(); screenHistory.push(currentScreen); document.getElementById(currentScreen).classList.remove('active'); document.getElementById('adminSetupScreen').classList.add('active'); currentScreen = 'adminSetupScreen'; document.getElementById('mainHeader').classList.add('visible'); document.getElementById('backBtn').classList.add('visible'); 
+    }
     function saveTournamentSettings() { const gn = document.getElementById('setupGameName').value.trim(); const dl = document.getElementById('setupDeadline').value; const ge = document.getElementById('setupGameNameError'); const de = document.getElementById('setupDeadlineError'); ge.classList.remove('visible'); de.classList.remove('visible'); let err = false; if (!gn) { ge.textContent = 'ゲーム名を入力してください'; ge.classList.add('visible'); err = true; } if (!dl) { de.textContent = '締切日時を選択してください'; de.classList.add('visible'); err = true; } if (err) return; playClick(); appState.tournament = { admin_name: appState.adminName, admin_device: appState.deviceId, game_name: gn, deadline: new Date(dl) }; appendLog(appState.adminName + 'がトーナメント「' + gn + '」を作成しました'); if (db) { db.collection('tournaments').doc('current').set({ admin_name: appState.adminName, admin_device: appState.deviceId, game_name: gn, deadline: new Date(dl), updated_at: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }).catch(e => console.error(e)); } updateTournamentDisplay(); showModal('settingsCompleteModal'); }
-    function submitEntry() { if (!appState.tournament?.deadline) { showToast('締切日時が未設定です', 'error'); return; } const d = appState.tournament.deadline.toDate ? appState.tournament.deadline.toDate() : new Date(appState.tournament.deadline); if (new Date() > d) { showToast('締切を過ぎています', 'error'); return; } const n = document.getElementById('usernameInput').value.trim(); const e = document.getElementById('usernameError'); if (!n) { e.textContent = 'ユーザーネームを入力してください'; e.classList.add('visible'); return; } if (appState.entries.find(x => x.username === n)) { e.textContent = 'このユーザー名は既に使用されています'; e.classList.add('visible'); return; } if (appState.entries.find(x => x.device_id === appState.deviceId)) { e.textContent = 'このデバイスは既に登録済みです'; e.classList.add('visible'); return; } if (appState.entries.length >= 100) { updateSystemNotice('参加上限に達しました'); showToast('参加上限に達しました', 'error'); return; } e.classList.remove('visible'); const id = appState.entries.length + 1; const ic = document.getElementById('iconPreview').querySelector('img'); playClick(); const ne = { id: appState.deviceId, entry_id: id, username: n, device_id: appState.deviceId, icon_url: ic ? ic.src : null, status: 'ACTIVE' }; appState.entries.push(ne); appendLog(n + 'がエントリーしました'); if (db) { db.collection('entries').doc(appState.deviceId).set({ entry_id: id, username: n, device_id: appState.deviceId, icon_url: ic ? ic.src : null, status: 'ACTIVE', created_at: firebase.firestore.FieldValue.serverTimestamp() }).catch(x => console.error(x)); } updateEntriesDisplay(); updateTournamentDisplay(); document.getElementById('usernameInput').value = ''; clearIcon(); document.getElementById('entryCompleteInfo').textContent = n + ' (ID-' + String(id).padStart(2,'0') + ')'; showModal('entryCompleteModal'); }
+    async function submitEntry() { 
+      // クールダウンチェック
+      const cd = await checkCooldown('user');
+      if (cd.blocked) { showToast('短時間で登録・解除を繰り返したため、しばらくお待ちください（残り' + cd.remaining + '分）', 'error'); return; }
+      
+      if (!appState.tournament?.deadline) { showToast('締切日時が未設定です', 'error'); return; } const d = appState.tournament.deadline.toDate ? appState.tournament.deadline.toDate() : new Date(appState.tournament.deadline); if (new Date() > d) { showToast('締切を過ぎています', 'error'); return; } const n = document.getElementById('usernameInput').value.trim(); const e = document.getElementById('usernameError'); if (!n) { e.textContent = 'ユーザーネームを入力してください'; e.classList.add('visible'); return; } if (appState.entries.find(x => x.username === n)) { e.textContent = 'このユーザー名は既に使用されています'; e.classList.add('visible'); return; } if (appState.entries.find(x => x.device_id === appState.deviceId)) { e.textContent = 'このデバイスは既に登録済みです'; e.classList.add('visible'); return; } if (appState.entries.length >= 100) { updateSystemNotice('参加上限に達しました'); showToast('参加上限に達しました', 'error'); return; } e.classList.remove('visible'); 
+      
+      // 操作記録
+      const triggered = await recordAction('user', 'entry');
+      if (triggered) { showToast('短時間で登録・解除を繰り返したため、しばらくお待ちください', 'error'); return; }
+      
+      const id = appState.entries.length + 1; const ic = document.getElementById('iconPreview').querySelector('img'); playClick(); const ne = { id: appState.deviceId, entry_id: id, username: n, device_id: appState.deviceId, icon_url: ic ? ic.src : null, status: 'ACTIVE' }; appState.entries.push(ne); appendLog(n + 'がエントリーしました'); if (db) { db.collection('entries').doc(appState.deviceId).set({ entry_id: id, username: n, device_id: appState.deviceId, icon_url: ic ? ic.src : null, status: 'ACTIVE', created_at: firebase.firestore.FieldValue.serverTimestamp() }).catch(x => console.error(x)); } updateEntriesDisplay(); updateTournamentDisplay(); document.getElementById('usernameInput').value = ''; clearIcon(); document.getElementById('entryCompleteInfo').textContent = n + ' (ID-' + String(id).padStart(2,'0') + ')'; showModal('entryCompleteModal'); 
+    }
     function cancelEntry() { const my = appState.entries.find(e => e.device_id === appState.deviceId); if (!my) { showToast('エントリーしていません', 'error'); return; } const dl = appState.tournament?.deadline; if (dl) { const d = dl.toDate ? dl.toDate() : new Date(dl); if (new Date() >= d) { showToast('締切日時を過ぎているため解除できません', 'error'); return; } } showModal('confirmCancelEntryModal'); }
-    function executeCancelEntry() { playClick(); const myEntry = appState.entries.find(e => e.device_id === appState.deviceId); const username = myEntry ? myEntry.username : '不明'; const i = appState.entries.findIndex(e => e.device_id === appState.deviceId); if (i !== -1) appState.entries.splice(i, 1); appendLog(username + 'が登録解除しました'); if (db) db.collection('entries').doc(appState.deviceId).delete().catch(e => console.error(e)); updateEntriesDisplay(); updateTournamentDisplay(); updateEntryScreen(); updateCancelEntryButton(); hideModal('confirmCancelEntryModal'); showModal('cancelCompleteModal'); }
+    async function executeCancelEntry() { 
+      // クールダウンチェック
+      const cd = await checkCooldown('user');
+      if (cd.blocked) { hideModal('confirmCancelEntryModal'); showToast('短時間で登録・解除を繰り返したため、しばらくお待ちください（残り' + cd.remaining + '分）', 'error'); return; }
+      
+      // 操作記録
+      const triggered = await recordAction('user', 'cancel_entry');
+      if (triggered) { hideModal('confirmCancelEntryModal'); showToast('短時間で登録・解除を繰り返したため、しばらくお待ちください', 'error'); return; }
+      
+      playClick(); const myEntry = appState.entries.find(e => e.device_id === appState.deviceId); const username = myEntry ? myEntry.username : '不明'; const i = appState.entries.findIndex(e => e.device_id === appState.deviceId); if (i !== -1) appState.entries.splice(i, 1); appendLog(username + 'が登録解除しました'); if (db) db.collection('entries').doc(appState.deviceId).delete().catch(e => console.error(e)); updateEntriesDisplay(); updateTournamentDisplay(); updateEntryScreen(); updateCancelEntryButton(); hideModal('confirmCancelEntryModal'); showModal('cancelCompleteModal'); 
+    }
     function spinRoulette() { if (appState.isSpinning) return; const a = appState.entries.filter(e => e.status !== 'LOST'); const f = a.filter(e => !appState.matches.some(m => (m.player1_id === e.entry_id || m.player2_id === e.entry_id) && !m.winner_id)); if (f.length < 2) { showToast('対戦可能な参加者が不足しています', 'error'); return; } appState.isSpinning = true; document.getElementById('spinBtn').disabled = true; const s = [...f].sort(() => Math.random() - 0.5); appState.selectedPlayer1 = s[0]; appState.selectedPlayer2 = s[1]; document.getElementById('wheelInner').style.transform = 'rotate(' + (1800 + Math.random() * 720) + 'deg)'; setTimeout(() => { playVsSound(); updateVsDisplay(appState.selectedPlayer1, appState.selectedPlayer2); appendLog(appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username); document.getElementById('confirmMatchBtn').disabled = false; appState.isSpinning = false; document.getElementById('spinBtn').disabled = false; }, 4000); }
     function confirmMatch() { if (!appState.selectedPlayer1 || !appState.selectedPlayer2) return; document.getElementById('confirmMatchText').textContent = appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username; showModal('confirmMatchModal'); }
     function executeConfirmMatch() { if (!db) return; playClick(); appendLog(appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username + ' の対戦が確定'); db.collection('matches').add({ player1_id: appState.selectedPlayer1.entry_id, player1_name: appState.selectedPlayer1.username, player2_id: appState.selectedPlayer2.entry_id, player2_name: appState.selectedPlayer2.username, winner_id: null, round: 1, created_at: firebase.firestore.FieldValue.serverTimestamp() }).then(() => { hideModal('confirmMatchModal'); document.getElementById('matchResultControls').style.display = 'flex'; document.getElementById('confirmMatchBtn').disabled = true; showToast('対戦を確定しました', 'success'); }).catch(e => showToast('エラー: ' + e.message, 'error')); }
     function declareWinner(n) { appState.pendingWinner = { winner: n === 1 ? appState.selectedPlayer1 : appState.selectedPlayer2, loser: n === 1 ? appState.selectedPlayer2 : appState.selectedPlayer1 }; document.getElementById('confirmWinnerText').textContent = appState.pendingWinner.winner.username; showModal('confirmWinnerModal'); }
-    function executeWinner() { if (!db) return; const { winner, loser } = appState.pendingWinner; playClick(); appendLog(winner.username + 'が勝利（' + loser.username + '敗退）'); const m = appState.matches.find(x => x.player1_id === appState.selectedPlayer1.entry_id && x.player2_id === appState.selectedPlayer2.entry_id && !x.winner_id); if (m) db.collection('matches').doc(m.id).update({ winner_id: winner.entry_id, winner_name: winner.username }); const le = appState.entries.find(e => e.entry_id === loser.entry_id); if (le) db.collection('entries').doc(le.id).update({ status: 'LOST' }); hideModal('confirmWinnerModal'); document.getElementById('matchResultControls').style.display = 'none'; appState.selectedPlayer1 = null; appState.selectedPlayer2 = null; updateVsDisplay(null, null); document.getElementById('wheelInner').style.transform = 'rotate(0deg)'; showToast('勝者を確定しました', 'success'); checkAndUpdateStatus(); }
+    async function executeWinner() { 
+      if (!db) return; 
+      
+      // 管理者クールダウンチェック
+      const cd = await checkCooldown('admin');
+      if (cd.blocked) { hideModal('confirmWinnerModal'); showToast('短時間で登録・解除を繰り返したため、しばらくお待ちください（残り' + cd.remaining + '分）', 'error'); return; }
+      
+      const { winner, loser } = appState.pendingWinner; playClick(); appendLog(winner.username + 'が勝利（' + loser.username + '敗退）'); const m = appState.matches.find(x => x.player1_id === appState.selectedPlayer1.entry_id && x.player2_id === appState.selectedPlayer2.entry_id && !x.winner_id); if (m) db.collection('matches').doc(m.id).update({ winner_id: winner.entry_id, winner_name: winner.username }); const le = appState.entries.find(e => e.entry_id === loser.entry_id); if (le) db.collection('entries').doc(le.id).update({ status: 'LOST' }); hideModal('confirmWinnerModal'); document.getElementById('matchResultControls').style.display = 'none'; appState.selectedPlayer1 = null; appState.selectedPlayer2 = null; updateVsDisplay(null, null); document.getElementById('wheelInner').style.transform = 'rotate(0deg)'; showToast('勝者を確定しました', 'success'); checkAndUpdateStatus(); 
+    }
 
     // 大会終了確認
     function confirmEndTournament() {

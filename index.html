@@ -286,56 +286,29 @@
       bottom: 1.5rem;
       left: 1.5rem;
       display: flex;
-      flex-direction: column;
       gap: 0.5rem;
       z-index: 100;
     }
-    .sound-control-row {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: rgba(0, 20, 10, 0.9);
-      border: 1px solid var(--hud-green-dim);
-      padding: 0.4rem 0.6rem;
-      border-radius: 4px;
-    }
     .sound-btn {
-      background: transparent;
+      background: rgba(0, 20, 10, 0.9);
       border: 1px solid var(--hud-green);
       color: var(--hud-green);
-      width: 32px;
-      height: 32px;
-      border-radius: 4px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
       cursor: pointer;
-      font-size: 1rem;
+      font-size: 1.1rem;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.2s;
     }
     .sound-btn:hover { background: var(--hud-green); color: var(--bg-dark); }
-    .sound-btn.off { border-color: var(--hud-red); color: var(--hud-red); }
-    .sound-btn.off:hover { background: var(--hud-red); color: white; }
-    .sound-label { color: var(--text-dim); font-size: 0.7rem; min-width: 30px; }
-    .volume-slider {
-      width: 60px;
-      height: 4px;
-      -webkit-appearance: none;
-      background: var(--hud-green-dim);
-      border-radius: 2px;
-      cursor: pointer;
-    }
-    .volume-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 12px;
-      height: 12px;
-      background: var(--hud-green);
-      border-radius: 50%;
-      cursor: pointer;
-    }
+    .sound-btn.off { border-color: var(--text-dim); color: var(--text-dim); opacity: 0.5; }
+    .sound-btn.off:hover { background: var(--text-dim); color: white; }
     @media (max-width: 600px) {
       .sound-controls { bottom: 1rem; left: 1rem; }
-      .volume-slider { width: 50px; }
+      .sound-btn { width: 40px; height: 40px; font-size: 1rem; }
     }
     .form-group { margin-bottom: 1.2rem; }
     .form-label { display: block; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.4rem; }
@@ -682,7 +655,7 @@
           <button class="menu-btn" id="entryBtn" onclick="navigateTo('entryScreen')" disabled>エントリー登録する</button>
           <button class="menu-btn" onclick="navigateTo('tournamentScreen')">トーナメントを見る</button>
           <button class="menu-btn" onclick="navigateTo('historyScreen')">過去の大会記録を見る</button>
-          <button class="menu-btn" onclick="navigateTo('adminScreen')">管理者登録をする</button>
+          <button class="menu-btn" id="adminRegisterBtn" onclick="navigateTo('adminScreen')">管理者登録をする</button>
           <button class="menu-btn cancel-btn" id="cancelEntryBtn" onclick="cancelEntry()" disabled>登録解除</button>
           
           <!-- 参加者数表示（メニュー下） -->
@@ -758,6 +731,13 @@
           <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;">※締切日時以降に有効化されます</p>
         </div>
         <button class="submit-btn" onclick="saveTournamentSettings()">設定を保存</button>
+        
+        <!-- 管理者リセットボタン -->
+        <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--hud-green-dim);">
+          <p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.8rem;">⚠️ 管理者専用</p>
+          <button class="submit-btn" id="resetTournamentBtn" onclick="confirmResetTournament()" style="background:rgba(40,10,20,0.8);border-color:var(--hud-red);color:var(--hud-red);">管理者登録解除・大会リセット</button>
+          <p style="font-size:0.7rem;color:var(--text-dim);margin-top:0.5rem;">※締切日時以降は大会終了まで使用不可</p>
+        </div>
       </div>
     </div>
     <div class="screen" id="entryScreen">
@@ -840,7 +820,7 @@
       <button class="modal-close-btn" onclick="hideModal('userGuideModal')">×</button>
       <h3 class="modal-title">◆ 使い方ガイド</h3>
       <div class="guide-content">
-        <h4>🎮 トーナメントとは</h4><p>参加者同士が対戦し、勝ち残った人が優勝する大会形式です。</p>
+        <h4>🎮 トーナメントアプリとは</h4><p>参加者同士をマッチングさせ、勝ち残った人が優勝する大会形式を作成・運営できるアプリです。</p>
         <h4>📝 エントリー方法</h4><ul><li>管理者が締切日時を設定すると「エントリー登録する」が有効になります</li><li>ユーザーネームを入力して登録してください</li><li>締切日時までなら「登録解除」で解除可能です</li></ul>
         <h4>👀 トーナメントを見る</h4><p>大会情報や参加者リストを確認できます。</p>
       </div>
@@ -932,20 +912,24 @@
       </div>
     </div>
   </div>
+  <!-- リセット確認モーダル -->
+  <div class="modal-overlay" id="resetTournamentModal">
+    <div class="modal-content">
+      <button class="modal-close-btn" onclick="hideModal('resetTournamentModal')">×</button>
+      <h3 class="modal-title" style="color:var(--hud-red);">⚠️ 大会をリセットしますか？</h3>
+      <p style="text-align:center;color:var(--text-dim);margin:0.8rem 0;font-size:0.9rem;">管理者登録が解除され、大会設定・エントリー情報が全て削除されます。この操作は取り消せません。</p>
+      <div class="modal-buttons">
+        <button class="modal-btn modal-btn-cancel" onclick="hideModal('resetTournamentModal')">キャンセル</button>
+        <button class="modal-btn modal-btn-confirm" onclick="executeResetTournament()" style="background:var(--hud-red);border-color:var(--hud-red);">リセット実行</button>
+      </div>
+    </div>
+  </div>
   <div class="toast" id="toast"></div>
   
   <!-- BGM/SE Controls -->
   <div class="sound-controls" id="soundControls">
-    <div class="sound-control-row">
-      <button class="sound-btn" id="bgmBtn" onclick="toggleBGM()" title="BGM ON/OFF">🎵</button>
-      <span class="sound-label">BGM</span>
-      <input type="range" class="volume-slider" id="bgmVolume" min="0" max="100" value="30" oninput="setBGMVolume(this.value)">
-    </div>
-    <div class="sound-control-row">
-      <button class="sound-btn" id="seBtn" onclick="toggleSE()" title="SE ON/OFF">🔊</button>
-      <span class="sound-label">SE</span>
-      <input type="range" class="volume-slider" id="seVolume" min="0" max="100" value="50" oninput="setSEVolume(this.value)">
-    </div>
+    <button class="sound-btn" id="bgmBtn" onclick="toggleBGM()" title="BGM ON/OFF">🎵</button>
+    <button class="sound-btn" id="seBtn" onclick="toggleSE()" title="SE ON/OFF">🔊</button>
   </div>
   
   <!-- HUD - リアルタイム情報パネル（PC専用） -->
@@ -1263,7 +1247,7 @@
       const dl = t?.deadline;
       
       if (!dl) {
-        updateTournamentStatus('reception');
+        updateTournamentStatus('none'); // 未設定時は何も発光させない
         updateNextEvent('管理者の設定を待っています');
         return;
       }
@@ -1360,7 +1344,22 @@
       updateEntryButton();
       updateCancelEntryButton();
       updateMatchmakingButton();
+      updateAdminRegisterButton();
       checkAndUpdateStatus();
+    }
+    function updateAdminRegisterButton() {
+      const btn = document.getElementById('adminRegisterBtn');
+      if (!btn) return;
+      // 既に管理者が登録されている場合は他ユーザーは押せない
+      if (appState.tournament?.admin_device && appState.tournament.admin_device !== appState.deviceId) {
+        btn.disabled = true;
+        btn.style.opacity = '0.3';
+        btn.style.cursor = 'not-allowed';
+      } else {
+        btn.disabled = false;
+        btn.style.opacity = '';
+        btn.style.cursor = '';
+      }
     }
     function updateEntryButton() { const b = document.getElementById('entryBtn'); if (!appState.tournament?.deadline) { b.disabled = true; } else { const d = appState.tournament.deadline.toDate ? appState.tournament.deadline.toDate() : new Date(appState.tournament.deadline); b.disabled = new Date() > d; } }
     function updateCancelEntryButton() { const b = document.getElementById('cancelEntryBtn'); if (!b) return; const my = appState.entries.find(e => e.device_id === appState.deviceId); let can = !!my; const dl = appState.tournament?.deadline; if (dl) { const d = dl.toDate ? dl.toDate() : new Date(dl); if (new Date() >= d) can = false; } b.disabled = !can; }
@@ -1634,6 +1633,75 @@
       }, 2000);
     }
     function loadHistory() { if (!db) { document.getElementById('historyList').innerHTML = '<p style="text-align:center;color:var(--text-dim);">データベース未接続</p>'; return; } db.collection('history').orderBy('date', 'desc').get().then(snap => { const l = document.getElementById('historyList'); if (snap.empty) { l.innerHTML = '<p style="text-align:center;color:var(--text-dim);">記録がありません</p>'; return; } l.innerHTML = snap.docs.map(d => { const x = d.data(); const dt = x.date?.toDate?.() || new Date(); return '<div class="history-card"><div class="history-date">' + dt.toLocaleDateString('ja-JP') + '</div><div class="history-game">' + escapeHtml(x.game_name || '不明') + '</div><div class="history-winner">👑 優勝: ' + escapeHtml(x.champion_name || '不明') + '</div><div style="font-size:0.8rem;color:var(--text-dim);margin-top:0.4rem;">管理者: ' + escapeHtml(x.admin_name || '不明') + ' / 参加者: ' + (x.total_participants || 0) + '名</div></div>'; }).join(''); }); }
+    
+    // リセット確認
+    function confirmResetTournament() {
+      // 締切後かつ大会進行中はリセット不可
+      const dl = appState.tournament?.deadline;
+      if (dl) {
+        const d = dl.toDate ? dl.toDate() : new Date(dl);
+        if (new Date() >= d) {
+          showToast('締切日時以降は大会終了までリセットできません', 'error');
+          return;
+        }
+      }
+      showModal('resetTournamentModal');
+    }
+    
+    // リセット実行
+    async function executeResetTournament() {
+      playClick();
+      appendLog('⚠️ 管理者が大会をリセットしました');
+      
+      if (db) {
+        // 全データ削除
+        try {
+          await db.collection('tournaments').doc('current').delete();
+          const entriesSnap = await db.collection('entries').get();
+          const entriesBatch = db.batch();
+          entriesSnap.forEach(doc => entriesBatch.delete(doc.ref));
+          await entriesBatch.commit();
+          
+          const matchesSnap = await db.collection('matches').get();
+          const matchesBatch = db.batch();
+          matchesSnap.forEach(doc => matchesBatch.delete(doc.ref));
+          await matchesBatch.commit();
+        } catch (e) { console.error('Reset error:', e); }
+      }
+      
+      // ローカル状態をリセット
+      localStorage.removeItem('tournament_admin_name');
+      appState.tournament = null;
+      appState.entries = [];
+      appState.matches = [];
+      appState.isAdmin = false;
+      appState.adminName = null;
+      
+      hideModal('resetTournamentModal');
+      showToast('大会がリセットされました', 'success');
+      
+      setTimeout(() => {
+        goToTitle();
+        updateTournamentDisplay();
+      }, 1000);
+    }
+    
+    // リセットボタンの状態更新
+    function updateResetButton() {
+      const btn = document.getElementById('resetTournamentBtn');
+      if (!btn) return;
+      const dl = appState.tournament?.deadline;
+      if (dl) {
+        const d = dl.toDate ? dl.toDate() : new Date(dl);
+        if (new Date() >= d) {
+          btn.disabled = true;
+          btn.style.opacity = '0.3';
+        } else {
+          btn.disabled = false;
+          btn.style.opacity = '';
+        }
+      }
+    }
   </script>
 </body>
 </html>

@@ -348,6 +348,11 @@
     .submit-btn:hover:not(:disabled) { background: var(--hud-green); color: var(--bg-dark); box-shadow: 0 0 25px var(--hud-green-glow); }
     .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .participant-panel { background: var(--bg-panel); border: 2px solid var(--hud-green); }
+    .lottery-sidebar .participant-panel { height: 100%; display: flex; flex-direction: column; }
+    .lottery-sidebar .participant-list { flex: 1; max-height: none; overflow-y: auto; }
+    @media (min-width: 900px) {
+      .lottery-sidebar .participant-list { max-height: 450px; }
+    }
     .participant-header { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; border-bottom: 1px solid var(--hud-green-dim); }
     .participant-title { font-family: 'Orbitron', sans-serif; color: var(--hud-green); font-size: 0.9rem; }
     .participant-search { padding: 0.4rem 0.6rem; background: rgba(0,20,10,0.8); border: 1px solid var(--hud-green-dim); color: var(--text-primary); font-size: 0.85rem; width: 140px; }
@@ -453,23 +458,174 @@
     .lottery-sub { font-size: 0.75rem; color: var(--text-dim); }
     .lottery-venue-btn:not(:disabled) .lottery-sub { display: none; }
     
-    .roulette-container { display: none; flex-direction: column; align-items: center; padding: 1.5rem; }
-    .roulette-wheel { width: 240px; height: 240px; border: 3px solid var(--hud-green); border-radius: 50%; position: relative; margin-bottom: 1.5rem; background: radial-gradient(circle, rgba(0,40,20,0.8) 0%, var(--bg-dark) 100%); box-shadow: 0 0 25px var(--hud-green-glow); }
+    /* 抽選会場レイアウト */
+    .lottery-arena {
+      display: none;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+    .lottery-arena.active { display: block; }
+    
+    @media (min-width: 900px) {
+      .lottery-arena {
+        display: none;
+        grid-template-columns: 1fr 350px;
+        gap: 1.5rem;
+      }
+      .lottery-arena.active { display: grid; }
+    }
+    
+    /* 左側：ルーレット＋VS */
+    .lottery-main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .roulette-container { 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      position: relative;
+    }
+    .roulette-wheel { 
+      width: 280px; 
+      height: 280px; 
+      border: 4px solid var(--hud-green); 
+      border-radius: 50%; 
+      position: relative; 
+      background: radial-gradient(circle, rgba(0,60,30,0.9) 0%, rgba(0,20,10,0.95) 70%, var(--bg-dark) 100%); 
+      box-shadow: 0 0 40px var(--hud-green-glow), inset 0 0 60px rgba(0,255,65,0.1);
+    }
+    @media (min-width: 900px) {
+      .roulette-wheel { 
+        width: 420px; 
+        height: 420px; 
+        border-width: 5px;
+      }
+    }
     .wheel-inner { width: 100%; height: 100%; transition: transform 4s cubic-bezier(0.17,0.67,0.12,0.99); }
-    .wheel-segment { position: absolute; width: 100%; height: 100%; display: flex; align-items: flex-start; justify-content: center; padding-top: 12px; font-family: 'Orbitron', sans-serif; font-size: 0.75rem; color: var(--hud-green); }
-    .vs-display { background: var(--bg-panel); border: 2px solid var(--hud-green); padding: 1.2rem 1.5rem; text-align: center; margin-bottom: 1rem; }
-    .vs-title { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 0.8rem; }
-    .vs-players { display: flex; align-items: center; justify-content: center; gap: 1.2rem; }
+    .wheel-segment { 
+      position: absolute; 
+      width: 100%; 
+      height: 100%; 
+      display: flex; 
+      align-items: flex-start; 
+      justify-content: center; 
+      padding-top: 15px; 
+      font-family: 'Orbitron', sans-serif; 
+      font-size: 0.85rem; 
+      color: var(--hud-green); 
+      text-shadow: 0 0 8px var(--hud-green-glow);
+    }
+    @media (min-width: 900px) {
+      .wheel-segment { font-size: 1rem; padding-top: 20px; }
+    }
+    
+    /* VS表示（ルーレット中央に重ねる） */
+    .vs-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+      text-align: center;
+      pointer-events: none;
+    }
+    .vs-display { 
+      background: rgba(0, 20, 10, 0.95); 
+      border: 3px solid var(--hud-green); 
+      border-radius: 12px;
+      padding: 1rem 1.5rem; 
+      text-align: center;
+      box-shadow: 0 0 30px rgba(0,0,0,0.8);
+    }
+    @media (min-width: 900px) {
+      .vs-display { padding: 1.5rem 2rem; }
+    }
+    .vs-title { color: var(--hud-gold); font-size: 0.9rem; margin-bottom: 0.8rem; font-weight: bold; }
+    .vs-players { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+    @media (min-width: 900px) {
+      .vs-players { gap: 1.5rem; }
+    }
     .vs-player { text-align: center; }
-    .vs-player-icon { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--hud-green); margin: 0 auto 0.4rem; display: flex; align-items: center; justify-content: center; background: var(--bg-dark); overflow: hidden; }
-    .vs-player-id { color: var(--text-dim); font-size: 0.75rem; }
-    .vs-player-name { color: var(--hud-green); font-weight: bold; font-size: 0.9rem; }
-    .vs-text { font-family: 'Orbitron', sans-serif; font-size: 1.8rem; color: var(--hud-gold); text-shadow: 0 0 10px rgba(255,204,0,0.5); }
-    .roulette-controls { display: flex; gap: 0.8rem; flex-wrap: wrap; justify-content: center; }
-    .roulette-btn { padding: 0.7rem 1.2rem; font-weight: bold; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; }
+    .vs-player-icon { 
+      width: 60px; 
+      height: 60px; 
+      border-radius: 50%; 
+      border: 3px solid var(--hud-green); 
+      margin: 0 auto 0.5rem; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      background: var(--bg-dark); 
+      overflow: hidden;
+      font-size: 1.5rem;
+    }
+    @media (min-width: 900px) {
+      .vs-player-icon { width: 80px; height: 80px; font-size: 2rem; }
+    }
+    .vs-player-id { color: var(--text-dim); font-size: 0.8rem; font-family: 'Orbitron', sans-serif; }
+    .vs-player-name { 
+      color: var(--hud-green); 
+      font-weight: bold; 
+      font-size: 1rem; 
+      max-width: 100px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    @media (min-width: 900px) {
+      .vs-player-name { font-size: 1.2rem; max-width: 120px; }
+    }
+    .vs-text { 
+      font-family: 'Orbitron', sans-serif; 
+      font-size: 2rem; 
+      color: var(--hud-gold); 
+      text-shadow: 0 0 15px rgba(255,204,0,0.7);
+      animation: vs-pulse 1.5s infinite;
+    }
+    @media (min-width: 900px) {
+      .vs-text { font-size: 2.5rem; }
+    }
+    @keyframes vs-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    
+    /* 操作ボタン */
+    .roulette-controls { 
+      display: flex; 
+      gap: 0.8rem; 
+      flex-wrap: wrap; 
+      justify-content: center; 
+      margin-top: 1.5rem;
+    }
+    .roulette-btn { 
+      padding: 0.9rem 1.5rem; 
+      font-weight: bold; 
+      cursor: pointer; 
+      transition: all 0.2s; 
+      font-size: 1rem;
+      border-radius: 6px;
+    }
     .roulette-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     #spinBtn { background: var(--hud-green); border: none; color: var(--bg-dark); }
+    #spinBtn:hover:not(:disabled) { box-shadow: 0 0 20px var(--hud-green-glow); }
     #confirmMatchBtn { background: transparent; border: 2px solid var(--hud-gold); color: var(--hud-gold); }
+    #confirmMatchBtn:hover:not(:disabled) { box-shadow: 0 0 15px rgba(255,204,0,0.5); }
+    
+    /* 右側：参加者リスト */
+    .lottery-sidebar {
+      margin-top: 1.5rem;
+    }
+    @media (min-width: 900px) {
+      .lottery-sidebar { margin-top: 0; }
+    }
+    
     .history-card { background: var(--bg-panel); border: 1px solid var(--hud-green-dim); padding: 1rem; margin-bottom: 0.8rem; }
     .history-date { color: var(--text-dim); font-size: 0.8rem; }
     .history-game { color: var(--hud-green); font-size: 1.1rem; font-weight: bold; margin: 0.4rem 0; }
@@ -809,48 +965,85 @@
       </div>
     </div>
     <div class="screen" id="tournamentScreen">
-      <div class="info-display" style="max-width:700px;margin:1rem auto;">
+      <div class="info-display" style="max-width:1200px;margin:1rem auto;">
         <div class="info-item"><div class="info-label">ゲーム名</div><div class="info-value" id="tournamentGameName">未設定</div></div>
         <div class="info-item"><div class="info-label">管理者</div><div class="info-value" id="tournamentAdmin">-</div></div>
         <div class="info-item"><div class="info-label">締切日時</div><div class="info-value" id="tournamentDeadline">未設定</div></div>
         <div class="info-item"><div class="info-label">参加者</div><div class="info-value" id="tournamentCount">0名</div></div>
       </div>
+      
       <!-- 抽選会場へボタン -->
-      <div style="max-width:700px;margin:1rem auto;text-align:center;">
+      <div id="lotteryEntrance" style="max-width:700px;margin:1rem auto;text-align:center;">
         <button class="lottery-venue-btn" id="lotteryVenueBtn" onclick="enterLotteryVenue()" disabled>
           <span class="lottery-icon">⚔️</span>
           <span class="lottery-text">抽選会場へ</span>
           <span class="lottery-sub" id="lotteryBtnSub">（締切後に解放）</span>
         </button>
       </div>
-      <div class="roulette-container" id="rouletteContainer">
-        <div class="roulette-wheel"><div class="wheel-inner" id="wheelInner"></div></div>
-        <div class="vs-display">
-          <div class="vs-title">対戦カード</div>
-          <div class="vs-players">
-            <div class="vs-player"><div class="vs-player-icon" id="vsPlayer1Icon"><span>?</span></div><div class="vs-player-id" id="vsPlayer1Id">-</div><div class="vs-player-name" id="vsPlayer1Name">-</div></div>
-            <div class="vs-text">VS</div>
-            <div class="vs-player"><div class="vs-player-icon" id="vsPlayer2Icon"><span>?</span></div><div class="vs-player-id" id="vsPlayer2Id">-</div><div class="vs-player-name" id="vsPlayer2Name">-</div></div>
+      
+      <!-- 抽選会場（左：ルーレット、右：リスト） -->
+      <div class="lottery-arena" id="lotteryArena">
+        <!-- 左側：ルーレット＋VS -->
+        <div class="lottery-main">
+          <div class="roulette-container" id="rouletteContainer">
+            <div class="roulette-wheel">
+              <div class="wheel-inner" id="wheelInner"></div>
+              <!-- VS表示（中央に重ねる） -->
+              <div class="vs-overlay">
+                <div class="vs-display">
+                  <div class="vs-title">⚔️ 対戦カード</div>
+                  <div class="vs-players">
+                    <div class="vs-player">
+                      <div class="vs-player-icon" id="vsPlayer1Icon"><span>?</span></div>
+                      <div class="vs-player-id" id="vsPlayer1Id">-</div>
+                      <div class="vs-player-name" id="vsPlayer1Name">-</div>
+                    </div>
+                    <div class="vs-text">VS</div>
+                    <div class="vs-player">
+                      <div class="vs-player-icon" id="vsPlayer2Icon"><span>?</span></div>
+                      <div class="vs-player-id" id="vsPlayer2Id">-</div>
+                      <div class="vs-player-name" id="vsPlayer2Name">-</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- 操作ボタン -->
+          <div class="roulette-controls" id="rouletteAdminControls" style="display:none;">
+            <button class="roulette-btn" id="spinBtn" onclick="spinRoulette()">ルーレット回転</button>
+            <button class="roulette-btn" id="confirmMatchBtn" onclick="confirmMatch()" disabled>対戦確定</button>
+            <button class="roulette-btn" id="endTournamentBtn" onclick="confirmEndTournament()" style="background:rgba(40,10,20,0.8);border-color:var(--hud-red);color:var(--hud-red);">大会終了・記録</button>
+          </div>
+          <div class="roulette-controls" id="matchResultControls" style="display:none;">
+            <button class="roulette-btn" onclick="declareWinner(1)">← 勝利</button>
+            <button class="roulette-btn" onclick="declareWinner(2)">勝利 →</button>
           </div>
         </div>
-        <div class="roulette-controls" id="rouletteAdminControls" style="display:none;">
-          <button class="roulette-btn" id="spinBtn" onclick="spinRoulette()">ルーレット回転</button>
-          <button class="roulette-btn" id="confirmMatchBtn" onclick="confirmMatch()" disabled>対戦確定</button>
-          <button class="roulette-btn" id="endTournamentBtn" onclick="confirmEndTournament()" style="background:rgba(40,10,20,0.8);border-color:var(--hud-red);color:var(--hud-red);">大会終了・記録</button>
-        </div>
-        <div class="roulette-controls" id="matchResultControls" style="display:none;">
-          <button class="roulette-btn" onclick="declareWinner(1)">← 勝利</button>
-          <button class="roulette-btn" onclick="declareWinner(2)">勝利 →</button>
+        
+        <!-- 右側：参加者リスト -->
+        <div class="lottery-sidebar">
+          <div class="participant-panel">
+            <div class="participant-header">
+              <h3 class="participant-title">◆ 参加者リスト</h3>
+              <input type="text" class="participant-search" placeholder="🔍 検索" oninput="filterParticipants(this.value)">
+            </div>
+            <div class="participant-row header"><div>ID</div><div>Icon</div><div>ユーザー名</div><div>状態</div></div>
+            <div class="participant-list" id="participantList"></div>
+            <div class="participant-count">参加者数: <span id="listCount">0</span>/100</div>
+          </div>
         </div>
       </div>
-      <div class="participant-panel" style="max-width:700px;margin:1rem auto;">
+      
+      <!-- 抽選会場入場前の参加者リスト -->
+      <div class="participant-panel" id="preArenaList" style="max-width:700px;margin:1rem auto;">
         <div class="participant-header">
           <h3 class="participant-title">◆ 参加者リスト</h3>
           <input type="text" class="participant-search" placeholder="🔍 検索" oninput="filterParticipants(this.value)">
         </div>
         <div class="participant-row header"><div>ID</div><div>Icon</div><div>ユーザー名</div><div>状態</div></div>
-        <div class="participant-list" id="participantList"></div>
-        <div class="participant-count">参加者数: <span id="listCount">0</span>/100（最大100人）</div>
+        <div class="participant-list" id="participantListPre"></div>
+        <div class="participant-count">参加者数: <span id="listCountPre">0</span>/100（最大100人）</div>
       </div>
     </div>
     <div class="screen" id="historyScreen">
@@ -1363,7 +1556,22 @@
     function hideModal(id) { document.getElementById(id).classList.remove('active'); }
     function showToast(msg, type = 'success') { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast ' + type + ' visible'; setTimeout(() => t.classList.remove('visible'), 3000); }
     function showGuide(type) { showModal(type === 'admin' ? 'adminGuideModal' : 'userGuideModal'); }
-    function showMatchmakingInfo() { const dl = appState.tournament?.deadline; if (dl) { const d = dl.toDate ? dl.toDate() : new Date(dl); if (new Date() >= d) { switchToBattleBGM(); navigateTo('tournamentScreen'); document.getElementById('lotteryVenueBtn').style.display = 'none'; document.getElementById('rouletteContainer').style.display = 'flex'; document.getElementById('rouletteAdminControls').style.display = 'flex'; return; } } showToast('締切日時以降に有効化されます', 'error'); }
+    function showMatchmakingInfo() { 
+      const dl = appState.tournament?.deadline; 
+      if (dl) { 
+        const d = dl.toDate ? dl.toDate() : new Date(dl); 
+        if (new Date() >= d) { 
+          switchToBattleBGM(); 
+          navigateTo('tournamentScreen'); 
+          document.getElementById('lotteryEntrance').style.display = 'none'; 
+          document.getElementById('preArenaList').style.display = 'none';
+          document.getElementById('lotteryArena').classList.add('active');
+          document.getElementById('rouletteAdminControls').style.display = 'flex'; 
+          return; 
+        } 
+      } 
+      showToast('締切日時以降に有効化されます', 'error'); 
+    }
     function previewIcon(input) { if (input.files && input.files[0]) { const r = new FileReader(); r.onload = e => { document.getElementById('iconPreview').innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;">'; document.getElementById('iconDeleteBtn').style.display = 'block'; }; r.readAsDataURL(input.files[0]); } }
     function clearIcon() { document.getElementById('iconPreview').innerHTML = '<span style="color:var(--text-dim);font-size:1.3rem;">+</span>'; document.getElementById('iconInput').value = ''; document.getElementById('iconDeleteBtn').style.display = 'none'; }
     function escapeHtml(s) { return s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''; }
@@ -1442,9 +1650,12 @@
       // BGMをバトルマッチに切り替え
       switchToBattleBGM();
       
-      // ルーレット表示
-      document.getElementById('rouletteContainer').style.display = 'flex';
-      document.getElementById('lotteryVenueBtn').style.display = 'none';
+      // 入場ボタンと事前リストを非表示
+      document.getElementById('lotteryEntrance').style.display = 'none';
+      document.getElementById('preArenaList').style.display = 'none';
+      
+      // 抽選会場を表示
+      document.getElementById('lotteryArena').classList.add('active');
       
       // 管理者のみ操作ボタン表示
       if (appState.isAdmin || appState.tournament?.admin_device === appState.deviceId) {
@@ -1454,12 +1665,23 @@
       }
       
       playClick();
+      appendLog('抽選会場に入場しました');
     }
     function updateEntriesDisplay() {
       const list = document.getElementById('participantList');
-      document.getElementById('listCount').textContent = appState.entries.length;
-      if (appState.entries.length === 0) { list.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--text-dim);">参加者はいません</div>'; return; }
-      list.innerHTML = appState.entries.map(e => '<div class="participant-row"><div class="participant-id">ID-' + String(e.entry_id).padStart(2,'0') + '</div><div class="participant-icon">' + (e.icon_url ? '<img src="' + e.icon_url + '">' : '👤') + '</div><div>' + escapeHtml(e.username) + '</div><div><span class="status-badge ' + (e.status === 'LOST' ? 'status-lost' : 'status-active') + '">' + (e.status || 'ACTIVE') + '</span></div></div>').join('');
+      const listPre = document.getElementById('participantListPre');
+      const listCountEl = document.getElementById('listCount');
+      const listCountPreEl = document.getElementById('listCountPre');
+      
+      if (listCountEl) listCountEl.textContent = appState.entries.length;
+      if (listCountPreEl) listCountPreEl.textContent = appState.entries.length;
+      
+      const html = appState.entries.length === 0 
+        ? '<div style="text-align:center;padding:1.5rem;color:var(--text-dim);">参加者はいません</div>'
+        : appState.entries.map(e => '<div class="participant-row"><div class="participant-id">ID-' + String(e.entry_id).padStart(2,'0') + '</div><div class="participant-icon">' + (e.icon_url ? '<img src="' + e.icon_url + '">' : '👤') + '</div><div>' + escapeHtml(e.username) + '</div><div><span class="status-badge ' + (e.status === 'LOST' ? 'status-lost' : 'status-active') + '">' + (e.status || 'ACTIVE') + '</span></div></div>').join('');
+      
+      if (list) list.innerHTML = html;
+      if (listPre) listPre.innerHTML = html;
     }
     function updateEntryScreen() {
       const my = appState.entries.find(e => e.device_id === appState.deviceId);

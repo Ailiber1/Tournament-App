@@ -681,334 +681,157 @@
       text-shadow: 0 0 10px rgba(255,204,0,0.5);
     }
     
-    /* トーナメントツリー全体 */
-    .tournament-tree {
+    /* トーナメントブラケット - 伝統的な形式 */
+    .bracket-tree {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0;
+      gap: 10px;
+      padding: 1rem;
       min-width: fit-content;
     }
     
-    /* 優勝者表示（トップ） */
-    .bracket-champion {
-      text-align: center;
-      padding: 1rem 2rem;
+    /* 優勝枠 */
+    .bracket-champion-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.8rem 1.5rem;
       border: 3px solid var(--hud-gold);
       background: rgba(255, 204, 0, 0.15);
-      margin-bottom: 0;
       animation: champion-glow 2s infinite;
-      min-width: 140px;
+      margin-bottom: 10px;
     }
     @keyframes champion-glow {
       0%, 100% { box-shadow: 0 0 15px rgba(255,204,0,0.3); }
       50% { box-shadow: 0 0 30px rgba(255,204,0,0.6); }
     }
-    .bracket-champion-title {
-      font-size: 0.85rem;
-      color: var(--hud-gold);
-      margin-bottom: 0.3rem;
-    }
-    .bracket-champion-name {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.1rem;
-      color: var(--hud-gold);
-      text-shadow: 0 0 10px rgba(255,204,0,0.5);
-    }
-    .bracket-champion.empty {
+    .bracket-champion-box.empty {
       border-style: dashed;
       animation: none;
       opacity: 0.6;
     }
-    .bracket-champion.empty .bracket-champion-name {
-      color: var(--text-dim);
-    }
-    
-    /* 接続線（優勝枠から下へ） */
-    .tree-connector-down {
-      width: 2px;
-      height: 20px;
-      background: var(--hud-green-dim);
-    }
-    
-    /* 各ラウンド */
-    .tree-round {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    
-    /* 上への接続線群 */
-    .tree-connectors {
-      display: flex;
-      justify-content: center;
-      width: 100%;
-    }
-    .tree-connector-pair {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      position: relative;
-    }
-    .tree-connector-pair::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 25%;
-      right: 25%;
-      height: 2px;
-      background: var(--hud-green-dim);
-    }
-    .tree-line-up {
-      width: 2px;
-      height: 20px;
-      background: var(--hud-green-dim);
-    }
-    
-    /* 試合群 */
-    .tree-matches {
-      display: flex;
-      justify-content: center;
-      gap: 0;
-      width: 100%;
-    }
-    
-    /* 試合ペア */
-    .tree-match-pair {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      position: relative;
-      padding: 0 10px;
-    }
-    
-    /* 下への分岐線 */
-    .tree-match-pair::after {
-      content: '';
-      position: absolute;
-      bottom: -15px;
-      left: 50%;
-      width: 2px;
-      height: 15px;
-      background: var(--hud-green-dim);
-    }
-    .tree-round:last-child .tree-match-pair::after {
-      display: none;
-    }
-    
-    /* 個別スロット（プレイヤー枠） */
-    .tree-slot {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.5rem 0.6rem;
-      background: rgba(0, 30, 15, 0.9);
-      border: 2px solid var(--hud-green-dim);
-      min-width: 120px;
-      max-width: 160px;
-      margin: 2px 0;
-      transition: all 0.2s;
-    }
-    @media (min-width: 900px) {
-      .tree-slot { min-width: 150px; max-width: 200px; padding: 0.6rem 0.8rem; }
-    }
-    
-    .tree-slot.clickable {
-      cursor: pointer;
-    }
-    .tree-slot.clickable:hover {
-      background: rgba(0, 255, 65, 0.2);
-      transform: scale(1.02);
-    }
-    
-    .tree-slot.deciding {
-      border-color: var(--hud-gold);
-      box-shadow: 0 0 10px rgba(255,204,0,0.4);
-      animation: slot-pulse 1.5s infinite;
-    }
-    @keyframes slot-pulse {
-      0%, 100% { box-shadow: 0 0 10px rgba(255,204,0,0.4); }
-      50% { box-shadow: 0 0 20px rgba(255,204,0,0.7); }
-    }
-    
-    .tree-slot.completed {
-      border-color: var(--hud-green);
-    }
-    
-    .slot-id {
+    .champion-trophy { font-size: 1.5rem; }
+    .champion-label { font-size: 0.7rem; color: var(--hud-gold); }
+    .champion-name {
       font-family: 'Orbitron', sans-serif;
-      font-size: 0.65rem;
-      color: var(--text-dim);
-      min-width: 35px;
-    }
-    
-    .slot-name {
-      color: var(--hud-green);
-      font-size: 0.8rem;
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    @media (min-width: 900px) {
-      .slot-name { font-size: 0.9rem; }
-    }
-    
-    .slot-name.lost {
-      color: #666;
-      text-decoration: line-through;
-      opacity: 0.6;
-    }
-    
-    .slot-status {
-      font-size: 0.6rem;
-      padding: 0.1rem 0.25rem;
-      border-radius: 2px;
-    }
-    .slot-status.lost {
-      background: rgba(100,100,100,0.3);
-      color: #888;
-    }
-    
-    .slot-empty {
-      color: var(--text-dim);
-      font-style: italic;
-      font-size: 0.75rem;
-    }
-    
-    .slot-badge {
-      font-size: 0.55rem;
-      padding: 0.1rem 0.3rem;
-      border-radius: 2px;
-      margin-left: auto;
-    }
-    .slot-badge.winner {
-      background: rgba(255, 204, 0, 0.2);
+      font-size: 1rem;
       color: var(--hud-gold);
     }
-    .slot-badge.loser {
-      background: rgba(100, 100, 100, 0.3);
-      color: #888;
-    }
-    .slot-badge.seed {
-      background: rgba(255, 165, 0, 0.2);
-      color: #ffa500;
+    .bracket-champion-box.empty .champion-name { color: var(--text-dim); }
+    
+    /* ラウンド行 */
+    .bracket-round-row {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 5px;
     }
     
-    /* シード権を持つスロット */
-    .tree-slot.seed {
-      border-left: 3px solid #ffa500;
-      background: rgba(255, 165, 0, 0.1);
+    /* 試合ボックス */
+    .bracket-match-box {
+      display: flex;
+      gap: 2px;
+      position: relative;
+    }
+    .bracket-match-box::after {
+      content: '';
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      height: 10px;
+      background: var(--hud-green-dim);
+    }
+    .bracket-round-row:last-child .bracket-match-box::after {
+      display: none;
+    }
+    .bracket-match-box.pending {
+      filter: drop-shadow(0 0 8px rgba(255, 204, 0, 0.5));
     }
     
-    /* ツリーレベル（各ラウンド） */
-    .tree-level {
+    /* プレイヤーボックス（縦長、名前縦書き） */
+    .bracket-player-box {
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-bottom: 0.5rem;
-      position: relative;
-    }
-    
-    .tree-level-label {
-      color: var(--text-dim);
-      font-size: 0.7rem;
-      margin-bottom: 0.3rem;
-      padding: 0.2rem 0.8rem;
-      border: 1px solid var(--hud-green-dim);
-      background: rgba(0, 40, 20, 0.5);
-    }
-    
-    .tree-level-matches {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    
-    /* 試合カード */
-    .tree-match {
-      display: flex;
-      flex-direction: column;
-      background: rgba(0, 20, 10, 0.9);
+      justify-content: flex-end;
+      width: 40px;
+      min-height: 70px;
+      padding: 6px 4px;
+      background: rgba(0, 30, 15, 0.9);
       border: 2px solid var(--hud-green-dim);
-      min-width: 130px;
+      cursor: default;
+      transition: all 0.2s;
       position: relative;
     }
     @media (min-width: 900px) {
-      .tree-match { min-width: 160px; }
+      .bracket-player-box { width: 50px; min-height: 90px; }
     }
     
-    .tree-match.pending {
-      border-color: var(--hud-gold);
-      box-shadow: 0 0 12px rgba(255, 204, 0, 0.3);
-      animation: tree-match-pulse 1.5s infinite;
+    .bracket-player-box.clickable { cursor: pointer; }
+    .bracket-player-box.clickable:hover {
+      background: rgba(0, 255, 65, 0.2);
+      transform: scale(1.05);
     }
-    @keyframes tree-match-pulse {
-      0%, 100% { box-shadow: 0 0 12px rgba(255, 204, 0, 0.3); }
-      50% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.6); }
-    }
-    
-    .tree-match.completed {
+    .bracket-player-box.winner {
+      background: rgba(0, 255, 65, 0.2);
       border-color: var(--hud-green);
     }
-    
-    .tree-match.bye-match {
+    .bracket-player-box.loser {
+      opacity: 0.4;
+      background: rgba(50, 50, 50, 0.3);
+    }
+    .bracket-player-box.seed {
       border-color: #ffa500;
+    }
+    .bracket-player-box.active {
+      border-color: var(--hud-gold);
+      animation: active-pulse 1.5s infinite;
+    }
+    @keyframes active-pulse {
+      0%, 100% { box-shadow: 0 0 5px rgba(255, 204, 0, 0.4); }
+      50% { box-shadow: 0 0 15px rgba(255, 204, 0, 0.7); }
+    }
+    .bracket-player-box.empty {
       border-style: dashed;
-      opacity: 0.8;
+      opacity: 0.5;
     }
     
-    .tree-slot.bye {
-      background: rgba(255, 165, 0, 0.1);
-      justify-content: center;
-    }
-    
-    /* VS区切り */
-    .tree-vs {
-      text-align: center;
-      font-family: 'Orbitron', sans-serif;
-      font-size: 0.65rem;
-      color: var(--hud-red);
-      padding: 0.15rem 0;
-      background: rgba(0, 0, 0, 0.3);
-      border-top: 1px solid var(--hud-green-dim);
-      border-bottom: 1px solid var(--hud-green-dim);
-    }
-    
-    /* ツリースロット */
-    .tree-slot {
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-      padding: 0.4rem 0.5rem;
-      transition: all 0.2s;
-      min-height: 32px;
+    /* 縦書き名前 */
+    .player-name-v {
+      writing-mode: vertical-rl;
+      text-orientation: upright;
+      color: var(--hud-green);
+      font-size: 0.7rem;
+      letter-spacing: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-height: 55px;
     }
     @media (min-width: 900px) {
-      .tree-slot { padding: 0.5rem 0.6rem; min-height: 36px; }
+      .player-name-v { font-size: 0.8rem; max-height: 70px; }
+    }
+    .bracket-player-box.loser .player-name-v {
+      color: #555;
+      text-decoration: line-through;
+    }
+    .bracket-player-box.winner .player-name-v {
+      color: var(--hud-gold);
     }
     
-    .tree-slot.clickable {
-      cursor: pointer;
-    }
-    .tree-slot.clickable:hover {
-      background: rgba(0, 255, 65, 0.2);
+    .player-id-v {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.5rem;
+      color: var(--text-dim);
+      margin-top: 3px;
     }
     
-    .tree-slot.winner {
-      background: rgba(0, 255, 65, 0.15);
-      border-left: 3px solid var(--hud-green);
-    }
-    .tree-slot.loser {
-      opacity: 0.5;
-      background: rgba(50, 50, 50, 0.2);
-    }
-    .tree-slot.empty {
-      justify-content: center;
-    }
-    .tree-slot.deciding {
-      background: rgba(255, 204, 0, 0.1);
+    .winner-mark, .seed-mark {
+      font-size: 0.6rem;
+      margin-bottom: 2px;
     }
     
     /* トーナメント表へボタン */
@@ -1650,13 +1473,13 @@
   
   <!-- BGM Audio -->
   <audio id="bgmAudio" loop preload="auto">
-    <source src="./tournament.mp3" type="audio/mpeg">
+    <source src="./トーナメント.mp3" type="audio/mpeg">
   </audio>
   <audio id="battleBgmAudio" loop preload="auto">
-    <source src="./battle.mp3" type="audio/mpeg">
+    <source src="./バトルマッチ.mp3" type="audio/mpeg">
   </audio>
   <audio id="vsSoundAudio" preload="auto">
-    <source src="./vs.mp3" type="audio/mpeg">
+    <source src="./VS用.mp3" type="audio/mpeg">
   </audio>
   
   <div class="calendar-modal" id="calendarModal">
@@ -1712,15 +1535,24 @@
         btn.classList.remove('off');
         btn.textContent = '🎵';
         if (currentBgm === 'normal') {
-          bgmAudio.play().catch(e => {});
+          if (bgmAudio.readyState >= 2) {
+            bgmAudio.play().catch(e => startBgmFallback(false));
+          } else {
+            startBgmFallback(false);
+          }
         } else {
-          battleBgmAudio.play().catch(e => {});
+          if (battleBgmAudio.readyState >= 2) {
+            battleBgmAudio.play().catch(e => startBgmFallback(true));
+          } else {
+            startBgmFallback(true);
+          }
         }
       } else {
         btn.classList.add('off');
         btn.textContent = '🔇';
         bgmAudio.pause();
         battleBgmAudio.pause();
+        stopBgmFallback();
       }
     }
 
@@ -1751,19 +1583,23 @@
     function switchToBattleBGM() {
       console.log('switchToBattleBGM called, currentBgm:', currentBgm, 'bgmEnabled:', bgmEnabled);
       currentBgm = 'battle';
+      stopBgmFallback();
       bgmAudio.pause();
       bgmAudio.currentTime = 0;
       battleBgmAudio.volume = bgmVolume;
       if (bgmEnabled) {
-        battleBgmAudio.play().then(() => {
-          console.log('Battle BGM playing');
-        }).catch(e => {
-          console.log('Battle BGM error:', e);
-          // フォールバック：少し待ってから再試行
-          setTimeout(() => {
-            battleBgmAudio.play().catch(e2 => console.log('Battle BGM retry failed:', e2));
-          }, 100);
-        });
+        // mp3ファイルがあれば使用、なければフォールバック
+        if (battleBgmAudio.readyState >= 2) {
+          battleBgmAudio.play().then(() => {
+            console.log('Battle BGM playing');
+          }).catch(e => {
+            console.log('Battle BGM error, using fallback:', e);
+            startBgmFallback(true);
+          });
+        } else {
+          console.log('Battle BGM not loaded, using fallback');
+          startBgmFallback(true);
+        }
       }
       appendLog('⚔️ 抽選会場に入場！');
     }
@@ -1772,11 +1608,21 @@
     function switchToNormalBGM() {
       if (currentBgm === 'normal') return;
       currentBgm = 'normal';
+      stopBgmFallback();
       battleBgmAudio.pause();
       battleBgmAudio.currentTime = 0;
       bgmAudio.volume = bgmVolume;
       if (bgmEnabled) {
-        bgmAudio.play().catch(e => console.log('Normal BGM blocked'));
+        // mp3ファイルがあれば使用、なければフォールバック
+        if (bgmAudio.readyState >= 2) {
+          bgmAudio.play().catch(e => {
+            console.log('Normal BGM blocked, using fallback');
+            startBgmFallback(false);
+          });
+        } else {
+          console.log('Normal BGM not loaded, using fallback');
+          startBgmFallback(false);
+        }
       }
     }
 
@@ -1784,16 +1630,77 @@
     function playVsSound() {
       if (!seEnabled) return;
       
-      // まずaudio要素で再生を試みる
-      vsSoundAudio.volume = seVolume;
-      vsSoundAudio.currentTime = 0;
-      vsSoundAudio.play().then(() => {
-        console.log('VS sound playing');
-      }).catch(e => {
-        console.log('VS sound blocked, using fallback:', e);
-        // フォールバック：WebAudioAPIで効果音を生成
+      // mp3ファイルが読み込まれているかチェック
+      if (vsSoundAudio.readyState >= 2) {
+        // ファイルが読み込まれていれば再生
+        vsSoundAudio.volume = seVolume;
+        vsSoundAudio.currentTime = 0;
+        vsSoundAudio.play().catch(e => {
+          playVsSoundFallback();
+        });
+      } else {
+        // ファイルがなければフォールバック
         playVsSoundFallback();
-      });
+      }
+    }
+    
+    // BGM用のAudioContext（フォールバック用）
+    let bgmContext = null;
+    let bgmOscillators = [];
+    let bgmGains = [];
+    let bgmPlaying = false;
+    
+    // BGMフォールバック（mp3がない場合）
+    function startBgmFallback(isBattle = false) {
+      if (!bgmEnabled) return;
+      stopBgmFallback();
+      
+      try {
+        bgmContext = new (window.AudioContext || window.webkitAudioContext)();
+        bgmPlaying = true;
+        
+        // シンプルなアンビエントBGM
+        const baseFreq = isBattle ? 110 : 65;
+        const notes = isBattle ? [110, 138, 165, 138] : [65, 82, 98, 82];
+        let noteIndex = 0;
+        
+        function playNote() {
+          if (!bgmPlaying || !bgmContext) return;
+          
+          const osc = bgmContext.createOscillator();
+          const gain = bgmContext.createGain();
+          osc.connect(gain);
+          gain.connect(bgmContext.destination);
+          
+          osc.type = isBattle ? 'sawtooth' : 'sine';
+          osc.frequency.setValueAtTime(notes[noteIndex], bgmContext.currentTime);
+          gain.gain.setValueAtTime(bgmVolume * 0.15, bgmContext.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, bgmContext.currentTime + 0.8);
+          
+          osc.start(bgmContext.currentTime);
+          osc.stop(bgmContext.currentTime + 0.9);
+          
+          noteIndex = (noteIndex + 1) % notes.length;
+          
+          if (bgmPlaying) {
+            setTimeout(playNote, 900);
+          }
+        }
+        
+        playNote();
+      } catch(e) {
+        console.log('BGM fallback error:', e);
+      }
+    }
+    
+    function stopBgmFallback() {
+      bgmPlaying = false;
+      if (bgmContext) {
+        try {
+          bgmContext.close();
+        } catch(e) {}
+        bgmContext = null;
+      }
     }
     
     // VS効果音のフォールバック（WebAudioAPI）
@@ -1834,6 +1741,9 @@
       } catch(e) { console.log('VS fallback error:', e); }
     }
 
+    // BGMのフォールバック（Web Audio APIでアンビエント音を生成）
+    // 注: startBgmFallback関数を使用
+
     function initBGM() {
       bgmAudio.volume = bgmVolume;
       battleBgmAudio.volume = bgmVolume;
@@ -1860,10 +1770,22 @@
       
       // 複数のインタラクションイベントでBGMを開始
       const startBGM = () => {
-        if (bgmEnabled && bgmAudio.paused && currentBgm === 'normal') {
-          bgmAudio.play().then(() => {
-            console.log('BGM started successfully');
-          }).catch(e => console.log('BGM start failed:', e));
+        if (!bgmEnabled) return;
+        
+        // mp3ファイルが読み込まれているかチェック
+        if (bgmAudio.readyState >= 2) {
+          if (bgmAudio.paused && currentBgm === 'normal') {
+            bgmAudio.play().then(() => {
+              console.log('BGM started successfully');
+            }).catch(e => {
+              console.log('BGM blocked, using fallback');
+              startBgmFallback(false);
+            });
+          }
+        } else {
+          // ファイルがなければフォールバック
+          console.log('BGM file not loaded, using fallback');
+          startBgmFallback(false);
         }
       };
       
@@ -1872,9 +1794,14 @@
         document.addEventListener(event, startBGM, { once: true });
       });
       
-      // ページが既にアクティブなら即座に試行
+      // ページが既にアクティブなら即座に試行（ただしmp3がなければフォールバック）
       if (document.visibilityState === 'visible') {
-        setTimeout(startBGM, 100);
+        setTimeout(() => {
+          // ユーザー操作を待たずにフォールバックを準備
+          if (bgmAudio.readyState < 2) {
+            console.log('BGM file not available, fallback ready');
+          }
+        }, 500);
       }
     }
 
@@ -2541,17 +2468,45 @@
     function spinRoulette() { 
       if (appState.isSpinning) return; 
       const a = appState.entries.filter(e => e.status !== 'LOST'); 
-      // シード権を持っていない、かつ進行中の試合がないプレイヤー
-      const f = a.filter(e => !e.has_seed && !appState.matches.some(m => (m.player1_id === e.entry_id || m.player2_id === e.entry_id) && !m.winner_id)); 
       
-      // 奇数の場合はシード抽選を促す
-      if (f.length % 2 === 1 && f.length >= 1) {
-        // シード抽選モード
-        showSeedLottery(f);
+      // 優勝者が決まっている場合は回せない
+      if (a.length <= 1) {
+        showToast('大会は終了しています', 'error');
         return;
       }
       
-      if (f.length < 2) { showToast('対戦可能な参加者が不足しています', 'error'); return; } 
+      // 進行中の試合がある人を除外（シード保持者も含む）
+      const inMatch = appState.matches.filter(m => !m.winner_id);
+      const inMatchIds = inMatch.flatMap(m => [m.player1_id, m.player2_id]);
+      
+      // 対戦可能なプレイヤー（敗退しておらず、進行中の試合がない）
+      const available = a.filter(e => !inMatchIds.includes(e.entry_id));
+      
+      // シード未使用の人（まだシード抽選が必要かどうか判定用）
+      const needsSeedLottery = available.filter(e => !e.has_seed);
+      
+      // 対戦可能な参加者がいない（全員が試合中）
+      if (available.length === 0) {
+        showToast('全員が試合中です。結果を確定してください。', 'error');
+        return;
+      }
+      
+      // 1人だけの場合
+      if (available.length === 1) {
+        showToast('対戦相手がいません。試合結果を確定してください。', 'error');
+        return;
+      }
+      
+      // 奇数の場合かつシード未保持者が奇数ならシード抽選
+      if (needsSeedLottery.length % 2 === 1 && needsSeedLottery.length >= 1 && available.length > 2) {
+        showSeedLottery(needsSeedLottery);
+        return;
+      }
+      
+      if (available.length < 2) { showToast('対戦可能な参加者が不足しています', 'error'); return; }
+      
+      // 対戦カードを決定（シード保持者も含む）
+      const f = available; 
       appState.isSpinning = true; 
       document.getElementById('spinBtn').disabled = true; 
       const s = [...f].sort(() => Math.random() - 0.5); 
@@ -2793,117 +2748,62 @@
         return;
       }
       
-      // 参加者をソート（シード権保持者を後ろに、不戦勝の位置に配置）
-      const seedPlayers = allEntries.filter(e => e.has_seed);
-      const normalPlayers = allEntries.filter(e => !e.has_seed);
-      
       // ブラケットサイズを計算（2のべき乗）
       const totalPlayers = allEntries.length;
       const rounds = Math.ceil(Math.log2(Math.max(totalPlayers, 2)));
       const bracketSize = Math.pow(2, rounds);
       
-      // ブラケット配置を作成
-      // シード権保持者は1回戦でBYEと対戦する位置に配置
+      // 1回戦のスロット配置
       const bracketSlots = new Array(bracketSize).fill(null);
-      
-      // 通常プレイヤーを前から配置
-      normalPlayers.forEach((p, i) => {
+      allEntries.forEach((p, i) => {
         if (i < bracketSize) {
           bracketSlots[i] = p;
         }
       });
       
-      // シード権保持者をBYE位置（奇数番目の空きスロット）に配置
-      seedPlayers.forEach((p, i) => {
-        // 空きスロットを探す（できれば奇数インデックス = ペアの2番目）
-        for (let j = 1; j < bracketSize; j += 2) {
-          if (!bracketSlots[j]) {
-            bracketSlots[j] = p;
-            break;
-          }
-        }
-        // 奇数がなければ偶数に
-        for (let j = 0; j < bracketSize; j++) {
-          if (!bracketSlots[j]) {
-            bracketSlots[j] = p;
-            break;
-          }
-        }
-      });
-      
-      // ラウンド名
-      const getRoundName = (r, total) => {
-        const fromFinal = total - r;
-        if (fromFinal === 0) return '決勝';
-        if (fromFinal === 1) return '準決勝';
-        if (fromFinal === 2) return '準々決勝';
-        return `${r + 1}回戦`;
-      };
-      
-      // HTMLを生成
-      let html = '<div class="tournament-tree">';
-      
       // 優勝トロフィー
       const activeEntries = allEntries.filter(e => e.status !== 'LOST');
       const champion = activeEntries.length === 1 ? activeEntries[0] : null;
       
-      html += `
-        <div class="bracket-champion ${champion ? '' : 'empty'}">
-          <div class="bracket-champion-title">🏆 優勝</div>
-          <div class="bracket-champion-name">${champion ? escapeHtml(champion.username) : '???'}</div>
-        </div>
-      `;
+      // HTMLを生成（下から上へ）
+      let html = '<div class="bracket-tree">';
       
-      // 各ラウンドを生成（上から下へ：決勝→準決勝→...→1回戦）
-      for (let r = rounds - 1; r >= 0; r--) {
-        const matchesInRound = Math.pow(2, r);
-        const roundName = getRoundName(rounds - 1 - r, rounds);
+      // 1回戦から決勝まで（下から上へ表示するため配列に貯める）
+      const roundsHtml = [];
+      
+      for (let r = 0; r < rounds; r++) {
+        const matchesInRound = Math.pow(2, rounds - 1 - r);
+        const roundNames = ['1回戦', '2回戦', '準々決勝', '準決勝', '決勝'];
+        const roundName = r === rounds - 1 ? '決勝' : (r === rounds - 2 ? '準決勝' : (r === rounds - 3 ? '準々決勝' : `${r + 1}回戦`));
         
-        html += `
-          <div class="tree-level">
-            <div class="tree-level-label">${roundName}</div>
-            <div class="tree-level-matches" style="--matches: ${matchesInRound}">
-        `;
+        let roundHtml = `<div class="bracket-round-row">`;
         
         for (let m = 0; m < matchesInRound; m++) {
           let player1 = null, player2 = null;
-          let isByeMatch = false;
           
-          // 1回戦の場合はブラケットスロットから
           if (r === 0) {
+            // 1回戦は直接スロットから
             player1 = bracketSlots[m * 2] || null;
             player2 = bracketSlots[m * 2 + 1] || null;
-            
-            // BYE判定（片方がシード権持ちで、もう片方がnull）
-            if (player1?.has_seed && !player2) {
-              isByeMatch = true;
-            } else if (player2?.has_seed && !player1) {
-              isByeMatch = true;
-            }
           } else {
             // 上のラウンドは勝者から推測
-            // この位置に対応する1回戦のプレイヤーを取得
-            const slot1 = m * 2;
-            const slot2 = m * 2 + 1;
-            const range1Start = slot1 * Math.pow(2, rounds - r - 1 + 1);
-            const range2Start = slot2 * Math.pow(2, rounds - r - 1 + 1);
+            const rangeSize = Math.pow(2, r + 1);
+            const range1Start = m * rangeSize;
+            const range2Start = m * rangeSize + rangeSize / 2;
             
             // 各ブロックのactive参加者を取得
-            const block1Players = [];
-            const block2Players = [];
-            for (let i = range1Start; i < range1Start + Math.pow(2, rounds - r); i++) {
+            for (let i = range1Start; i < range1Start + rangeSize / 2 && i < bracketSlots.length; i++) {
               if (bracketSlots[i] && bracketSlots[i].status !== 'LOST') {
-                block1Players.push(bracketSlots[i]);
+                player1 = bracketSlots[i];
+                break;
               }
             }
-            for (let i = range2Start; i < range2Start + Math.pow(2, rounds - r); i++) {
+            for (let i = range2Start; i < range2Start + rangeSize / 2 && i < bracketSlots.length; i++) {
               if (bracketSlots[i] && bracketSlots[i].status !== 'LOST') {
-                block2Players.push(bracketSlots[i]);
+                player2 = bracketSlots[i];
+                break;
               }
             }
-            
-            if (block1Players.length > 0) player1 = block1Players[0];
-            if (block2Players.length > 0) player2 = block2Players[0];
           }
           
           // この試合が登録されているか確認
@@ -2913,61 +2813,74 @@
           );
           
           const isPending = registeredMatch && !registeredMatch.winner_id;
-          const isCompleted = registeredMatch && registeredMatch.winner_id;
           const winnerId = registeredMatch?.winner_id;
           
-          html += `<div class="tree-match ${isPending ? 'pending' : ''} ${isCompleted ? 'completed' : ''} ${isByeMatch ? 'bye-match' : ''}">`;
-          
-          // プレイヤー1
-          html += renderSlot(player1, player2, winnerId, isPending, isAdmin, 1, isByeMatch);
-          
-          // VS区切り線
-          html += `<div class="tree-vs">${isByeMatch ? 'BYE' : 'VS'}</div>`;
-          
-          // プレイヤー2（BYE試合の場合は空欄）
-          if (isByeMatch && !player2) {
-            html += `<div class="tree-slot bye"><span class="slot-empty">- 不戦勝 -</span></div>`;
-          } else if (isByeMatch && !player1) {
-            html += renderSlot(player2, player1, winnerId, isPending, isAdmin, 2, isByeMatch);
-          } else {
-            html += renderSlot(player2, player1, winnerId, isPending, isAdmin, 2, false);
-          }
-          
-          html += '</div>';
+          roundHtml += `<div class="bracket-match-box ${isPending ? 'pending' : ''}">`;
+          roundHtml += renderBracketPlayer(player1, player2, winnerId, isPending, isAdmin, 'left');
+          roundHtml += renderBracketPlayer(player2, player1, winnerId, isPending, isAdmin, 'right');
+          roundHtml += `</div>`;
         }
         
-        html += '</div></div>';
+        roundHtml += `</div>`;
+        roundsHtml.push(roundHtml);
+      }
+      
+      // 優勝枠
+      html += `
+        <div class="bracket-champion-box ${champion ? '' : 'empty'}">
+          <div class="champion-trophy">🏆</div>
+          <div class="champion-label">優勝</div>
+          <div class="champion-name">${champion ? escapeHtml(champion.username) : '???'}</div>
+        </div>
+      `;
+      
+      // 決勝から1回戦の順で表示（上から下）
+      for (let i = roundsHtml.length - 1; i >= 0; i--) {
+        html += roundsHtml[i];
       }
       
       html += '</div>';
-      
       container.innerHTML = html;
     }
     
-    // スロットをレンダリング
-    function renderSlot(player, opponent, winnerId, isPending, isAdmin, position, isByeMatch = false) {
+    // ブラケットプレイヤーをレンダリング
+    function renderBracketPlayer(player, opponent, winnerId, isPending, isAdmin, side) {
       if (!player) {
-        return `<div class="tree-slot empty"><span class="slot-empty">- BYE -</span></div>`;
+        return `<div class="bracket-player-box empty ${side}"><span class="player-name-v">BYE</span></div>`;
       }
       
       const isWinner = winnerId === player.entry_id;
-      const isLoser = winnerId && winnerId !== player.entry_id && player.status === 'LOST';
+      const isLoser = winnerId && winnerId !== player.entry_id;
       const hasSeed = player.has_seed;
-      const canClick = isAdmin && isPending && opponent && !isByeMatch;
+      const canClick = isAdmin && isPending && opponent;
       
-      // シード権保持者でBYE試合の場合は自動勝利扱い
-      const autoWin = hasSeed && isByeMatch;
+      const classes = [
+        'bracket-player-box',
+        side,
+        isWinner ? 'winner' : '',
+        isLoser ? 'loser' : '',
+        hasSeed ? 'seed' : '',
+        canClick ? 'clickable' : '',
+        isPending ? 'active' : ''
+      ].filter(Boolean).join(' ');
       
       return `
-        <div class="tree-slot ${isWinner || autoWin ? 'winner' : ''} ${isLoser ? 'loser' : ''} ${hasSeed ? 'seed' : ''} ${canClick ? 'clickable' : ''} ${isPending && !isByeMatch ? 'deciding' : ''}"
+        <div class="${classes}"
           ${canClick ? `onclick="selectBracketWinner(${player.entry_id}, ${opponent.entry_id}, '${escapeHtml(player.username)}', '${escapeHtml(opponent.username)}')"` : ''}>
-          <span class="slot-id">ID-${String(player.entry_id).padStart(2, '0')}</span>
-          <span class="slot-name ${isLoser ? 'lost' : ''}">${escapeHtml(player.username)}</span>
-          ${hasSeed ? '<span class="slot-badge seed">🎖️シード</span>' : ''}
-          ${(isWinner || autoWin) && !hasSeed ? '<span class="slot-badge winner">🏆勝者</span>' : ''}
-          ${isLoser ? '<span class="slot-badge loser">敗退</span>' : ''}
+          ${isWinner ? '<span class="winner-mark">🏆</span>' : ''}
+          ${hasSeed ? '<span class="seed-mark">🎖️</span>' : ''}
+          <span class="player-name-v">${escapeHtml(player.username)}</span>
+          <span class="player-id-v">${String(player.entry_id).padStart(2, '0')}</span>
         </div>
       `;
+    }
+    
+    // 旧関数（互換性のため）
+    function renderSlotVertical(player, opponent, winnerId, isPending, isAdmin) {
+      return renderBracketPlayer(player, opponent, winnerId, isPending, isAdmin, 'left');
+    }
+    function renderSlot(player, opponent, winnerId, isPending, isAdmin, position, isByeMatch = false) {
+      return renderBracketPlayer(player, opponent, winnerId, isPending, isAdmin, 'left');
     }
     
     // 試合のHTMLを生成

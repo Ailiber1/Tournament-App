@@ -1891,13 +1891,15 @@
       // 抽選会場を表示
       document.getElementById('lotteryArena').classList.add('active');
       
-      // 管理者のみ操作ボタン表示
+      // 管理者のみルーレット操作ボタン表示
       if (appState.isAdmin || appState.tournament?.admin_device === appState.deviceId) {
         document.getElementById('rouletteAdminControls').style.display = 'flex';
-        updateBracketControls();
       } else {
         document.getElementById('rouletteAdminControls').style.display = 'none';
       }
+      
+      // トーナメント表ボタンは全ユーザーに表示
+      updateBracketControls();
       
       playClick();
       appendLog('抽選会場に入場しました');
@@ -2352,6 +2354,12 @@
     
     // トーナメント表から勝者を選択
     function selectBracketWinner(winnerId, loserId, winnerName, loserName) {
+      // 管理者のみ操作可能
+      const isAdmin = appState.isAdmin || appState.tournament?.admin_device === appState.deviceId;
+      if (!isAdmin) {
+        return; // 何も反応しない
+      }
+      
       const winner = appState.entries.find(e => e.entry_id === winnerId);
       const loser = appState.entries.find(e => e.entry_id === loserId);
       
@@ -2371,10 +2379,9 @@
       if (!controls) return;
       
       const activeCount = appState.entries.filter(e => e.status !== 'LOST').length;
-      const isAdmin = appState.isAdmin || appState.tournament?.admin_device === appState.deviceId;
       
-      // 20名以下かつ管理者の場合に表示
-      if (activeCount <= 20 && activeCount >= 2 && isAdmin) {
+      // 20名以下で全ユーザーに表示（操作権限は別で制御）
+      if (activeCount <= 20 && activeCount >= 2) {
         controls.style.display = 'flex';
       } else {
         controls.style.display = 'none';

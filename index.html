@@ -663,33 +663,36 @@
       display: none;
       flex-direction: column;
       align-items: center;
-      padding: 1rem;
+      padding: 2rem;
       overflow-x: auto;
       overflow-y: auto;
-      max-height: 70vh;
+      width: 100%;
+      min-height: 60vh;
     }
     .bracket-container.active { display: flex; }
     
     .bracket-title {
       font-family: 'Orbitron', sans-serif;
       color: var(--hud-gold);
-      font-size: 1.2rem;
-      margin-bottom: 1rem;
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
       text-align: center;
+      text-shadow: 0 0 10px rgba(255,204,0,0.5);
     }
     
     .bracket-round {
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-bottom: 1.5rem;
+      margin-bottom: 2rem;
+      width: 100%;
     }
     
     .bracket-round-title {
       color: var(--text-dim);
-      font-size: 0.8rem;
-      margin-bottom: 0.8rem;
-      padding: 0.3rem 1rem;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      padding: 0.4rem 1.5rem;
       border: 1px solid var(--hud-green-dim);
       background: rgba(0,40,20,0.5);
     }
@@ -698,7 +701,7 @@
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 1rem;
+      gap: 1.5rem;
     }
     
     .bracket-match {
@@ -706,48 +709,60 @@
       flex-direction: column;
       background: rgba(0, 30, 15, 0.9);
       border: 2px solid var(--hud-green-dim);
-      min-width: 180px;
+      min-width: 220px;
       position: relative;
     }
-    .bracket-match.deciding { border-color: var(--hud-gold); box-shadow: 0 0 15px rgba(255,204,0,0.3); }
+    @media (min-width: 900px) {
+      .bracket-match { min-width: 280px; }
+    }
+    .bracket-match.deciding { border-color: var(--hud-gold); box-shadow: 0 0 20px rgba(255,204,0,0.4); }
     
     .bracket-player {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.6rem 0.8rem;
+      gap: 0.8rem;
+      padding: 0.9rem 1.2rem;
       border-bottom: 1px solid var(--hud-green-dim);
       cursor: default;
       transition: all 0.2s;
     }
+    @media (min-width: 900px) {
+      .bracket-player { padding: 1rem 1.5rem; }
+    }
     .bracket-player:last-child { border-bottom: none; }
     .bracket-player.clickable { cursor: pointer; }
-    .bracket-player.clickable:hover { background: rgba(0, 255, 65, 0.15); }
+    .bracket-player.clickable:hover { background: rgba(0, 255, 65, 0.2); transform: scale(1.02); }
     
     .bracket-player.winner {
-      background: rgba(0, 255, 65, 0.2);
-      border-left: 3px solid var(--hud-green);
+      background: rgba(0, 255, 65, 0.25);
+      border-left: 4px solid var(--hud-green);
     }
     .bracket-player.loser {
-      opacity: 0.4;
+      opacity: 0.35;
       background: rgba(50, 50, 50, 0.3);
     }
     
     .bracket-player-id {
       font-family: 'Orbitron', sans-serif;
-      font-size: 0.7rem;
+      font-size: 0.8rem;
       color: var(--text-dim);
-      min-width: 45px;
+      min-width: 50px;
+    }
+    @media (min-width: 900px) {
+      .bracket-player-id { font-size: 0.9rem; min-width: 60px; }
     }
     .bracket-player-name {
       color: var(--hud-green);
-      font-size: 0.9rem;
+      font-size: 1rem;
       flex: 1;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .bracket-player.loser .bracket-player-name { color: #666; }
+    @media (min-width: 900px) {
+      .bracket-player-name { font-size: 1.1rem; }
+    }
+    .bracket-player.loser .bracket-player-name { color: #555; text-decoration: line-through; }
     .bracket-player.winner .bracket-player-name { color: var(--hud-gold); font-weight: bold; }
     
     .bracket-connector {
@@ -760,15 +775,20 @@
     /* 優勝者表示 */
     .bracket-champion {
       text-align: center;
-      padding: 1.5rem;
+      padding: 2rem 3rem;
       border: 3px solid var(--hud-gold);
-      background: rgba(255, 204, 0, 0.1);
-      margin-top: 1rem;
+      background: rgba(255, 204, 0, 0.15);
+      margin-top: 1.5rem;
+      animation: champion-glow 2s infinite;
+    }
+    @keyframes champion-glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(255,204,0,0.3); }
+      50% { box-shadow: 0 0 40px rgba(255,204,0,0.6); }
     }
     .bracket-champion-title {
-      font-size: 0.9rem;
+      font-size: 1.1rem;
       color: var(--hud-gold);
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.8rem;
     }
     .bracket-champion-name {
       font-family: 'Orbitron', sans-serif;
@@ -1536,20 +1556,78 @@
     // VS効果音を再生
     function playVsSound() {
       if (!seEnabled) return;
+      
+      // まずaudio要素で再生を試みる
       vsSoundAudio.volume = seVolume;
       vsSoundAudio.currentTime = 0;
-      vsSoundAudio.play().catch(e => console.log('VS sound blocked'));
+      vsSoundAudio.play().then(() => {
+        console.log('VS sound playing');
+      }).catch(e => {
+        console.log('VS sound blocked, using fallback:', e);
+        // フォールバック：WebAudioAPIで効果音を生成
+        playVsSoundFallback();
+      });
+    }
+    
+    // VS効果音のフォールバック（WebAudioAPI）
+    function playVsSoundFallback() {
+      if (!seEnabled) return;
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // ドラマチックな「VS」効果音を生成
+        const duration = 0.8;
+        
+        // 低音のインパクト
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(80, ctx.currentTime);
+        osc1.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + duration);
+        gain1.gain.setValueAtTime(seVolume * 0.6, ctx.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+        osc1.start(ctx.currentTime);
+        osc1.stop(ctx.currentTime + duration);
+        
+        // 高音のアクセント
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.type = 'square';
+        osc2.frequency.setValueAtTime(800, ctx.currentTime);
+        osc2.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.3);
+        gain2.gain.setValueAtTime(seVolume * 0.3, ctx.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        osc2.start(ctx.currentTime);
+        osc2.stop(ctx.currentTime + 0.3);
+        
+      } catch(e) { console.log('VS fallback error:', e); }
     }
 
     function initBGM() {
       bgmAudio.volume = bgmVolume;
       battleBgmAudio.volume = bgmVolume;
       vsSoundAudio.volume = seVolume;
-      document.addEventListener('click', () => {
+      
+      // 複数のインタラクションイベントでBGMを開始
+      const startBGM = () => {
         if (bgmEnabled && bgmAudio.paused && currentBgm === 'normal') {
-          bgmAudio.play().catch(e => {});
+          bgmAudio.play().catch(e => console.log('BGM start failed:', e));
         }
-      }, { once: true });
+      };
+      
+      // クリック、タッチ、キー入力など様々なイベントで開始
+      ['click', 'touchstart', 'keydown'].forEach(event => {
+        document.addEventListener(event, startBGM, { once: true });
+      });
+      
+      // ページが既にアクティブなら即座に試行
+      if (document.visibilityState === 'visible') {
+        setTimeout(startBGM, 100);
+      }
     }
 
     function playClick() { if (!seEnabled) return; try { const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=800;o.type='sine';g.gain.setValueAtTime(seVolume*0.5,c.currentTime);g.gain.exponentialRampToValueAtTime(0.01,c.currentTime+0.1);o.start(c.currentTime);o.stop(c.currentTime+0.1);} catch(e){} }
@@ -1702,6 +1780,7 @@
       if (!dl) {
         updateTournamentStatus('none'); // 未設定時は何も発光させない
         updateNextEvent('管理者の設定を待っています');
+        updateLotteryVenueButton();
         return;
       }
       
@@ -1713,7 +1792,18 @@
         const diff = deadline - now;
         const hours = Math.floor(diff / (1000 * 60 * 60));
         const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        updateNextEvent('締切まで: ' + hours + '時間 ' + mins + '分');
+        const secs = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        // 1時間以内は秒数も表示
+        if (hours === 0 && mins < 60) {
+          if (mins === 0) {
+            updateNextEvent('締切まで: ' + secs + '秒');
+          } else {
+            updateNextEvent('締切まで: ' + mins + '分 ' + secs + '秒');
+          }
+        } else {
+          updateNextEvent('締切まで: ' + hours + '時間 ' + mins + '分');
+        }
       } else {
         // 締切後
         const activeCount = appState.entries.filter(e => e.status !== 'LOST').length;
@@ -1728,7 +1818,17 @@
           updateNextEvent('');
         }
       }
+      
+      // ボタン状態も更新
+      updateLotteryVenueButton();
+      updateEntryButton();
+      updateCancelEntryButton();
     }
+    
+    // 定期的にステータスをチェック（1秒ごと）
+    setInterval(() => {
+      checkAndUpdateStatus();
+    }, 1000);
 
     function createMatrixBg() {
       const bg = document.getElementById('matrixBg');
@@ -2093,7 +2193,52 @@
     }
     
     function initFirebase() { try { firebase.initializeApp(firebaseConfig); db = firebase.firestore(); console.log('Firebase OK'); loadData(); initLogListener(); setInterval(cleanupOldActionLogs, 60000); } catch (e) { console.error('Firebase error:', e); updateTournamentDisplay(); } }
-    function loadData() { if (!db) return; db.collection('tournaments').doc('current').onSnapshot(doc => { if (doc.exists) { appState.tournament = doc.data(); if (appState.tournament.admin_device === appState.deviceId) { appState.isAdmin = true; appState.adminName = appState.tournament.admin_name; } updateTournamentDisplay(); } }); db.collection('entries').orderBy('entry_id', 'asc').onSnapshot(snap => { appState.entries = snap.docs.map(d => ({ id: d.id, ...d.data() })); updateEntriesDisplay(); updateRouletteWheel(); updateTournamentDisplay(); updateBracketControls(); if (bracketMode) generateBracket(); }); db.collection('matches').orderBy('created_at', 'asc').onSnapshot(snap => { appState.matches = snap.docs.map(d => ({ id: d.id, ...d.data() })); if (bracketMode) generateBracket(); }); }
+    function loadData() { 
+      if (!db) return; 
+      
+      // トーナメント情報の監視（ルーレット状態含む）
+      db.collection('tournaments').doc('current').onSnapshot(doc => { 
+        if (doc.exists) { 
+          const data = doc.data();
+          const prevRouletteState = appState.tournament?.roulette_state;
+          appState.tournament = data; 
+          
+          if (data.admin_device === appState.deviceId) { 
+            appState.isAdmin = true; 
+            appState.adminName = data.admin_name; 
+          }
+          
+          // ルーレット状態の同期（管理者以外のデバイス）
+          if (data.roulette_state && data.admin_device !== appState.deviceId) {
+            const newState = data.roulette_state;
+            const prevTimestamp = prevRouletteState?.timestamp?.toMillis?.() || 0;
+            const newTimestamp = newState.timestamp?.toMillis?.() || 0;
+            
+            if (newTimestamp > prevTimestamp) {
+              handleRouletteSync(newState);
+            }
+          }
+          
+          updateTournamentDisplay(); 
+        } 
+      }); 
+      
+      // エントリー情報の監視
+      db.collection('entries').orderBy('entry_id', 'asc').onSnapshot(snap => { 
+        appState.entries = snap.docs.map(d => ({ id: d.id, ...d.data() })); 
+        updateEntriesDisplay(); 
+        updateRouletteWheel(); 
+        updateTournamentDisplay(); 
+        updateBracketControls(); 
+        if (bracketMode) generateBracket(); 
+      }); 
+      
+      // マッチ情報の監視
+      db.collection('matches').orderBy('created_at', 'asc').onSnapshot(snap => { 
+        appState.matches = snap.docs.map(d => ({ id: d.id, ...d.data() })); 
+        if (bracketMode) generateBracket(); 
+      }); 
+    }
     async function registerAdmin() { 
       // クールダウンチェック
       const cd = await checkCooldown('admin');
@@ -2143,18 +2288,70 @@
       appState.selectedPlayer1 = s[0]; 
       appState.selectedPlayer2 = s[1]; 
       
+      const rotation = 1800 + Math.random() * 720;
+      
+      // Firestoreにルーレット状態を保存（他デバイスに同期）
+      if (db) {
+        db.collection('tournaments').doc('current').update({
+          roulette_state: {
+            spinning: true,
+            rotation: rotation,
+            player1_id: s[0].entry_id,
+            player2_id: s[1].entry_id,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          }
+        }).catch(e => console.log('Roulette sync error:', e));
+      }
+      
       // ルーレット回転音
       playSpinSound();
       
-      document.getElementById('wheelInner').style.transform = 'rotate(' + (1800 + Math.random() * 720) + 'deg)'; 
+      document.getElementById('wheelInner').style.transform = 'rotate(' + rotation + 'deg)'; 
       setTimeout(() => { 
         playVsSound(); 
         updateVsDisplay(appState.selectedPlayer1, appState.selectedPlayer2); 
         appendLog(appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username); 
         document.getElementById('confirmMatchBtn').disabled = false; 
         appState.isSpinning = false; 
-        document.getElementById('spinBtn').disabled = false; 
+        document.getElementById('spinBtn').disabled = false;
+        
+        // 回転完了を同期
+        if (db) {
+          db.collection('tournaments').doc('current').update({
+            'roulette_state.spinning': false
+          }).catch(e => {});
+        }
       }, 4000); 
+    }
+    
+    // 他デバイスからのルーレット同期を処理
+    function handleRouletteSync(state) {
+      if (!state) return;
+      
+      const p1 = appState.entries.find(e => e.entry_id === state.player1_id);
+      const p2 = appState.entries.find(e => e.entry_id === state.player2_id);
+      
+      if (state.spinning && !appState.isSpinning) {
+        // 他デバイスで回転開始
+        appState.isSpinning = true;
+        playSpinSound();
+        document.getElementById('wheelInner').style.transform = 'rotate(' + state.rotation + 'deg)';
+        
+        setTimeout(() => {
+          playVsSound();
+          if (p1 && p2) {
+            appState.selectedPlayer1 = p1;
+            appState.selectedPlayer2 = p2;
+            updateVsDisplay(p1, p2);
+          }
+          appState.isSpinning = false;
+        }, 4000);
+      } else if (!state.spinning && p1 && p2) {
+        // 回転完了後の状態を同期
+        appState.selectedPlayer1 = p1;
+        appState.selectedPlayer2 = p2;
+        updateVsDisplay(p1, p2);
+      }
     }
     
     // ルーレット回転音
@@ -2186,13 +2383,21 @@
       bracketMode = !bracketMode;
       const rouletteMain = document.querySelector('.lottery-main');
       const bracketContainer = document.getElementById('bracketContainer');
+      const lotterySidebar = document.querySelector('.lottery-sidebar');
+      const lotteryArena = document.getElementById('lotteryArena');
       
       if (bracketMode) {
+        // トーナメント表を全画面表示
         rouletteMain.style.display = 'none';
+        if (lotterySidebar) lotterySidebar.style.display = 'none';
+        if (lotteryArena) lotteryArena.style.gridTemplateColumns = '1fr';
         bracketContainer.classList.add('active');
         generateBracket();
       } else {
+        // ルーレット画面に戻す
         rouletteMain.style.display = 'flex';
+        if (lotterySidebar) lotterySidebar.style.display = '';
+        if (lotteryArena) lotteryArena.style.gridTemplateColumns = '';
         bracketContainer.classList.remove('active');
       }
     }

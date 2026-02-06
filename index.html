@@ -1794,14 +1794,9 @@
         document.addEventListener(event, startBGM, { once: true });
       });
       
-      // ページが既にアクティブなら即座に試行（ただしmp3がなければフォールバック）
+      // ページが既にアクティブなら即座に試行
       if (document.visibilityState === 'visible') {
-        setTimeout(() => {
-          // ユーザー操作を待たずにフォールバックを準備
-          if (bgmAudio.readyState < 2) {
-            console.log('BGM file not available, fallback ready');
-          }
-        }, 500);
+        setTimeout(startBGM, 500);
       }
     }
 

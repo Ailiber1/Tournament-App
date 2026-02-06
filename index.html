@@ -1535,24 +1535,15 @@
         btn.classList.remove('off');
         btn.textContent = '🎵';
         if (currentBgm === 'normal') {
-          if (bgmAudio.readyState >= 2) {
-            bgmAudio.play().catch(e => startBgmFallback(false));
-          } else {
-            startBgmFallback(false);
-          }
+          bgmAudio.play().catch(e => {});
         } else {
-          if (battleBgmAudio.readyState >= 2) {
-            battleBgmAudio.play().catch(e => startBgmFallback(true));
-          } else {
-            startBgmFallback(true);
-          }
+          battleBgmAudio.play().catch(e => {});
         }
       } else {
         btn.classList.add('off');
         btn.textContent = '🔇';
         bgmAudio.pause();
         battleBgmAudio.pause();
-        stopBgmFallback();
       }
     }
 
@@ -1583,23 +1574,19 @@
     function switchToBattleBGM() {
       console.log('switchToBattleBGM called, currentBgm:', currentBgm, 'bgmEnabled:', bgmEnabled);
       currentBgm = 'battle';
-      stopBgmFallback();
       bgmAudio.pause();
       bgmAudio.currentTime = 0;
       battleBgmAudio.volume = bgmVolume;
       if (bgmEnabled) {
-        // mp3ファイルがあれば使用、なければフォールバック
-        if (battleBgmAudio.readyState >= 2) {
-          battleBgmAudio.play().then(() => {
-            console.log('Battle BGM playing');
-          }).catch(e => {
-            console.log('Battle BGM error, using fallback:', e);
-            startBgmFallback(true);
-          });
-        } else {
-          console.log('Battle BGM not loaded, using fallback');
-          startBgmFallback(true);
-        }
+        battleBgmAudio.play().then(() => {
+          console.log('Battle BGM playing');
+        }).catch(e => {
+          console.log('Battle BGM error:', e);
+          // フォールバック：少し待ってから再試行
+          setTimeout(() => {
+            battleBgmAudio.play().catch(e2 => console.log('Battle BGM retry failed:', e2));
+          }, 100);
+        });
       }
       appendLog('⚔️ 抽選会場に入場！');
     }
@@ -1608,40 +1595,20 @@
     function switchToNormalBGM() {
       if (currentBgm === 'normal') return;
       currentBgm = 'normal';
-      stopBgmFallback();
       battleBgmAudio.pause();
       battleBgmAudio.currentTime = 0;
       bgmAudio.volume = bgmVolume;
       if (bgmEnabled) {
-        // mp3ファイルがあれば使用、なければフォールバック
-        if (bgmAudio.readyState >= 2) {
-          bgmAudio.play().catch(e => {
-            console.log('Normal BGM blocked, using fallback');
-            startBgmFallback(false);
-          });
-        } else {
-          console.log('Normal BGM not loaded, using fallback');
-          startBgmFallback(false);
-        }
+        bgmAudio.play().catch(e => console.log('Normal BGM blocked'));
       }
     }
 
     // VS効果音を再生
     function playVsSound() {
       if (!seEnabled) return;
-      
-      // mp3ファイルが読み込まれているかチェック
-      if (vsSoundAudio.readyState >= 2) {
-        // ファイルが読み込まれていれば再生
-        vsSoundAudio.volume = seVolume;
-        vsSoundAudio.currentTime = 0;
-        vsSoundAudio.play().catch(e => {
-          playVsSoundFallback();
-        });
-      } else {
-        // ファイルがなければフォールバック
-        playVsSoundFallback();
-      }
+      vsSoundAudio.volume = seVolume;
+      vsSoundAudio.currentTime = 0;
+      vsSoundAudio.play().catch(e => console.log('VS sound blocked'));
     }
     
     // BGM用のAudioContext（フォールバック用）
@@ -1749,68 +1716,22 @@
       battleBgmAudio.volume = bgmVolume;
       vsSoundAudio.volume = seVolume;
       
-      let bgmStarted = false;
-      
-      // 音声ファイルのエラーを監視
-      bgmAudio.addEventListener('error', (e) => {
-        console.error('BGM audio error:', e);
-      });
-      battleBgmAudio.addEventListener('error', (e) => {
-        console.error('Battle BGM audio error:', e);
-      });
-      vsSoundAudio.addEventListener('error', (e) => {
-        console.error('VS sound audio error:', e);
-      });
-      
-      // 読み込み完了を監視
-      bgmAudio.addEventListener('canplaythrough', () => {
-        console.log('BGM ready to play');
-      });
-      battleBgmAudio.addEventListener('canplaythrough', () => {
-        console.log('Battle BGM ready to play');
-      });
-      
-      // BGMを開始する関数
+      // 複数のインタラクションイベントでBGMを開始
       const startBGM = () => {
-        if (!bgmEnabled || bgmStarted) return;
-        
-        // mp3ファイルが読み込まれているかチェック
-        if (bgmAudio.readyState >= 2) {
-          if (bgmAudio.paused && currentBgm === 'normal') {
-            bgmAudio.play().then(() => {
-              console.log('BGM started successfully');
-              bgmStarted = true;
-            }).catch(e => {
-              console.log('BGM blocked, trying fallback');
-              startBgmFallback(false);
-              bgmStarted = true;
-            });
-          }
-        } else {
-          // ファイルがなければフォールバック
-          console.log('BGM file not loaded, using fallback');
-          startBgmFallback(false);
-          bgmStarted = true;
+        if (bgmEnabled && bgmAudio.paused && currentBgm === 'normal') {
+          bgmAudio.play().catch(e => console.log('BGM start failed:', e));
         }
       };
       
-      // 複数のインタラクションイベントでBGMを開始（成功するまで何度も試行）
-      const tryStartBGM = () => {
-        if (!bgmStarted) {
-          startBGM();
-        }
-      };
-      
+      // クリック、タッチ、キー入力など様々なイベントで開始
       ['click', 'touchstart', 'keydown'].forEach(event => {
-        document.addEventListener(event, tryStartBGM);
+        document.addEventListener(event, startBGM, { once: true });
       });
       
-      // 3秒後にイベントリスナーを削除（BGMが開始されていなくても）
-      setTimeout(() => {
-        ['click', 'touchstart', 'keydown'].forEach(event => {
-          document.removeEventListener(event, tryStartBGM);
-        });
-      }, 10000);
+      // ページが既にアクティブなら即座に試行
+      if (document.visibilityState === 'visible') {
+        setTimeout(startBGM, 100);
+      }
     }
 
     function playClick() { if (!seEnabled) return; try { const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=800;o.type='sine';g.gain.setValueAtTime(seVolume*0.5,c.currentTime);g.gain.exponentialRampToValueAtTime(0.01,c.currentTime+0.1);o.start(c.currentTime);o.stop(c.currentTime+0.1);} catch(e){} }

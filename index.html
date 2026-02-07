@@ -3268,11 +3268,41 @@
       const rounds = Math.ceil(Math.log2(Math.max(totalPlayers, 2)));
       const bracketSize = Math.pow(2, rounds);
       
-      // 1回戦のスロット配置
+      // 1回戦のスロット配置（ルーレット結果の対戦ペアとシード権を反映）
       const bracketSlots = new Array(bracketSize).fill(null);
-      allEntries.forEach((p, i) => {
-        if (i < bracketSize) {
-          bracketSlots[i] = p;
+      const placedIds = new Set();
+      let slotIdx = 0;
+
+      // matchesはcreated_at昇順。各プレイヤーの初回試合ペアを隣接スロットに配置
+      matches.forEach(m => {
+        if (placedIds.has(m.player1_id) || placedIds.has(m.player2_id)) return;
+        const p1 = allEntries.find(e => e.entry_id === m.player1_id);
+        const p2 = allEntries.find(e => e.entry_id === m.player2_id);
+        if (p1 && p2 && slotIdx + 1 < bracketSize) {
+          bracketSlots[slotIdx] = p1;
+          bracketSlots[slotIdx + 1] = p2;
+          placedIds.add(p1.entry_id);
+          placedIds.add(p2.entry_id);
+          slotIdx += 2;
+        }
+      });
+
+      // シード選手をBYEスロットの隣に配置（偶数スロットに配置、奇数スロットがBYE）
+      allEntries.filter(p => p.has_seed && !placedIds.has(p.entry_id)).forEach(p => {
+        if (slotIdx < bracketSize) {
+          bracketSlots[slotIdx] = p;
+          placedIds.add(p.entry_id);
+          slotIdx += 2;
+        }
+      });
+
+      // 残りの未配置プレイヤー（通常はないが安全策）
+      allEntries.filter(p => !placedIds.has(p.entry_id)).forEach(p => {
+        for (let i = 0; i < bracketSize; i++) {
+          if (!bracketSlots[i]) {
+            bracketSlots[i] = p;
+            break;
+          }
         }
       });
       

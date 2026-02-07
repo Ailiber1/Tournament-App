@@ -1996,9 +1996,16 @@
       updateHudVisibility();
     }
     
-    // トーナメント画面の初期化
+    // トーナメント画面の初期化（大会がない場合のみリセット）
     function initTournamentScreen() {
-      // 抽選会場関連を初期状態に戻す
+      // 大会が存在する場合はリセットしない
+      if (appState.tournament) {
+        // ボタン状態だけ更新
+        updateLotteryVenueButton();
+        return;
+      }
+      
+      // 大会がない場合のみ、抽選会場関連を初期状態に戻す
       const lotteryArena = document.getElementById('lotteryArena');
       const lotteryEntrance = document.getElementById('lotteryEntrance');
       const preArenaList = document.getElementById('preArenaList');
@@ -2010,7 +2017,8 @@
       
       // 抽選会場を非表示、入口ボタンを表示
       if (lotteryArena) {
-        lotteryArena.style.display = 'none';
+        lotteryArena.classList.remove('active');
+        lotteryArena.style.display = '';
         lotteryArena.style.gridTemplateColumns = '';
       }
       if (lotteryEntrance) lotteryEntrance.style.display = '';
@@ -2168,8 +2176,10 @@
       document.getElementById('lotteryEntrance').style.display = 'none';
       document.getElementById('preArenaList').style.display = 'none';
       
-      // 抽選会場を表示
-      document.getElementById('lotteryArena').classList.add('active');
+      // 抽選会場を表示（style.displayをクリアしてCSSのactiveクラスを有効にする）
+      const lotteryArena = document.getElementById('lotteryArena');
+      lotteryArena.style.display = '';
+      lotteryArena.classList.add('active');
       
       // 管理者のみルーレット操作ボタン表示
       if (appState.isAdmin || appState.tournament?.admin_device === appState.deviceId) {

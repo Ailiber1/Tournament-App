@@ -3779,10 +3779,14 @@
               }
             }
 
-            // 上位ラウンドのクリック可能なプレイヤーボックスを水平線の両端に表示
+            // 上位ラウンドのクリック可能なプレイヤーボックスを水平線の間に表示
             const leftX = groupCenterX(groupStart, groupStart + halfSize - 1);
             const rightX = groupCenterX(groupStart + halfSize, groupStart + groupSize - 1);
-            const junctionY = lineAreaHeight - (r + 1) * roundHeight;
+            // ラウンドrの縦空間の中央にボックスを配置
+            const roundBottomY = lineAreaHeight - r * roundHeight;
+            const roundTopY = lineAreaHeight - (r + 1) * roundHeight;
+            const boxCenterY = (roundBottomY + roundTopY) / 2;
+            const upperBoxTop = boxCenterY - upperBoxH / 2;
             const isPending = (matchRecord && !matchRecord.winner_id) || needsMatch;
             const canClick = isAdmin && isPending;
 
@@ -3793,7 +3797,7 @@
               p1IsWinner ? 'winner' : '', p1IsLoser ? 'loser' : '',
               canClick ? 'clickable' : '', isPending ? 'active' : ''
             ].filter(Boolean).join(' ');
-            html += `<div class="${p1Classes}" style="width:${upperBoxW}px;min-height:${upperBoxH}px;padding:${upperBoxPad}px;position:absolute;left:${leftX - upperBoxW / 2}px;top:${junctionY - upperBoxH - 2}px;"
+            html += `<div class="${p1Classes}" style="width:${upperBoxW}px;min-height:${upperBoxH}px;padding:${upperBoxPad}px;position:absolute;left:${leftX - upperBoxW / 2}px;top:${upperBoxTop}px;"
               ${canClick ? `onclick="selectBracketWinner(${p1.entry_id}, ${p2.entry_id}, '${escapeHtml(p1.username)}', '${escapeHtml(p2.username)}')"` : ''}>
               ${p1IsWinner ? '<span class="winner-mark">🏆</span>' : ''}
               <span class="player-name-v" style="font-size:${upperNameSize};">${escapeHtml(p1.username)}</span>
@@ -3807,7 +3811,7 @@
               p2IsWinner ? 'winner' : '', p2IsLoser ? 'loser' : '',
               canClick ? 'clickable' : '', isPending ? 'active' : ''
             ].filter(Boolean).join(' ');
-            html += `<div class="${p2Classes}" style="width:${upperBoxW}px;min-height:${upperBoxH}px;padding:${upperBoxPad}px;position:absolute;left:${rightX - upperBoxW / 2}px;top:${junctionY - upperBoxH - 2}px;"
+            html += `<div class="${p2Classes}" style="width:${upperBoxW}px;min-height:${upperBoxH}px;padding:${upperBoxPad}px;position:absolute;left:${rightX - upperBoxW / 2}px;top:${upperBoxTop}px;"
               ${canClick ? `onclick="selectBracketWinner(${p2.entry_id}, ${p1.entry_id}, '${escapeHtml(p2.username)}', '${escapeHtml(p1.username)}')"` : ''}>
               ${p2IsWinner ? '<span class="winner-mark">🏆</span>' : ''}
               <span class="player-name-v" style="font-size:${upperNameSize};">${escapeHtml(p2.username)}</span>

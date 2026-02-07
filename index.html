@@ -2134,6 +2134,7 @@
       const btn = document.getElementById('lotteryVenueBtn');
       const sub = document.getElementById('lotteryBtnSub');
       const entrance = document.getElementById('lotteryEntrance');
+      const lotteryArena = document.getElementById('lotteryArena');
       if (!btn) return;
       
       // 大会がない場合はボタンエリアごと非表示
@@ -2143,7 +2144,13 @@
         return;
       }
       
-      // 大会がある場合
+      // 既に抽選会場内にいる場合は「抽選会場へ」ボタンを非表示のまま
+      if (lotteryArena && lotteryArena.classList.contains('active')) {
+        if (entrance) entrance.style.display = 'none';
+        return;
+      }
+      
+      // 抽選会場に入っていない場合のみボタンを表示
       if (entrance) entrance.style.display = '';
       
       const dl = appState.tournament?.deadline;
@@ -3553,10 +3560,3 @@
           btn.style.opacity = '0.3';
         } else {
           btn.disabled = false;
-          btn.style.opacity = '';
-        }
-      }
-    }
-  </script>
-</body>
-</html>

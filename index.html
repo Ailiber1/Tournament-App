@@ -676,31 +676,54 @@
       display: none;
       flex-direction: column;
       align-items: center;
-      padding: 1.5rem 1rem;
+      padding: 1rem 0.5rem;
       overflow-x: auto;
       overflow-y: auto;
       width: 100%;
       min-height: 60vh;
+      -webkit-overflow-scrolling: touch;
+    }
+    @media (min-width: 900px) {
+      .bracket-container { padding: 1.5rem 1rem; }
     }
     .bracket-container.active { display: flex; }
-    
+
     .bracket-title {
       font-family: 'Orbitron', sans-serif;
       color: var(--hud-gold);
-      font-size: 1.3rem;
-      margin-bottom: 1.5rem;
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
       text-align: center;
       text-shadow: 0 0 10px rgba(255,204,0,0.5);
     }
+    @media (min-width: 900px) {
+      .bracket-title { font-size: 1.3rem; margin-bottom: 1.5rem; }
+    }
     
+    /* スクロールヒント（スマホ用） */
+    .bracket-scroll-hint {
+      display: none;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.7rem;
+      margin-bottom: 0.5rem;
+      animation: hint-fade 2s infinite;
+    }
+    @keyframes hint-fade {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
     /* トーナメントブラケット - 伝統的な形式 */
     .bracket-tree {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 1rem;
+      padding: 0.5rem;
       min-width: fit-content;
       position: relative;
+    }
+    @media (min-width: 900px) {
+      .bracket-tree { padding: 1rem; }
     }
     
     /* SVG線のコンテナ */
@@ -886,15 +909,18 @@
     .bracket-view-btn {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.8rem 1.5rem;
+      gap: 0.3rem;
+      padding: 0.6rem 1rem;
       background: rgba(0, 40, 20, 0.9);
       border: 2px solid var(--hud-gold);
       color: var(--hud-gold);
       cursor: pointer;
       transition: all 0.3s;
-      font-size: 0.9rem;
-      margin: 0.5rem;
+      font-size: 0.8rem;
+      margin: 0.3rem;
+    }
+    @media (min-width: 900px) {
+      .bracket-view-btn { padding: 0.8rem 1.5rem; font-size: 0.9rem; gap: 0.5rem; margin: 0.5rem; }
     }
     .bracket-view-btn:hover { box-shadow: 0 0 15px rgba(255,204,0,0.4); }
     .bracket-view-btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -2890,7 +2916,13 @@
     // ========== トーナメント表機能 ==========
     let bracketMode = false;
     let tournamentEndedLocally = false;
-    
+    let bracketResizeTimer = null;
+    window.addEventListener('resize', function() {
+      if (!bracketMode) return;
+      clearTimeout(bracketResizeTimer);
+      bracketResizeTimer = setTimeout(function() { generateBracket(); }, 200);
+    });
+
     // トーナメント表の表示/非表示切り替え
     function toggleBracketView() {
       bracketMode = !bracketMode;
@@ -3010,19 +3042,34 @@
         }
       }
       
-      // サイズ計算（人数に応じてアダプティブ）
-      let boxWidth, boxHeight, boxGap, roundHeight;
+      // 画面幅を取得（ブラケットコンテナの利用可能幅）
+      const containerEl = document.getElementById('bracketContainer');
+      const availableWidth = (containerEl ? containerEl.clientWidth : window.innerWidth) - 32; // padding分を引く
+
+      // デスクトップ基準のサイズ（人数に応じて）
+      let baseBoxW, baseBoxH, baseGap, baseRoundH;
       if (bracketSize <= 2) {
-        boxWidth = 100; boxHeight = 140; boxGap = 50; roundHeight = 110;
+        baseBoxW = 100; baseBoxH = 140; baseGap = 50; baseRoundH = 110;
       } else if (bracketSize <= 4) {
-        boxWidth = 80; boxHeight = 120; boxGap = 30; roundHeight = 95;
+        baseBoxW = 80; baseBoxH = 120; baseGap = 30; baseRoundH = 95;
       } else if (bracketSize <= 8) {
-        boxWidth = 70; boxHeight = 110; boxGap = 20; roundHeight = 85;
+        baseBoxW = 70; baseBoxH = 110; baseGap = 20; baseRoundH = 85;
       } else if (bracketSize <= 16) {
-        boxWidth = 60; boxHeight = 100; boxGap = 15; roundHeight = 80;
+        baseBoxW = 60; baseBoxH = 100; baseGap = 15; baseRoundH = 80;
       } else {
-        boxWidth = 50; boxHeight = 90; boxGap = 10; roundHeight = 70;
+        baseBoxW = 50; baseBoxH = 90; baseGap = 10; baseRoundH = 70;
       }
+
+      // デスクトップ基準幅と画面幅を比較して縮小率を計算
+      const desktopWidth = bracketSize * (baseBoxW + baseGap);
+      const scale = Math.min(1, availableWidth / desktopWidth);
+
+      // 最小サイズの下限を設定（読めないほど小さくならないように）
+      const boxWidth = Math.max(28, Math.round(baseBoxW * scale));
+      const boxHeight = Math.max(50, Math.round(baseBoxH * scale));
+      const boxGap = Math.max(4, Math.round(baseGap * scale));
+      const roundHeight = Math.max(40, Math.round(baseRoundH * scale));
+
       const svgWidth = bracketSize * (boxWidth + boxGap);
       const lineAreaHeight = rounds * roundHeight + 30;
 
@@ -3031,13 +3078,21 @@
       // ヘルパー: スロット範囲の中心X座標
       function groupCenterX(start, end) { return (slotXPos(start) + slotXPos(end)) / 2; }
 
-      // HTMLを生成（gapなしで優勝ボックスとSVGを密着）
-      let html = '<div class="bracket-tree" style="display:flex;flex-direction:column;align-items:center;">';
+      // HTMLを生成
+      const needsScroll = svgWidth > availableWidth;
+      let html = '';
+      if (needsScroll) {
+        html += '<div class="bracket-scroll-hint" style="display:block;">← スワイプでスクロール →</div>';
+      }
+      html += '<div class="bracket-tree" style="display:flex;flex-direction:column;align-items:center;">';
 
-      // 優勝枠サイズ（人数に応じて拡縮）
-      const champPad = bracketSize <= 4 ? '1rem 2rem' : '0.8rem 1.5rem';
-      const champTrophy = bracketSize <= 4 ? '2rem' : '1.5rem';
-      const champNameSize = bracketSize <= 4 ? '1.2rem' : '1rem';
+      // 優勝枠サイズ（人数とスケールに応じて拡縮）
+      const champScale = Math.max(0.6, scale);
+      const champPadV = Math.max(0.4, 0.8 * champScale);
+      const champPadH = Math.max(0.6, 1.5 * champScale);
+      const champPad = champPadV + 'rem ' + champPadH + 'rem';
+      const champTrophy = Math.max(1, (bracketSize <= 4 ? 2 : 1.5) * champScale) + 'rem';
+      const champNameSize = Math.max(0.7, (bracketSize <= 4 ? 1.2 : 1) * champScale) + 'rem';
 
       // 優勝枠（最上部）
       html += `
@@ -3050,6 +3105,10 @@
 
       // SVGとプレイヤーを含むコンテナ
       html += `<div style="position:relative;width:${svgWidth}px;height:${lineAreaHeight + boxHeight}px;">`;
+
+      // SVGの線幅もスケール
+      const strokeW = Math.max(1, Math.round(2 * Math.max(0.5, scale)));
+      const strokeWWin = Math.max(1.5, Math.round(3 * Math.max(0.5, scale)));
 
       // SVG線エリア（プレイヤーボックスと重ならない高さ）
       html += `<svg class="bracket-lines" width="${svgWidth}" height="${lineAreaHeight}" style="position:absolute;top:0;left:0;" overflow="hidden">`;
@@ -3075,11 +3134,11 @@
           const topY = lineAreaHeight - (r + 1) * roundHeight;
 
           // 左側垂直線
-          html += `<line x1="${leftX}" y1="${bottomY}" x2="${leftX}" y2="${topY}" class="bracket-line" />`;
+          html += `<line x1="${leftX}" y1="${bottomY}" x2="${leftX}" y2="${topY}" class="bracket-line" style="stroke-width:${strokeW};" />`;
           // 右側垂直線
-          html += `<line x1="${rightX}" y1="${bottomY}" x2="${rightX}" y2="${topY}" class="bracket-line" />`;
+          html += `<line x1="${rightX}" y1="${bottomY}" x2="${rightX}" y2="${topY}" class="bracket-line" style="stroke-width:${strokeW};" />`;
           // 上部水平線
-          html += `<line x1="${leftX}" y1="${topY}" x2="${rightX}" y2="${topY}" class="bracket-line" />`;
+          html += `<line x1="${leftX}" y1="${topY}" x2="${rightX}" y2="${topY}" class="bracket-line" style="stroke-width:${strokeW};" />`;
         }
       }
 
@@ -3089,7 +3148,7 @@
       const finalRightX = rounds === 1 ? slotXPos(1) : groupCenterX(finalHalf, bracketSize - 1);
       const finalCenterX = (finalLeftX + finalRightX) / 2;
       const finalTopY = lineAreaHeight - rounds * roundHeight;
-      html += `<line x1="${finalCenterX}" y1="${finalTopY}" x2="${finalCenterX}" y2="0" class="bracket-line" />`;
+      html += `<line x1="${finalCenterX}" y1="${finalTopY}" x2="${finalCenterX}" y2="0" class="bracket-line" style="stroke-width:${strokeW};" />`;
 
       // === パス2: 勝者の経路（明るい緑で発光） ===
       for (let r = 0; r < rounds; r++) {
@@ -3121,23 +3180,27 @@
           const winnerX = isLeftWinner ? leftX : rightX;
 
           // 勝者の垂直線（明るい緑）
-          html += `<line x1="${winnerX}" y1="${bottomY}" x2="${winnerX}" y2="${topY}" class="bracket-line winner" />`;
+          html += `<line x1="${winnerX}" y1="${bottomY}" x2="${winnerX}" y2="${topY}" class="bracket-line winner" style="stroke-width:${strokeWWin};" />`;
           // 勝者から中央への水平線（明るい緑）
-          html += `<line x1="${winnerX}" y1="${topY}" x2="${centerX}" y2="${topY}" class="bracket-line winner" />`;
+          html += `<line x1="${winnerX}" y1="${topY}" x2="${centerX}" y2="${topY}" class="bracket-line winner" style="stroke-width:${strokeWWin};" />`;
         }
       }
 
       // 優勝者の決勝→優勝線（明るい緑）
       if (champion) {
-        html += `<line x1="${finalCenterX}" y1="${finalTopY}" x2="${finalCenterX}" y2="0" class="bracket-line winner" />`;
+        html += `<line x1="${finalCenterX}" y1="${finalTopY}" x2="${finalCenterX}" y2="0" class="bracket-line winner" style="stroke-width:${strokeWWin};" />`;
       }
 
       html += '</svg>';
 
-      // プレイヤーボックスのフォントサイズ
-      const nameFontSize = bracketSize <= 2 ? '1rem' : (bracketSize <= 4 ? '0.9rem' : '0.8rem');
-      const idFontSize = bracketSize <= 4 ? '0.7rem' : '0.6rem';
-      const boxStyle = `width:${boxWidth}px;min-height:${boxHeight}px;`;
+      // プレイヤーボックスのフォントサイズ（スケールに応じて縮小）
+      const baseNameSize = bracketSize <= 2 ? 1 : (bracketSize <= 4 ? 0.9 : 0.8);
+      const baseIdSize = bracketSize <= 4 ? 0.7 : 0.6;
+      const nameFontSize = Math.max(0.5, baseNameSize * Math.max(0.65, scale)) + 'rem';
+      const idFontSize = Math.max(0.4, baseIdSize * Math.max(0.65, scale)) + 'rem';
+      const nameMaxH = Math.max(30, Math.round(80 * scale));
+      const boxPad = Math.max(2, Math.round(8 * scale));
+      const boxStyle = `width:${boxWidth}px;min-height:${boxHeight}px;padding:${boxPad}px ${Math.max(2, Math.round(4 * scale))}px;`;
 
       // プレイヤーボックス（SVGの直下、重ならない位置に配置）
       html += `<div class="bracket-round-row" style="position:absolute;top:${lineAreaHeight}px;left:0;right:0;display:flex;justify-content:center;gap:${boxGap}px;">`;
@@ -3181,7 +3244,7 @@
             ${canClick ? `onclick="selectBracketWinner(${player.entry_id}, ${opponent.entry_id}, '${escapeHtml(player.username)}', '${escapeHtml(opponent.username)}')"` : ''}>
             ${isWinner ? '<span class="winner-mark">🏆</span>' : ''}
             ${hasSeed ? '<span class="seed-mark">🎖️</span>' : ''}
-            <span class="player-name-v" style="font-size:${nameFontSize};">${escapeHtml(player.username)}</span>
+            <span class="player-name-v" style="font-size:${nameFontSize};max-height:${nameMaxH}px;">${escapeHtml(player.username)}</span>
             <span class="player-id-v" style="font-size:${idFontSize};">${String(player.entry_id).padStart(2, '0')}</span>
           </div>
         `;

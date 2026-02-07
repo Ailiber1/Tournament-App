@@ -1972,6 +1972,7 @@
       updateLotteryVenueButton();
       updateEntryButton();
       updateCancelEntryButton();
+      updateMatchmakingButton();
     }
     
     // 定期的にステータスをチェック（1秒ごと）
@@ -2149,7 +2150,7 @@
     
     function updateEntryButton() { const b = document.getElementById('entryBtn'); if (!appState.tournament?.deadline) { b.disabled = true; } else { const d = appState.tournament.deadline.toDate ? appState.tournament.deadline.toDate() : new Date(appState.tournament.deadline); b.disabled = new Date() > d; } }
     function updateCancelEntryButton() { const b = document.getElementById('cancelEntryBtn'); if (!b) return; const my = appState.entries.find(e => e.device_id === appState.deviceId); let can = !!my; const dl = appState.tournament?.deadline; if (dl) { const d = dl.toDate ? dl.toDate() : new Date(dl); if (new Date() >= d) can = false; } b.disabled = !can; }
-    function updateMatchmakingButton() { const b = document.getElementById('matchmakingBtn'); if (!b) return; const dl = appState.tournament?.deadline; if (dl) { const d = dl.toDate ? dl.toDate() : new Date(dl); if (new Date() >= d) { b.style.opacity = '1'; b.textContent = '🎲 対戦カード抽選を開始'; b.classList.add('matchmaking-active'); } else { b.style.opacity = '0.5'; b.textContent = '🎲 対戦カード抽選（締切後に有効化）'; b.classList.remove('matchmaking-active'); } } }
+    function updateMatchmakingButton() { const b = document.getElementById('matchmakingBtn'); if (!b) return; const dl = appState.tournament?.deadline; if (!dl) { b.style.opacity = '0.5'; b.textContent = '🎲 対戦カード抽選（締切後に有効化）'; b.classList.remove('matchmaking-active'); return; } const d = dl.toDate ? dl.toDate() : new Date(dl); if (new Date() >= d) { b.style.opacity = '1'; b.textContent = '🎲 対戦カード抽選を開始'; b.classList.add('matchmaking-active'); } else { b.style.opacity = '0.5'; b.textContent = '🎲 対戦カード抽選（締切後に有効化）'; b.classList.remove('matchmaking-active'); } }
     
     // 抽選会場ボタンの状態更新
     function updateLotteryVenueButton() {
@@ -2564,7 +2565,10 @@
       // VS表示をリセット
       if (typeof updateVsDisplay === 'function') updateVsDisplay(null, null);
       if (typeof disableWinnerSelection === 'function') disableWinnerSelection();
-      
+
+      // 対戦カード抽選ボタンをリセット
+      updateMatchmakingButton();
+
       // HUD表示状態を更新
       updateHudVisibility();
       

@@ -2510,6 +2510,8 @@
         appState.matches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         updateBracketControls();
         if (bracketMode) generateBracket();
+        // 全対戦カード確定チェック（管理者のみ）
+        if (appState.isAdmin) checkAllMatchupsDecided();
       });
     }
     
@@ -2671,56 +2673,46 @@
       
       playClick(); const myEntry = appState.entries.find(e => e.device_id === appState.deviceId); const username = myEntry ? myEntry.username : '不明'; const i = appState.entries.findIndex(e => e.device_id === appState.deviceId); if (i !== -1) appState.entries.splice(i, 1); appendLog(username + 'が登録解除しました'); if (db) db.collection('entries').doc(appState.deviceId).delete().catch(e => console.error(e)); updateEntriesDisplay(); updateTournamentDisplay(); updateEntryScreen(); updateCancelEntryButton(); hideModal('confirmCancelEntryModal'); showModal('cancelCompleteModal'); 
     }
-    function spinRoulette() { 
-      if (appState.isSpinning) return; 
-      const a = appState.entries.filter(e => e.status !== 'LOST'); 
-      
+    function spinRoulette() {
+      if (appState.isSpinning) return;
+      const a = appState.entries.filter(e => e.status !== 'LOST');
+
       // 優勝者が決まっている場合は回せない
       if (a.length <= 1) {
         showToast('大会は終了しています', 'error');
         return;
       }
-      
-      // 進行中の試合がある人を除外（シード保持者も含む）
+
+      // 進行中の試合がある人を除外
       const inMatch = appState.matches.filter(m => !m.winner_id);
       const inMatchIds = inMatch.flatMap(m => [m.player1_id, m.player2_id]);
-      
-      // 対戦可能なプレイヤー（敗退しておらず、進行中の試合がない）
-      const available = a.filter(e => !inMatchIds.includes(e.entry_id));
-      
-      // シード未使用の人（まだシード抽選が必要かどうか判定用）
-      const needsSeedLottery = available.filter(e => !e.has_seed);
-      
-      // 対戦可能な参加者がいない（全員が試合中）
+
+      // 対戦可能なプレイヤー（敗退せず、進行中の試合がなく、シード権もない）
+      const available = a.filter(e => !inMatchIds.includes(e.entry_id) && !e.has_seed);
+
+      // 対戦可能な参加者がいない
       if (available.length === 0) {
-        showToast('全員が試合中です。結果を確定してください。', 'error');
+        showToast('全ての対戦カードが確定済みです', 'info');
         return;
       }
-      
-      // 1人だけの場合
+
+      // 1人だけ残った場合 → 自動シード
       if (available.length === 1) {
-        showToast('対戦相手がいません。試合結果を確定してください。', 'error');
+        autoAssignSeed(available[0]);
         return;
       }
-      
-      // 奇数の場合かつシード未保持者が奇数ならシード抽選
-      if (needsSeedLottery.length % 2 === 1 && needsSeedLottery.length >= 1 && available.length > 2) {
-        showSeedLottery(needsSeedLottery);
-        return;
-      }
-      
+
       if (available.length < 2) { showToast('対戦可能な参加者が不足しています', 'error'); return; }
-      
-      // 対戦カードを決定（シード保持者も含む）
-      const f = available; 
-      appState.isSpinning = true; 
-      document.getElementById('spinBtn').disabled = true; 
-      const s = [...f].sort(() => Math.random() - 0.5); 
-      appState.selectedPlayer1 = s[0]; 
-      appState.selectedPlayer2 = s[1]; 
-      
+
+      // 対戦カードを決定
+      appState.isSpinning = true;
+      document.getElementById('spinBtn').disabled = true;
+      const s = [...available].sort(() => Math.random() - 0.5);
+      appState.selectedPlayer1 = s[0];
+      appState.selectedPlayer2 = s[1];
+
       const rotation = 1800 + Math.random() * 720;
-      
+
       // Firestoreにルーレット状態を保存（他デバイスに同期）
       if (db) {
         db.collection('tournaments').doc('current').update({
@@ -2734,56 +2726,34 @@
           }
         }).catch(e => console.log('Roulette sync error:', e));
       }
-      
-      // ルーレット回転音
+
       playSpinSound();
-      
-      document.getElementById('wheelInner').style.transform = 'rotate(' + rotation + 'deg)'; 
-      setTimeout(() => { 
-        playVsSound(); 
-        updateVsDisplay(appState.selectedPlayer1, appState.selectedPlayer2); 
-        appendLog(appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username); 
-        document.getElementById('confirmMatchBtn').disabled = false; 
-        appState.isSpinning = false; 
+
+      document.getElementById('wheelInner').style.transform = 'rotate(' + rotation + 'deg)';
+      setTimeout(() => {
+        playVsSound();
+        updateVsDisplay(appState.selectedPlayer1, appState.selectedPlayer2);
+        appendLog(appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username);
+        document.getElementById('confirmMatchBtn').disabled = false;
+        appState.isSpinning = false;
         document.getElementById('spinBtn').disabled = false;
-        
+
         // 回転完了を同期
         if (db) {
           db.collection('tournaments').doc('current').update({
             'roulette_state.spinning': false
           }).catch(e => {});
         }
-      }, 4000); 
+      }, 4000);
     }
-    
-    // シード抽選を表示
-    function showSeedLottery(players) {
-      const count = players.length;
-      document.getElementById('seedLotteryInfo').textContent = 
-        `対戦可能な参加者が${count}名（奇数）です。1名にシード権（不戦勝）を与えます。`;
-      showModal('seedLotteryModal');
-    }
-    
-    // シード抽選を実行
-    function executeSeedLottery() {
-      hideModal('seedLotteryModal');
-      
-      const a = appState.entries.filter(e => e.status !== 'LOST'); 
-      const f = a.filter(e => !e.has_seed && !appState.matches.some(m => (m.player1_id === e.entry_id || m.player2_id === e.entry_id) && !m.winner_id)); 
-      
-      if (f.length === 0) {
-        showToast('シード対象者がいません', 'error');
-        return;
-      }
-      
+
+    // 最後の1人に自動でシード権を付与
+    function autoAssignSeed(player) {
       appState.isSpinning = true;
       document.getElementById('spinBtn').disabled = true;
-      
-      // ランダムに1名を選ぶ
-      const seedPlayer = f[Math.floor(Math.random() * f.length)];
-      
+
       const rotation = 1800 + Math.random() * 720;
-      
+
       // Firestoreにルーレット状態を保存
       if (db) {
         db.collection('tournaments').doc('current').update({
@@ -2791,47 +2761,50 @@
             spinning: true,
             rotation: rotation,
             seed_lottery: true,
-            seed_player_id: seedPlayer.entry_id,
+            seed_player_id: player.entry_id,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
           }
-        }).catch(e => console.log('Seed lottery sync error:', e));
+        }).catch(e => console.log('Seed sync error:', e));
       }
-      
+
       playSpinSound();
       document.getElementById('wheelInner').style.transform = 'rotate(' + rotation + 'deg)';
-      
+
       setTimeout(() => {
         // シード権を付与
         if (db) {
-          db.collection('entries').doc(seedPlayer.id).update({ has_seed: true }).catch(e => {});
+          db.collection('entries').doc(player.id).update({ has_seed: true }).catch(e => {});
         }
-        seedPlayer.has_seed = true;
-        
+        player.has_seed = true;
+
         // VS表示をシード用に
         document.getElementById('vsOverlay').style.display = 'flex';
-        document.getElementById('vsPlayer1Id').textContent = 'ID-' + String(seedPlayer.entry_id).padStart(2, '0');
-        document.getElementById('vsPlayer1Name').textContent = seedPlayer.username;
-        document.getElementById('vsPlayer1Icon').innerHTML = seedPlayer.icon_url ? '<img src="' + seedPlayer.icon_url + '" style="width:100%;height:100%;object-fit:cover;">' : '<span>👑</span>';
+        document.getElementById('vsPlayer1Id').textContent = 'ID-' + String(player.entry_id).padStart(2, '0');
+        document.getElementById('vsPlayer1Name').textContent = player.username;
+        document.getElementById('vsPlayer1Icon').innerHTML = player.icon_url ? '<img src="' + player.icon_url + '" style="width:100%;height:100%;object-fit:cover;">' : '<svg class="silhouette-icon" viewBox="0 0 100 120"><circle cx="50" cy="30" r="22"/><path d="M10 120 Q10 70 50 65 Q90 70 90 120Z"/></svg>';
         document.getElementById('vsPlayer2Id').textContent = 'SEED';
         document.getElementById('vsPlayer2Name').textContent = '不戦勝';
         document.getElementById('vsPlayer2Icon').innerHTML = '<span>🎖️</span>';
-        
+
         playVsSound();
-        appendLog('🎖️ ' + seedPlayer.username + ' がシード権を獲得！');
-        showToast(seedPlayer.username + ' がシード権を獲得！', 'success');
-        
+        appendLog('🎖️ ' + player.username + ' がシード権を獲得！（最後の1人）');
+        showToast(player.username + ' がシード権を獲得！', 'success');
+
         appState.isSpinning = false;
         document.getElementById('spinBtn').disabled = false;
-        
-        // ルーレット更新
+
         updateRouletteWheel();
-        
+        updateEntriesDisplay();
+
         // 回転完了を同期
         if (db) {
           db.collection('tournaments').doc('current').update({
             'roulette_state.spinning': false
           }).catch(e => {});
         }
+
+        // 全対戦カード確定チェック
+        checkAllMatchupsDecided();
       }, 4000);
     }
     
@@ -2853,7 +2826,7 @@
               document.getElementById('vsOverlay').style.display = 'flex';
               document.getElementById('vsPlayer1Id').textContent = 'ID-' + String(seedPlayer.entry_id).padStart(2, '0');
               document.getElementById('vsPlayer1Name').textContent = seedPlayer.username;
-              document.getElementById('vsPlayer1Icon').innerHTML = seedPlayer.icon_url ? '<img src="' + seedPlayer.icon_url + '" style="width:100%;height:100%;object-fit:cover;">' : '<span>👑</span>';
+              document.getElementById('vsPlayer1Icon').innerHTML = seedPlayer.icon_url ? '<img src="' + seedPlayer.icon_url + '" style="width:100%;height:100%;object-fit:cover;">' : '<svg class="silhouette-icon" viewBox="0 0 100 120"><circle cx="50" cy="30" r="22"/><path d="M10 120 Q10 70 50 65 Q90 70 90 120Z"/></svg>';
               document.getElementById('vsPlayer2Id').textContent = 'SEED';
               document.getElementById('vsPlayer2Name').textContent = '不戦勝';
               document.getElementById('vsPlayer2Icon').innerHTML = '<span>🎖️</span>';
@@ -3367,10 +3340,10 @@
     function updateBracketControls() {
       const controls = document.getElementById('bracketControls');
       if (!controls) return;
-      
+
       const activeCount = appState.entries.filter(e => e.status !== 'LOST').length;
       const matchCount = appState.matches.length;
-      
+
       // 条件：対戦が1つ以上確定している、かつ20名以下
       if (matchCount >= 1 && activeCount <= 20 && activeCount >= 1) {
         controls.style.display = 'flex';
@@ -3378,28 +3351,53 @@
         controls.style.display = 'none';
       }
     }
+
+    // 全対戦カードが確定したかチェックし、確定済みならトーナメント表を表示
+    function checkAllMatchupsDecided() {
+      const active = appState.entries.filter(e => e.status !== 'LOST');
+      const inMatch = appState.matches.filter(m => !m.winner_id);
+      const inMatchIds = inMatch.flatMap(m => [m.player1_id, m.player2_id]);
+      const unmatched = active.filter(e => !inMatchIds.includes(e.entry_id) && !e.has_seed);
+
+      // 未マッチの人が1人→自動シード付与
+      if (unmatched.length === 1) {
+        autoAssignSeed(unmatched[0]);
+        return;
+      }
+
+      // 全員がマッチ済みまたはシード済み → トーナメント表を自動表示
+      if (unmatched.length === 0 && appState.matches.length > 0) {
+        updateBracketControls();
+        if (!bracketMode) {
+          showToast('全対戦カードが確定しました！トーナメント表を表示します', 'success');
+          setTimeout(() => { toggleBracketView(); }, 1000);
+        }
+      }
+    }
     
     
     function confirmMatch() { if (!appState.selectedPlayer1 || !appState.selectedPlayer2) return; document.getElementById('confirmMatchText').textContent = appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username; showModal('confirmMatchModal'); }
-    function executeConfirmMatch() { 
-      if (!db) return; 
-      playClick(); 
-      appendLog(appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username + ' の対戦が確定'); 
-      db.collection('matches').add({ 
-        player1_id: appState.selectedPlayer1.entry_id, 
-        player1_name: appState.selectedPlayer1.username, 
-        player2_id: appState.selectedPlayer2.entry_id, 
-        player2_name: appState.selectedPlayer2.username, 
-        winner_id: null, 
-        round: 1, 
-        created_at: firebase.firestore.FieldValue.serverTimestamp() 
-      }).then(() => { 
-        hideModal('confirmMatchModal'); 
-        // プレイヤーをクリック可能にする
+    function executeConfirmMatch() {
+      if (!db) return;
+      playClick();
+      appendLog(appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username + ' の対戦が確定');
+      db.collection('matches').add({
+        player1_id: appState.selectedPlayer1.entry_id,
+        player1_name: appState.selectedPlayer1.username,
+        player2_id: appState.selectedPlayer2.entry_id,
+        player2_name: appState.selectedPlayer2.username,
+        winner_id: null,
+        round: 1,
+        created_at: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(() => {
+        hideModal('confirmMatchModal');
         enableWinnerSelection();
-        document.getElementById('confirmMatchBtn').disabled = true; 
-        showToast('対戦を確定しました。勝者をクリックしてください', 'success'); 
-      }).catch(e => showToast('エラー: ' + e.message, 'error')); 
+        document.getElementById('confirmMatchBtn').disabled = true;
+        showToast('対戦を確定しました。勝者をクリックしてください', 'success');
+
+        // 次のスピンで残り1人ならシード自動付与チェック
+        setTimeout(() => { checkAllMatchupsDecided(); }, 500);
+      }).catch(e => showToast('エラー: ' + e.message, 'error'));
     }
     
     // 勝者選択を有効化

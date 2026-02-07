@@ -1473,13 +1473,13 @@
   
   <!-- BGM Audio -->
   <audio id="bgmAudio" loop preload="auto">
-    <source src="./%E3%83%88%E3%83%BC%E3%83%8A%E3%83%A1%E3%83%B3%E3%83%88.mp3" type="audio/mpeg">
+    <source src="./tournament.mp3" type="audio/mpeg">
   </audio>
   <audio id="battleBgmAudio" loop preload="auto">
-    <source src="./%E3%83%90%E3%83%88%E3%83%AB%E3%83%9E%E3%83%83%E3%83%81.mp3" type="audio/mpeg">
+    <source src="./Battle Match.mp3" type="audio/mpeg">
   </audio>
   <audio id="vsSoundAudio" preload="auto">
-    <source src="./VS%E7%94%A8.mp3" type="audio/mpeg">
+    <source src="./VS用.mp3" type="audio/mpeg">
   </audio>
   
   <div class="calendar-modal" id="calendarModal">
@@ -1715,23 +1715,11 @@
       bgmAudio.volume = bgmVolume;
       battleBgmAudio.volume = bgmVolume;
       vsSoundAudio.volume = seVolume;
-      
-      // 複数のインタラクションイベントでBGMを開始
-      const startBGM = () => {
+      document.addEventListener('click', () => {
         if (bgmEnabled && bgmAudio.paused && currentBgm === 'normal') {
-          bgmAudio.play().catch(e => console.log('BGM start failed:', e));
+          bgmAudio.play().catch(e => {});
         }
-      };
-      
-      // クリック、タッチ、キー入力など様々なイベントで開始
-      ['click', 'touchstart', 'keydown'].forEach(event => {
-        document.addEventListener(event, startBGM, { once: true });
-      });
-      
-      // ページが既にアクティブなら即座に試行
-      if (document.visibilityState === 'visible') {
-        setTimeout(startBGM, 100);
-      }
+      }, { once: true });
     }
 
     function playClick() { if (!seEnabled) return; try { const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=800;o.type='sine';g.gain.setValueAtTime(seVolume*0.5,c.currentTime);g.gain.exponentialRampToValueAtTime(0.01,c.currentTime+0.1);o.start(c.currentTime);o.stop(c.currentTime+0.1);} catch(e){} }

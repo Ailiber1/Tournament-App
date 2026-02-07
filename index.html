@@ -3797,10 +3797,10 @@
               p1IsWinner ? 'winner' : '', p1IsLoser ? 'loser' : '',
               canClick ? 'clickable' : '', isPending ? 'active' : ''
             ].filter(Boolean).join(' ');
-            html += `<div class="${p1Classes}" style="width:${upperBoxW}px;min-height:${upperBoxH}px;padding:${upperBoxPad}px;position:absolute;left:${leftX - upperBoxW / 2}px;top:${upperBoxTop}px;"
+            html += `<div class="${p1Classes}" style="width:${upperBoxW}px;height:${upperBoxH}px;padding:${upperBoxPad}px;position:absolute;left:${leftX - upperBoxW / 2}px;top:${upperBoxTop}px;overflow:hidden;"
               ${canClick ? `onclick="selectBracketWinner(${p1.entry_id}, ${p2.entry_id}, '${escapeHtml(p1.username)}', '${escapeHtml(p2.username)}')"` : ''}>
               ${p1IsWinner ? '<span class="winner-mark">🏆</span>' : ''}
-              <span class="player-name-v" style="font-size:${upperNameSize};">${escapeHtml(p1.username)}</span>
+              <span class="player-name-v" style="font-size:${upperNameSize};max-height:${upperBoxH - upperBoxPad * 2 - 16}px;overflow:hidden;">${escapeHtml(p1.username)}</span>
               <span class="player-id-v" style="font-size:${upperIdSize};">${String(p1.entry_id).padStart(2, '0')}</span>
             </div>`;
 
@@ -3811,10 +3811,10 @@
               p2IsWinner ? 'winner' : '', p2IsLoser ? 'loser' : '',
               canClick ? 'clickable' : '', isPending ? 'active' : ''
             ].filter(Boolean).join(' ');
-            html += `<div class="${p2Classes}" style="width:${upperBoxW}px;min-height:${upperBoxH}px;padding:${upperBoxPad}px;position:absolute;left:${rightX - upperBoxW / 2}px;top:${upperBoxTop}px;"
+            html += `<div class="${p2Classes}" style="width:${upperBoxW}px;height:${upperBoxH}px;padding:${upperBoxPad}px;position:absolute;left:${rightX - upperBoxW / 2}px;top:${upperBoxTop}px;overflow:hidden;"
               ${canClick ? `onclick="selectBracketWinner(${p2.entry_id}, ${p1.entry_id}, '${escapeHtml(p2.username)}', '${escapeHtml(p1.username)}')"` : ''}>
               ${p2IsWinner ? '<span class="winner-mark">🏆</span>' : ''}
-              <span class="player-name-v" style="font-size:${upperNameSize};">${escapeHtml(p2.username)}</span>
+              <span class="player-name-v" style="font-size:${upperNameSize};max-height:${upperBoxH - upperBoxPad * 2 - 16}px;overflow:hidden;">${escapeHtml(p2.username)}</span>
               <span class="player-id-v" style="font-size:${upperIdSize};">${String(p2.entry_id).padStart(2, '0')}</span>
             </div>`;
           }

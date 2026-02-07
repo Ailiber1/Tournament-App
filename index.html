@@ -1983,6 +1983,7 @@
     function navigateTo(screenId, directToTitle = false) {
       if (screenId === 'entryScreen') { if (!appState.tournament?.deadline) { showToast('締切日時が設定されていません', 'error'); return; } updateEntryScreen(); }
       if (screenId === 'historyScreen') loadHistory();
+      if (screenId === 'tournamentScreen') { initTournamentScreen(); }
       screenHistory.push(currentScreen);
       document.getElementById(currentScreen).classList.remove('active');
       document.getElementById(screenId).classList.add('active');
@@ -1993,6 +1994,42 @@
       if (directToTitle) { backBtn.textContent = '◀ タイトルに戻る'; backBtn.onclick = goToTitle; } else { backBtn.textContent = '◀ 戻る'; backBtn.onclick = goBack; }
       backBtn.classList.toggle('visible', screenId !== 'titleScreen');
       updateHudVisibility();
+    }
+    
+    // トーナメント画面の初期化
+    function initTournamentScreen() {
+      // 抽選会場関連を初期状態に戻す
+      const lotteryArena = document.getElementById('lotteryArena');
+      const lotteryEntrance = document.getElementById('lotteryEntrance');
+      const preArenaList = document.getElementById('preArenaList');
+      const bracketContainer = document.getElementById('bracketContainer');
+      const rouletteMain = document.querySelector('.lottery-main');
+      const lotterySidebar = document.querySelector('.lottery-sidebar');
+      const rouletteAdminControls = document.getElementById('rouletteAdminControls');
+      const bracketControls = document.getElementById('bracketControls');
+      
+      // 抽選会場を非表示、入口ボタンを表示
+      if (lotteryArena) {
+        lotteryArena.style.display = 'none';
+        lotteryArena.style.gridTemplateColumns = '';
+      }
+      if (lotteryEntrance) lotteryEntrance.style.display = '';
+      if (preArenaList) preArenaList.style.display = '';
+      if (bracketContainer) bracketContainer.classList.remove('active');
+      if (rouletteMain) rouletteMain.style.display = 'flex';
+      if (lotterySidebar) lotterySidebar.style.display = '';
+      if (rouletteAdminControls) rouletteAdminControls.style.display = 'none';
+      if (bracketControls) bracketControls.style.display = 'none';
+      
+      // bracketModeをリセット
+      bracketMode = false;
+      
+      // VS表示をリセット（関数が存在する場合のみ）
+      if (typeof updateVsDisplay === 'function') updateVsDisplay(null, null);
+      if (typeof disableWinnerSelection === 'function') disableWinnerSelection();
+      
+      // ボタン状態を更新
+      updateLotteryVenueButton();
     }
     function goBack() { if (screenHistory.length > 0) { const prev = screenHistory.pop(); document.getElementById(currentScreen).classList.remove('active'); document.getElementById(prev).classList.add('active'); currentScreen = prev; const header = document.getElementById('mainHeader'); if (currentScreen === 'titleScreen') header.classList.remove('visible'); else header.classList.add('visible'); document.getElementById('backBtn').classList.toggle('visible', currentScreen !== 'titleScreen'); updateHudVisibility(); } }
     function goToTitle() { document.getElementById(currentScreen).classList.remove('active'); document.getElementById('titleScreen').classList.add('active'); currentScreen = 'titleScreen'; screenHistory = []; document.getElementById('mainHeader').classList.remove('visible'); updateHudVisibility(); }
@@ -2376,7 +2413,13 @@
           }
           
           updateTournamentDisplay(); 
-        } 
+        } else {
+          // 大会データが削除された（大会終了）場合
+          if (appState.tournament) {
+            // 以前は大会があったが今はない → リセット
+            resetAfterTournamentEnd();
+          }
+        }
       }); 
       
       // エントリー情報の監視
@@ -2394,6 +2437,94 @@
         appState.matches = snap.docs.map(d => ({ id: d.id, ...d.data() })); 
         if (bracketMode) generateBracket(); 
       }); 
+    }
+    
+    // 大会終了後のリセット処理（全端末共通）
+    function resetAfterTournamentEnd() {
+      console.log('大会データが削除されました。リセットします。');
+      
+      // BGMを通常に戻す
+      switchToNormalBGM();
+      
+      // ローカル状態を完全リセット
+      appState.tournament = null;
+      appState.entries = [];
+      appState.matches = [];
+      appState.selectedPlayer1 = null;
+      appState.selectedPlayer2 = null;
+      appState.matchingIds = [];
+      appState.isAdmin = false;
+      appState.adminName = null;
+      bracketMode = false;
+      
+      // 管理者情報をlocalStorageから削除
+      localStorage.removeItem('tournament_admin_name');
+      
+      // HUDログをクリア
+      hudLogs.length = 0;
+      
+      // 画面を更新
+      updateTournamentDisplay();
+      updateEntriesDisplay();
+      updateHudDisplay();
+      
+      // トースト表示
+      showToast('大会が終了しました', 'info');
+      
+      // 画面履歴をクリア
+      screenHistory = [];
+      
+      // すべての画面を非表示
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('titleScreen').classList.add('active');
+      currentScreen = 'titleScreen';
+      
+      // ヘッダーを非表示
+      document.getElementById('mainHeader').classList.remove('visible');
+      document.getElementById('backBtn').classList.remove('visible');
+      
+      // 抽選会場の状態を完全リセット
+      const bracketContainer = document.getElementById('bracketContainer');
+      if (bracketContainer) bracketContainer.classList.remove('active');
+      
+      const lotteryArena = document.getElementById('lotteryArena');
+      if (lotteryArena) {
+        lotteryArena.style.display = 'none';
+        lotteryArena.style.gridTemplateColumns = '';
+      }
+      
+      const lotteryEntrance = document.getElementById('lotteryEntrance');
+      if (lotteryEntrance) lotteryEntrance.style.display = '';
+      
+      const preArenaList = document.getElementById('preArenaList');
+      if (preArenaList) preArenaList.style.display = '';
+      
+      const rouletteMain = document.querySelector('.lottery-main');
+      if (rouletteMain) rouletteMain.style.display = 'flex';
+      
+      const lotterySidebar = document.querySelector('.lottery-sidebar');
+      if (lotterySidebar) lotterySidebar.style.display = '';
+      
+      // ルーレット関連をリセット
+      const rouletteAdminControls = document.getElementById('rouletteAdminControls');
+      if (rouletteAdminControls) rouletteAdminControls.style.display = 'none';
+      
+      const bracketControls = document.getElementById('bracketControls');
+      if (bracketControls) bracketControls.style.display = 'none';
+      
+      const wheelInner = document.getElementById('wheelInner');
+      if (wheelInner) wheelInner.style.transform = 'rotate(0deg)';
+      
+      // VS表示をリセット
+      if (typeof updateVsDisplay === 'function') updateVsDisplay(null, null);
+      if (typeof disableWinnerSelection === 'function') disableWinnerSelection();
+      
+      // HUD表示状態を更新
+      updateHudVisibility();
+      
+      // ボタン状態を更新
+      updateTournamentViewButton();
+      updateLotteryVenueButton();
     }
     async function registerAdmin() { 
       // クールダウンチェック
@@ -3272,6 +3403,9 @@
       // HUDログをクリア
       hudLogs.length = 0;
       
+      // bracketModeをリセット
+      bracketMode = false;
+      
       hideModal('endTournamentModal');
       showToast('大会が終了しました！優勝: ' + championName, 'success');
       
@@ -3294,9 +3428,41 @@
         document.getElementById('mainHeader').classList.remove('visible');
         document.getElementById('backBtn').classList.remove('visible');
         
-        // 抽選会場の状態もリセット
+        // 抽選会場の状態を完全リセット
         const bracketContainer = document.getElementById('bracketContainer');
         if (bracketContainer) bracketContainer.classList.remove('active');
+        
+        const lotteryArena = document.getElementById('lotteryArena');
+        if (lotteryArena) {
+          lotteryArena.style.display = 'none';
+          lotteryArena.style.gridTemplateColumns = '';
+        }
+        
+        const lotteryEntrance = document.getElementById('lotteryEntrance');
+        if (lotteryEntrance) lotteryEntrance.style.display = '';
+        
+        const preArenaList = document.getElementById('preArenaList');
+        if (preArenaList) preArenaList.style.display = '';
+        
+        const rouletteMain = document.querySelector('.lottery-main');
+        if (rouletteMain) rouletteMain.style.display = 'flex';
+        
+        const lotterySidebar = document.querySelector('.lottery-sidebar');
+        if (lotterySidebar) lotterySidebar.style.display = '';
+        
+        // ルーレット関連をリセット
+        const rouletteAdminControls = document.getElementById('rouletteAdminControls');
+        if (rouletteAdminControls) rouletteAdminControls.style.display = 'none';
+        
+        const bracketControls = document.getElementById('bracketControls');
+        if (bracketControls) bracketControls.style.display = 'none';
+        
+        const wheelInner = document.getElementById('wheelInner');
+        if (wheelInner) wheelInner.style.transform = 'rotate(0deg)';
+        
+        // VS表示をリセット
+        updateVsDisplay(null, null);
+        disableWinnerSelection();
         
         // HUD表示状態を更新
         updateHudVisibility();

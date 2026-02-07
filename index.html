@@ -896,6 +896,25 @@
     }
     .bracket-view-btn:hover { box-shadow: 0 0 15px rgba(255,204,0,0.4); }
     .bracket-view-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* 対戦カード抽選ボタン - 有効化時 */
+    .matchmaking-active {
+      background: linear-gradient(180deg, rgba(0,60,30,0.9) 0%, rgba(0,40,20,0.95) 100%) !important;
+      border: 2px solid var(--hud-green) !important;
+      color: var(--hud-green) !important;
+      font-weight: bold;
+      animation: matchmaking-glow 1.5s ease-in-out infinite;
+      box-shadow: 0 0 15px var(--hud-green-glow), inset 0 0 15px rgba(0, 255, 65, 0.1);
+    }
+    .matchmaking-active:hover {
+      background: var(--hud-green) !important;
+      color: var(--bg-dark) !important;
+      box-shadow: 0 0 30px var(--hud-green-glow);
+    }
+    @keyframes matchmaking-glow {
+      0%, 100% { box-shadow: 0 0 15px var(--hud-green-glow), inset 0 0 15px rgba(0, 255, 65, 0.1); }
+      50% { box-shadow: 0 0 30px var(--hud-green-glow), 0 0 50px rgba(0, 255, 65, 0.2), inset 0 0 20px rgba(0, 255, 65, 0.15); }
+    }
     
     /* 右側：参加者リスト */
     .lottery-sidebar {
@@ -2046,21 +2065,24 @@
     function hideModal(id) { document.getElementById(id).classList.remove('active'); }
     function showToast(msg, type = 'success') { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast ' + type + ' visible'; setTimeout(() => t.classList.remove('visible'), 3000); }
     function showGuide(type) { showModal(type === 'admin' ? 'adminGuideModal' : 'userGuideModal'); }
-    function showMatchmakingInfo() { 
-      const dl = appState.tournament?.deadline; 
-      if (dl) { 
-        const d = dl.toDate ? dl.toDate() : new Date(dl); 
-        if (new Date() >= d) { 
-          switchToBattleBGM(); 
-          navigateTo('tournamentScreen'); 
-          document.getElementById('lotteryEntrance').style.display = 'none'; 
+    function showMatchmakingInfo() {
+      const dl = appState.tournament?.deadline;
+      if (dl) {
+        const d = dl.toDate ? dl.toDate() : new Date(dl);
+        if (new Date() >= d) {
+          switchToBattleBGM();
+          navigateTo('tournamentScreen');
+          document.getElementById('lotteryEntrance').style.display = 'none';
           document.getElementById('preArenaList').style.display = 'none';
-          document.getElementById('lotteryArena').classList.add('active');
-          document.getElementById('rouletteAdminControls').style.display = 'flex'; 
-          return; 
-        } 
-      } 
-      showToast('締切日時以降に有効化されます', 'error'); 
+          const lotteryArena = document.getElementById('lotteryArena');
+          lotteryArena.style.display = '';
+          lotteryArena.classList.add('active');
+          document.getElementById('rouletteAdminControls').style.display = 'flex';
+          updateBracketControls();
+          return;
+        }
+      }
+      showToast('締切日時以降に有効化されます', 'error');
     }
     function previewIcon(input) { if (input.files && input.files[0]) { const r = new FileReader(); r.onload = e => { document.getElementById('iconPreview').innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;">'; document.getElementById('iconDeleteBtn').style.display = 'block'; }; r.readAsDataURL(input.files[0]); } }
     function clearIcon() { document.getElementById('iconPreview').innerHTML = '<span style="color:var(--text-dim);font-size:1.3rem;">+</span>'; document.getElementById('iconInput').value = ''; document.getElementById('iconDeleteBtn').style.display = 'none'; }
@@ -2127,7 +2149,7 @@
     
     function updateEntryButton() { const b = document.getElementById('entryBtn'); if (!appState.tournament?.deadline) { b.disabled = true; } else { const d = appState.tournament.deadline.toDate ? appState.tournament.deadline.toDate() : new Date(appState.tournament.deadline); b.disabled = new Date() > d; } }
     function updateCancelEntryButton() { const b = document.getElementById('cancelEntryBtn'); if (!b) return; const my = appState.entries.find(e => e.device_id === appState.deviceId); let can = !!my; const dl = appState.tournament?.deadline; if (dl) { const d = dl.toDate ? dl.toDate() : new Date(dl); if (new Date() >= d) can = false; } b.disabled = !can; }
-    function updateMatchmakingButton() { const b = document.getElementById('matchmakingBtn'); if (!b) return; const dl = appState.tournament?.deadline; if (dl) { const d = dl.toDate ? dl.toDate() : new Date(dl); if (new Date() >= d) { b.style.opacity = '1'; b.textContent = '🎲 対戦カード抽選を開始'; } } }
+    function updateMatchmakingButton() { const b = document.getElementById('matchmakingBtn'); if (!b) return; const dl = appState.tournament?.deadline; if (dl) { const d = dl.toDate ? dl.toDate() : new Date(dl); if (new Date() >= d) { b.style.opacity = '1'; b.textContent = '🎲 対戦カード抽選を開始'; b.classList.add('matchmaking-active'); } else { b.style.opacity = '0.5'; b.textContent = '🎲 対戦カード抽選（締切後に有効化）'; b.classList.remove('matchmaking-active'); } } }
     
     // 抽選会場ボタンの状態更新
     function updateLotteryVenueButton() {
@@ -2456,10 +2478,11 @@
       }); 
       
       // マッチ情報の監視
-      db.collection('matches').orderBy('created_at', 'asc').onSnapshot(snap => { 
-        appState.matches = snap.docs.map(d => ({ id: d.id, ...d.data() })); 
-        if (bracketMode) generateBracket(); 
-      }); 
+      db.collection('matches').orderBy('created_at', 'asc').onSnapshot(snap => {
+        appState.matches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        updateBracketControls();
+        if (bracketMode) generateBracket();
+      });
     }
     
     // 大会終了後のリセット処理（全端末共通）
@@ -2984,11 +3007,12 @@
       const boxGap = 15;
       const roundHeight = 60;
       const svgWidth = bracketSize * (boxWidth + boxGap);
-      const svgHeight = rounds * roundHeight + 40;
-      
+      const lineAreaHeight = rounds * roundHeight + 40;
+      const totalHeight = lineAreaHeight + boxHeight;
+
       // HTMLを生成（flexbox縦並び）
       let html = '<div class="bracket-tree" style="display:flex;flex-direction:column;align-items:center;gap:20px;">';
-      
+
       // 優勝枠（最上部・横書き）
       html += `
         <div class="bracket-champion-box ${champion ? '' : 'empty'}">
@@ -2997,12 +3021,12 @@
           <div class="champion-name" style="writing-mode:horizontal-tb;text-orientation:mixed;">${champion ? escapeHtml(champion.username) : '???'}</div>
         </div>
       `;
-      
+
       // SVGとプレイヤーを含むコンテナ
-      html += `<div style="position:relative;width:${svgWidth}px;height:${svgHeight + boxHeight + 20}px;">`;
-      
-      // SVG線を描画
-      html += `<svg class="bracket-lines" width="${svgWidth}" height="${svgHeight}" style="position:absolute;top:0;left:0;">`;
+      html += `<div style="position:relative;width:${svgWidth}px;height:${totalHeight}px;">`;
+
+      // SVG線を描画（全領域をカバー）
+      html += `<svg class="bracket-lines" width="${svgWidth}" height="${totalHeight}" style="position:absolute;top:0;left:0;">`;
       
       // 各プレイヤーからの線を描画
       for (let i = 0; i < bracketSize; i++) {
@@ -3010,14 +3034,14 @@
         if (!player) continue;
         
         const x = i * (boxWidth + boxGap) + boxWidth / 2;
-        const baseY = svgHeight;
-        
+        const baseY = lineAreaHeight;
+
         // プレイヤーの勝ち上がり状況を確認
         let currentY = baseY;
         let isWinnerLine = false;
-        
+
         for (let r = 0; r < rounds; r++) {
-          const nextY = svgHeight - (r + 1) * roundHeight;
+          const nextY = lineAreaHeight - (r + 1) * roundHeight;
           const matchIndex = Math.floor(i / Math.pow(2, r + 1));
           const isLeftSide = (Math.floor(i / Math.pow(2, r)) % 2) === 0;
           

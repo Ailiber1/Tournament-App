@@ -628,8 +628,6 @@
     .roulette-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     #spinBtn { background: var(--hud-green); border: none; color: var(--bg-dark); }
     #spinBtn:hover:not(:disabled) { box-shadow: 0 0 20px var(--hud-green-glow); }
-    #confirmMatchBtn { background: transparent; border: 2px solid var(--hud-gold); color: var(--hud-gold); }
-    #confirmMatchBtn:hover:not(:disabled) { box-shadow: 0 0 15px rgba(255,204,0,0.5); }
     
     /* 勝者選択ボタン */
     .winner-btn {
@@ -1416,7 +1414,6 @@
           <!-- 操作ボタン -->
           <div class="roulette-controls" id="rouletteAdminControls" style="display:none;">
             <button class="roulette-btn" id="spinBtn" onclick="spinRoulette()">ルーレット回転</button>
-            <button class="roulette-btn" id="confirmMatchBtn" onclick="confirmMatch()" disabled>対戦確定</button>
             <button class="roulette-btn" id="endTournamentBtn" onclick="confirmEndTournament()" style="background:rgba(40,10,20,0.8);border-color:var(--hud-red);color:var(--hud-red);">大会終了・記録</button>
           </div>
           <!-- トーナメント表切り替えボタン（管理者用） -->
@@ -1533,17 +1530,6 @@
       <p style="text-align:center;margin:0.8rem 0;">エントリーが完了しました！</p>
       <p style="text-align:center;color:var(--hud-gold);font-size:1rem;" id="entryCompleteInfo"></p>
       <div class="modal-buttons"><button class="modal-btn modal-btn-confirm" onclick="hideModal('entryCompleteModal');navigateTo('tournamentScreen',true)">確認する</button></div>
-    </div>
-  </div>
-  <div class="modal-overlay" id="confirmMatchModal">
-    <div class="modal-content">
-      <button class="modal-close-btn" onclick="hideModal('confirmMatchModal')">×</button>
-      <h3 class="modal-title">対戦を確定しますか？</h3>
-      <p style="text-align:center;margin:0.8rem 0;" id="confirmMatchText"></p>
-      <div class="modal-buttons">
-        <button class="modal-btn modal-btn-cancel" onclick="hideModal('confirmMatchModal')">キャンセル</button>
-        <button class="modal-btn modal-btn-confirm" onclick="executeConfirmMatch()">確定</button>
-      </div>
     </div>
   </div>
   <!-- シード抽選確認モーダル -->
@@ -3046,17 +3032,32 @@
       setTimeout(() => {
         playVsSound();
         updateVsDisplay(appState.selectedPlayer1, appState.selectedPlayer2);
-        appendLog(appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username);
-        document.getElementById('confirmMatchBtn').disabled = false;
-        appState.isSpinning = false;
-        document.getElementById('spinBtn').disabled = false;
+        appendLog(appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username + ' の対戦が確定');
 
-        // 回転完了を同期
+        // ルーレット完了 → 自動で対戦確定（Firestore保存）
         if (db) {
+          db.collection('matches').add({
+            player1_id: appState.selectedPlayer1.entry_id,
+            player1_name: appState.selectedPlayer1.username,
+            player2_id: appState.selectedPlayer2.entry_id,
+            player2_name: appState.selectedPlayer2.username,
+            winner_id: null,
+            round: 1,
+            group: appState.activeGroup || null,
+            created_at: firebase.firestore.FieldValue.serverTimestamp()
+          }).then(() => {
+            enableWinnerSelection();
+            showToast('対戦確定！勝者をクリックしてください', 'success');
+            setTimeout(() => { checkAllMatchupsDecided(); }, 500);
+          }).catch(e => showToast('エラー: ' + e.message, 'error'));
+
           db.collection('tournaments').doc('current').update({
             'roulette_state.spinning': false
           }).catch(e => {});
         }
+
+        appState.isSpinning = false;
+        document.getElementById('spinBtn').disabled = false;
       }, 4000);
     }
 
@@ -3294,37 +3295,85 @@
       // 各ラウンドの勝者を特定
       for (let r = 0; r < rounds; r++) {
         const matchesInRound = Math.pow(2, rounds - 1 - r);
-        
+
         for (let m = 0; m < matchesInRound; m++) {
           let player1 = null, player2 = null;
-          
+
           if (r === 0) {
             player1 = bracketSlots[m * 2] || null;
             player2 = bracketSlots[m * 2 + 1] || null;
+
+            // BYE処理：片方がnullならもう片方が自動勝利（シード自動進出）
+            if (player1 && !player2) {
+              roundWinners[r].push({
+                matchIndex: m,
+                winnerId: player1.entry_id,
+                player1: player1,
+                player2: null,
+                isBye: true
+              });
+              if (playerProgress[player1.entry_id]) {
+                playerProgress[player1.entry_id].rounds[r] = true;
+              }
+              continue;
+            }
+            if (!player1 && player2) {
+              roundWinners[r].push({
+                matchIndex: m,
+                winnerId: player2.entry_id,
+                player1: null,
+                player2: player2,
+                isBye: true
+              });
+              if (playerProgress[player2.entry_id]) {
+                playerProgress[player2.entry_id].rounds[r] = true;
+              }
+              continue;
+            }
           } else {
             const rangeSize = Math.pow(2, r + 1);
             const range1Start = m * rangeSize;
             const range2Start = m * rangeSize + rangeSize / 2;
-            
-            for (let i = range1Start; i < range1Start + rangeSize / 2 && i < bracketSlots.length; i++) {
-              if (bracketSlots[i] && bracketSlots[i].status !== 'LOST') {
-                player1 = bracketSlots[i];
-                break;
+
+            // 前ラウンドで勝利した人を探す（BYE勝利含む）
+            const prevRoundWinnersLeft = roundWinners[r - 1].filter(w => {
+              const gs = w.matchIndex * Math.pow(2, r);
+              return gs >= range1Start && gs < range1Start + rangeSize / 2;
+            });
+            const prevRoundWinnersRight = roundWinners[r - 1].filter(w => {
+              const gs = w.matchIndex * Math.pow(2, r);
+              return gs >= range2Start && gs < range2Start + rangeSize / 2;
+            });
+
+            if (prevRoundWinnersLeft.length > 0) {
+              const wId = prevRoundWinnersLeft[prevRoundWinnersLeft.length - 1].winnerId;
+              player1 = allEntries.find(e => e.entry_id === wId) || null;
+            } else {
+              for (let i = range1Start; i < range1Start + rangeSize / 2 && i < bracketSlots.length; i++) {
+                if (bracketSlots[i] && bracketSlots[i].status !== 'LOST') {
+                  player1 = bracketSlots[i];
+                  break;
+                }
               }
             }
-            for (let i = range2Start; i < range2Start + rangeSize / 2 && i < bracketSlots.length; i++) {
-              if (bracketSlots[i] && bracketSlots[i].status !== 'LOST') {
-                player2 = bracketSlots[i];
-                break;
+            if (prevRoundWinnersRight.length > 0) {
+              const wId = prevRoundWinnersRight[prevRoundWinnersRight.length - 1].winnerId;
+              player2 = allEntries.find(e => e.entry_id === wId) || null;
+            } else {
+              for (let i = range2Start; i < range2Start + rangeSize / 2 && i < bracketSlots.length; i++) {
+                if (bracketSlots[i] && bracketSlots[i].status !== 'LOST') {
+                  player2 = bracketSlots[i];
+                  break;
+                }
               }
             }
           }
-          
-          const registeredMatch = matches.find(match => 
+
+          const registeredMatch = matches.find(match =>
             (match.player1_id === player1?.entry_id && match.player2_id === player2?.entry_id) ||
             (match.player2_id === player1?.entry_id && match.player1_id === player2?.entry_id)
           );
-          
+
           if (registeredMatch?.winner_id) {
             roundWinners[r].push({
               matchIndex: m,
@@ -3332,7 +3381,7 @@
               player1: player1,
               player2: player2
             });
-            
+
             if (playerProgress[registeredMatch.winner_id]) {
               playerProgress[registeredMatch.winner_id].rounds[r] = true;
             }
@@ -3515,16 +3564,19 @@
         const pairIndex = (i % 2 === 0) ? i + 1 : i - 1;
         const opponent = bracketSlots[pairIndex] || null;
 
+        // BYE判定：対戦相手がいない → 自動勝利（シード自動進出）
+        const isByeWin = !opponent;
+
         // 1回戦の試合を検索
-        const match = matches.find(mt =>
+        const match = !isByeWin ? matches.find(mt =>
           (mt.player1_id === player.entry_id && mt.player2_id === opponent?.entry_id) ||
           (mt.player2_id === player.entry_id && mt.player1_id === opponent?.entry_id)
-        );
+        ) : null;
 
         const winnerId = match?.winner_id;
         const isPending = match && !winnerId;
-        const isWinner = winnerId === player.entry_id;
-        const isLoser = winnerId && winnerId !== player.entry_id;
+        const isWinner = isByeWin || winnerId === player.entry_id;
+        const isLoser = !isByeWin && winnerId && winnerId !== player.entry_id;
         const hasSeed = player.has_seed;
         const canClick = isAdmin && isPending && opponent;
 
@@ -3540,7 +3592,7 @@
         html += `
           <div class="${classes}" style="${boxStyle}" data-slot="${i}"
             ${canClick ? `onclick="selectBracketWinner(${player.entry_id}, ${opponent.entry_id}, '${escapeHtml(player.username)}', '${escapeHtml(opponent.username)}')"` : ''}>
-            ${isWinner ? '<span class="winner-mark">🏆</span>' : ''}
+            ${isWinner && !isByeWin ? '<span class="winner-mark">🏆</span>' : ''}
             ${hasSeed ? '<span class="seed-mark">🎖️</span>' : ''}
             <span class="player-name-v" style="font-size:${nameFontSize};max-height:${nameMaxH}px;">${escapeHtml(player.username)}</span>
             <span class="player-id-v" style="font-size:${idFontSize};">${String(player.entry_id).padStart(2, '0')}</span>
@@ -3702,30 +3754,6 @@
     }
     
     
-    function confirmMatch() { if (!appState.selectedPlayer1 || !appState.selectedPlayer2) return; document.getElementById('confirmMatchText').textContent = appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username; showModal('confirmMatchModal'); }
-    function executeConfirmMatch() {
-      if (!db) return;
-      playClick();
-      appendLog(appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username + ' の対戦が確定');
-      db.collection('matches').add({
-        player1_id: appState.selectedPlayer1.entry_id,
-        player1_name: appState.selectedPlayer1.username,
-        player2_id: appState.selectedPlayer2.entry_id,
-        player2_name: appState.selectedPlayer2.username,
-        winner_id: null,
-        round: 1,
-        group: appState.activeGroup || null,
-        created_at: firebase.firestore.FieldValue.serverTimestamp()
-      }).then(() => {
-        hideModal('confirmMatchModal');
-        enableWinnerSelection();
-        document.getElementById('confirmMatchBtn').disabled = true;
-        showToast('対戦を確定しました。勝者をクリックしてください', 'success');
-
-        // 次のスピンで残り1人ならシード自動付与チェック
-        setTimeout(() => { checkAllMatchupsDecided(); }, 500);
-      }).catch(e => showToast('エラー: ' + e.message, 'error'));
-    }
     
     // 勝者選択を有効化
     function enableWinnerSelection() {

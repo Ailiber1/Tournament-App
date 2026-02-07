@@ -3709,16 +3709,14 @@
 
       html += '</div>'; // bracket-round-row
 
-      // === 上位ラウンドの対戦ボックス（勝ち上がり対戦） ===
+      // === 上位ラウンドのマッチ自動作成（ボックス表示なし・線で勝ち上がりが分かる） ===
       for (let r = 1; r < rounds; r++) {
         const numMatchesInRound = Math.pow(2, rounds - 1 - r);
-
         for (let m = 0; m < numMatchesInRound; m++) {
           const groupSize = Math.pow(2, r + 1);
           const halfSize = Math.pow(2, r);
           const groupStart = m * groupSize;
 
-          // 前ラウンドの勝者を探す
           let p1 = null, p2 = null;
           const prevWL = roundWinners[r - 1].filter(w => {
             const gs = w.matchIndex * Math.pow(2, r);
@@ -3731,18 +3729,15 @@
           if (prevWL.length > 0) p1 = allEntries.find(e => e.entry_id === prevWL[prevWL.length - 1].winnerId);
           if (prevWR.length > 0) p2 = allEntries.find(e => e.entry_id === prevWR[prevWR.length - 1].winnerId);
 
-          // 両方の対戦者が揃っていない場合はスキップ（BYEはroundWinnersで処理済み）
           if (!p1 || !p2) continue;
           const rw = roundWinners[r].find(w => w.matchIndex === m);
           if (rw && rw.isBye) continue;
           const winnerId = rw ? rw.winnerId : null;
 
-          // 既存のマッチレコードを検索
           const matchRecord = matches.find(mt =>
             (mt.player1_id === p1.entry_id && mt.player2_id === p2.entry_id) ||
             (mt.player2_id === p1.entry_id && mt.player1_id === p2.entry_id)
           );
-          const isPending = matchRecord && !matchRecord.winner_id;
           const needsMatch = !matchRecord && !winnerId;
 
           // 管理者なら未作成のマッチを自動作成
@@ -3764,63 +3759,6 @@
                 .catch(e => { delete window._bracketMatchCreating[key]; });
             }
           }
-
-          // ジャンクション位置を計算
-          const leftX = groupCenterX(groupStart, groupStart + halfSize - 1);
-          const rightX = groupCenterX(groupStart + halfSize, groupStart + groupSize - 1);
-          const centerX = (leftX + rightX) / 2;
-          const junctionY = lineAreaHeight - (r + 1) * roundHeight;
-
-          // 上位ラウンドのボックスサイズ
-          const upperBoxW = Math.max(22, Math.round(boxWidth * 0.7));
-          const upperBoxH = Math.max(35, Math.round(boxHeight * 0.55));
-          const upperFontSize = Math.max(0.45, parseFloat(nameFontSize) * 0.85) + 'rem';
-          const upperNameMaxH = Math.max(20, Math.round(nameMaxH * 0.65));
-          const matchGap = Math.max(4, Math.round(6 * scale));
-
-          // コンテナ配置
-          const containerW = upperBoxW * 2 + matchGap;
-          const containerLeft = centerX - containerW / 2;
-          const containerTop = junctionY - upperBoxH / 2;
-          const canClick = isAdmin && isPending;
-
-          html += '<div class="bracket-upper-match" style="position:absolute;top:' + containerTop + 'px;left:' + containerLeft + 'px;display:flex;gap:' + matchGap + 'px;">';
-
-          // Player 1 ボックス（左側勝者）
-          const p1Win = winnerId === p1.entry_id;
-          const p1Lose = winnerId && winnerId !== p1.entry_id;
-          const p1Cls = ['bracket-upper-box',
-            p1Win ? 'winner' : '', p1Lose ? 'loser' : '',
-            canClick ? 'clickable' : '', isPending ? 'active' : ''
-          ].filter(Boolean).join(' ');
-
-          html += '<div class="' + p1Cls + '" style="width:' + upperBoxW + 'px;min-height:' + upperBoxH + 'px;"';
-          if (canClick) {
-            html += ' onclick="selectBracketWinner(' + p1.entry_id + ', ' + p2.entry_id + ', \'' + escapeHtml(p1.username) + '\', \'' + escapeHtml(p2.username) + '\')"';
-          }
-          html += '>';
-          if (p1Win) html += '<span style="font-size:0.5rem;">🏆</span>';
-          html += '<span class="upper-name" style="font-size:' + upperFontSize + ';max-height:' + upperNameMaxH + 'px;">' + escapeHtml(p1.username) + '</span>';
-          html += '</div>';
-
-          // Player 2 ボックス（右側勝者）
-          const p2Win = winnerId === p2.entry_id;
-          const p2Lose = winnerId && winnerId !== p2.entry_id;
-          const p2Cls = ['bracket-upper-box',
-            p2Win ? 'winner' : '', p2Lose ? 'loser' : '',
-            canClick ? 'clickable' : '', isPending ? 'active' : ''
-          ].filter(Boolean).join(' ');
-
-          html += '<div class="' + p2Cls + '" style="width:' + upperBoxW + 'px;min-height:' + upperBoxH + 'px;"';
-          if (canClick) {
-            html += ' onclick="selectBracketWinner(' + p2.entry_id + ', ' + p1.entry_id + ', \'' + escapeHtml(p2.username) + '\', \'' + escapeHtml(p1.username) + '\')"';
-          }
-          html += '>';
-          if (p2Win) html += '<span style="font-size:0.5rem;">🏆</span>';
-          html += '<span class="upper-name" style="font-size:' + upperFontSize + ';max-height:' + upperNameMaxH + 'px;">' + escapeHtml(p2.username) + '</span>';
-          html += '</div>';
-
-          html += '</div>';
         }
       }
 

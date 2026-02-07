@@ -948,7 +948,65 @@
     .bracket-player-box.winner .player-name-v {
       color: var(--hud-gold);
     }
-    
+
+    /* 上位ラウンドの対戦ボックス */
+    .bracket-upper-match {
+      display: flex;
+      gap: 4px;
+      align-items: stretch;
+      z-index: 15;
+      pointer-events: auto;
+    }
+    .bracket-upper-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 30, 15, 0.95);
+      border: 2px solid var(--hud-green-dim);
+      padding: 2px 3px;
+      transition: all 0.3s;
+      cursor: default;
+      position: relative;
+    }
+    .bracket-upper-box .upper-name {
+      writing-mode: vertical-rl;
+      text-orientation: upright;
+      font-size: 0.6rem;
+      color: var(--hud-green);
+      letter-spacing: 1px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .bracket-upper-box.clickable { cursor: pointer; }
+    .bracket-upper-box.clickable:hover {
+      background: rgba(0, 255, 65, 0.25);
+      transform: scale(1.1);
+      box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+    }
+    .bracket-upper-box.winner {
+      background: rgba(0, 255, 65, 0.15);
+      border-color: var(--hud-green);
+      box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+    }
+    .bracket-upper-box.winner .upper-name {
+      color: var(--hud-gold);
+    }
+    .bracket-upper-box.loser {
+      opacity: 0.4;
+      border-color: #333;
+    }
+    .bracket-upper-box.loser .upper-name {
+      color: #555;
+      text-decoration: line-through;
+    }
+    .bracket-upper-box.active {
+      animation: pulse-active 1.5s infinite;
+    }
+    .bracket-upper-box.empty .upper-name {
+      color: var(--text-dim);
+    }
+
     .player-id-v {
       font-family: 'Orbitron', sans-serif;
       font-size: 0.5rem;
@@ -3397,6 +3455,25 @@
                 }
               }
             }
+
+            // 上位ラウンドのBYE処理：片方が不在なら自動進出
+            if (player1 && !player2) {
+              roundWinners[r].push({
+                matchIndex: m, winnerId: player1.entry_id,
+                player1: player1, player2: null, isBye: true
+              });
+              if (playerProgress[player1.entry_id]) playerProgress[player1.entry_id].rounds[r] = true;
+              continue;
+            }
+            if (!player1 && player2) {
+              roundWinners[r].push({
+                matchIndex: m, winnerId: player2.entry_id,
+                player1: null, player2: player2, isBye: true
+              });
+              if (playerProgress[player2.entry_id]) playerProgress[player2.entry_id].rounds[r] = true;
+              continue;
+            }
+            if (!player1 && !player2) continue;
           }
 
           const registeredMatch = matches.find(match =>
@@ -3631,6 +3708,122 @@
       }
 
       html += '</div>'; // bracket-round-row
+
+      // === 上位ラウンドの対戦ボックス（勝ち上がり対戦） ===
+      for (let r = 1; r < rounds; r++) {
+        const numMatchesInRound = Math.pow(2, rounds - 1 - r);
+
+        for (let m = 0; m < numMatchesInRound; m++) {
+          const groupSize = Math.pow(2, r + 1);
+          const halfSize = Math.pow(2, r);
+          const groupStart = m * groupSize;
+
+          // 前ラウンドの勝者を探す
+          let p1 = null, p2 = null;
+          const prevWL = roundWinners[r - 1].filter(w => {
+            const gs = w.matchIndex * Math.pow(2, r);
+            return gs >= groupStart && gs < groupStart + halfSize;
+          });
+          const prevWR = roundWinners[r - 1].filter(w => {
+            const gs = w.matchIndex * Math.pow(2, r);
+            return gs >= groupStart + halfSize && gs < groupStart + groupSize;
+          });
+          if (prevWL.length > 0) p1 = allEntries.find(e => e.entry_id === prevWL[prevWL.length - 1].winnerId);
+          if (prevWR.length > 0) p2 = allEntries.find(e => e.entry_id === prevWR[prevWR.length - 1].winnerId);
+
+          // 両方の対戦者が揃っていない場合はスキップ（BYEはroundWinnersで処理済み）
+          if (!p1 || !p2) continue;
+          const rw = roundWinners[r].find(w => w.matchIndex === m);
+          if (rw && rw.isBye) continue;
+          const winnerId = rw ? rw.winnerId : null;
+
+          // 既存のマッチレコードを検索
+          const matchRecord = matches.find(mt =>
+            (mt.player1_id === p1.entry_id && mt.player2_id === p2.entry_id) ||
+            (mt.player2_id === p1.entry_id && mt.player1_id === p2.entry_id)
+          );
+          const isPending = matchRecord && !matchRecord.winner_id;
+          const needsMatch = !matchRecord && !winnerId;
+
+          // 管理者なら未作成のマッチを自動作成
+          if (needsMatch && isAdmin && db) {
+            const key = p1.entry_id + '_' + p2.entry_id + '_r' + r;
+            if (!window._bracketMatchCreating) window._bracketMatchCreating = {};
+            if (!window._bracketMatchCreating[key]) {
+              window._bracketMatchCreating[key] = true;
+              db.collection('matches').add({
+                player1_id: p1.entry_id,
+                player1_name: p1.username,
+                player2_id: p2.entry_id,
+                player2_name: p2.username,
+                winner_id: null,
+                round: r + 1,
+                group: appState.activeGroup || null,
+                created_at: firebase.firestore.FieldValue.serverTimestamp()
+              }).then(() => { delete window._bracketMatchCreating[key]; })
+                .catch(e => { delete window._bracketMatchCreating[key]; });
+            }
+          }
+
+          // ジャンクション位置を計算
+          const leftX = groupCenterX(groupStart, groupStart + halfSize - 1);
+          const rightX = groupCenterX(groupStart + halfSize, groupStart + groupSize - 1);
+          const centerX = (leftX + rightX) / 2;
+          const junctionY = lineAreaHeight - (r + 1) * roundHeight;
+
+          // 上位ラウンドのボックスサイズ
+          const upperBoxW = Math.max(22, Math.round(boxWidth * 0.7));
+          const upperBoxH = Math.max(35, Math.round(boxHeight * 0.55));
+          const upperFontSize = Math.max(0.45, parseFloat(nameFontSize) * 0.85) + 'rem';
+          const upperNameMaxH = Math.max(20, Math.round(nameMaxH * 0.65));
+          const matchGap = Math.max(4, Math.round(6 * scale));
+
+          // コンテナ配置
+          const containerW = upperBoxW * 2 + matchGap;
+          const containerLeft = centerX - containerW / 2;
+          const containerTop = junctionY - upperBoxH / 2;
+          const canClick = isAdmin && isPending;
+
+          html += '<div class="bracket-upper-match" style="position:absolute;top:' + containerTop + 'px;left:' + containerLeft + 'px;display:flex;gap:' + matchGap + 'px;">';
+
+          // Player 1 ボックス（左側勝者）
+          const p1Win = winnerId === p1.entry_id;
+          const p1Lose = winnerId && winnerId !== p1.entry_id;
+          const p1Cls = ['bracket-upper-box',
+            p1Win ? 'winner' : '', p1Lose ? 'loser' : '',
+            canClick ? 'clickable' : '', isPending ? 'active' : ''
+          ].filter(Boolean).join(' ');
+
+          html += '<div class="' + p1Cls + '" style="width:' + upperBoxW + 'px;min-height:' + upperBoxH + 'px;"';
+          if (canClick) {
+            html += ' onclick="selectBracketWinner(' + p1.entry_id + ', ' + p2.entry_id + ', \'' + escapeHtml(p1.username) + '\', \'' + escapeHtml(p2.username) + '\')"';
+          }
+          html += '>';
+          if (p1Win) html += '<span style="font-size:0.5rem;">🏆</span>';
+          html += '<span class="upper-name" style="font-size:' + upperFontSize + ';max-height:' + upperNameMaxH + 'px;">' + escapeHtml(p1.username) + '</span>';
+          html += '</div>';
+
+          // Player 2 ボックス（右側勝者）
+          const p2Win = winnerId === p2.entry_id;
+          const p2Lose = winnerId && winnerId !== p2.entry_id;
+          const p2Cls = ['bracket-upper-box',
+            p2Win ? 'winner' : '', p2Lose ? 'loser' : '',
+            canClick ? 'clickable' : '', isPending ? 'active' : ''
+          ].filter(Boolean).join(' ');
+
+          html += '<div class="' + p2Cls + '" style="width:' + upperBoxW + 'px;min-height:' + upperBoxH + 'px;"';
+          if (canClick) {
+            html += ' onclick="selectBracketWinner(' + p2.entry_id + ', ' + p1.entry_id + ', \'' + escapeHtml(p2.username) + '\', \'' + escapeHtml(p1.username) + '\')"';
+          }
+          html += '>';
+          if (p2Win) html += '<span style="font-size:0.5rem;">🏆</span>';
+          html += '<span class="upper-name" style="font-size:' + upperFontSize + ';max-height:' + upperNameMaxH + 'px;">' + escapeHtml(p2.username) + '</span>';
+          html += '</div>';
+
+          html += '</div>';
+        }
+      }
+
       html += '</div>'; // SVGとプレイヤーのコンテナ
       html += '</div>'; // bracket-tree
 
@@ -3729,15 +3922,19 @@
       if (!isAdmin) {
         return; // 何も反応しない
       }
-      
+
       const winner = appState.entries.find(e => e.entry_id === winnerId);
       const loser = appState.entries.find(e => e.entry_id === loserId);
-      
+
       if (!winner || !loser) {
         showToast('プレイヤーが見つかりません', 'error');
         return;
       }
-      
+
+      // ルーレット選択をクリア（executeWinnerでブラケット用の検索を使うため）
+      appState.selectedPlayer1 = null;
+      appState.selectedPlayer2 = null;
+
       appState.pendingWinner = { winner, loser };
       document.getElementById('confirmWinnerText').textContent = winnerName + ' を勝者にしますか？';
       showModal('confirmWinnerModal');
@@ -3762,15 +3959,22 @@
 
     // 全対戦カードが確定したかチェックし、確定済みならトーナメント表を表示
     function checkAllMatchupsDecided() {
+      // ブラケット表示中は自動マッチメイクしない（ブラケットが進行を管理）
+      if (bracketMode) return;
+
       const active = getGroupFilteredEntries().filter(e => e.status !== 'LOST');
       const inMatch = getGroupFilteredMatches().filter(m => !m.winner_id);
       const inMatchIds = inMatch.flatMap(m => [m.player1_id, m.player2_id]);
       const unmatched = active.filter(e => !inMatchIds.includes(e.entry_id) && !e.has_seed);
 
-      // 未マッチの人が1人→自動シード付与
+      // 未マッチの人が1人→自動シード付与（ただし既に勝利経験のある選手は除外）
       if (unmatched.length === 1) {
-        autoAssignSeed(unmatched[0]);
-        return;
+        const player = unmatched[0];
+        const hasWonMatch = appState.matches.some(m => m.winner_id === player.entry_id);
+        if (!hasWonMatch) {
+          autoAssignSeed(unmatched[0]);
+          return;
+        }
       }
 
       // 全員がマッチ済みまたはシード済み → トーナメント表ボタンを表示

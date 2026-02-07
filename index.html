@@ -2642,7 +2642,11 @@
           // グループ状態の同期
           if (data.group_phase) {
             appState.groupPhase = data.group_phase;
-            appState.activeGroup = data.active_group || appState.activeGroup;
+            if (data.group_phase === 'merged') {
+              appState.activeGroup = null;
+            } else {
+              appState.activeGroup = data.active_group || appState.activeGroup;
+            }
             renderGroupTabs();
           }
 
@@ -2849,6 +2853,8 @@
     // ===== グループシステム =====
     function getGroupFilteredEntries() {
       if (!appState.tournament?.group_phase) return appState.entries;
+      // 統合フェーズ: 全エントリーを返す（グループ区分なし）
+      if (appState.tournament.group_phase === 'merged') return appState.entries;
       if (appState.activeGroup === 'finals') {
         const winners = appState.tournament?.group_winners || {};
         const winnerIds = Object.values(winners).map(w => w.entry_id);
@@ -2861,6 +2867,10 @@
     }
     function getGroupFilteredMatches() {
       if (!appState.tournament?.group_phase) return appState.matches;
+      // 統合フェーズ: グループなしのマッチ（統合後に作られたもの）を返す
+      if (appState.tournament.group_phase === 'merged') {
+        return appState.matches.filter(m => !m.group || m.group === 'merged');
+      }
       if (appState.activeGroup === 'finals') {
         return appState.matches.filter(m => m.group === 'finals');
       }
@@ -2907,7 +2917,7 @@
       if (!container || !tabs) return;
 
       const phase = appState.tournament?.group_phase;
-      if (!phase) {
+      if (!phase || phase === 'merged') {
         container.style.display = 'none';
         return;
       }
@@ -3999,11 +4009,13 @@
       const inMatchIds = inMatch.flatMap(m => [m.player1_id, m.player2_id]);
       const unmatched = active.filter(e => !inMatchIds.includes(e.entry_id) && !e.has_seed);
 
-      // 未マッチの人が1人→自動シード付与（ただし既に勝利経験のある選手は除外）
+      // 未マッチの人が1人→自動シード付与
+      // （現フェーズ内でまだ勝利していない選手のみ。統合フェーズでは統合後のマッチのみチェック）
       if (unmatched.length === 1) {
         const player = unmatched[0];
-        const hasWonMatch = appState.matches.some(m => m.winner_id === player.entry_id);
-        if (!hasWonMatch) {
+        const currentPhaseMatches = getGroupFilteredMatches();
+        const hasWonInPhase = currentPhaseMatches.some(m => m.winner_id === player.entry_id);
+        if (!hasWonInPhase) {
           autoAssignSeed(unmatched[0]);
           return;
         }
@@ -4107,49 +4119,50 @@
       checkGroupWinner(winner, loser);
     }
 
-    // グループ勝者チェック
+    // グループ統合チェック（全グループ合計の生存者が21人以下になったら統合）
     function checkGroupWinner(winner, loser) {
       if (!db) return;
       const phase = appState.tournament?.group_phase;
-      if (!phase || phase === 'none') return;
+      if (!phase || phase === 'none' || phase === 'merged') return;
 
       const currentGroup = appState.activeGroup;
       if (!currentGroup || currentGroup === 'finals') return;
 
       // 敗者がまだ entries に反映されていない可能性があるので、loser を手動で除外
-      const groupEntries = appState.entries.filter(e => e.group === currentGroup);
-      const activeInGroup = groupEntries.filter(e => e.status !== 'LOST' && e.entry_id !== loser.entry_id);
+      const allActive = appState.entries.filter(e => e.status !== 'LOST' && e.entry_id !== loser.entry_id);
 
-      if (activeInGroup.length === 1) {
-        const groupWinner = activeInGroup[0];
-        const winners = { ...(appState.tournament.group_winners || {}) };
-        winners[currentGroup] = { entry_id: groupWinner.entry_id, username: groupWinner.username };
-
-        const allGroups = [...new Set(appState.entries.map(e => e.group).filter(Boolean))];
-        const allDone = Object.keys(winners).length === allGroups.length;
-
-        const updateData = { group_winners: winners };
-        if (allDone) {
-          updateData.group_phase = 'finals';
-          updateData.active_group = 'finals';
-        }
-
-        db.collection('tournaments').doc('current').update(updateData).then(() => {
-          showToast('グループ' + currentGroup + 'の勝者: ' + groupWinner.username, 'success');
-          appendLog('グループ' + currentGroup + ' 勝者: ' + groupWinner.username);
-
-          if (allDone) {
-            appState.activeGroup = 'finals';
-            appState.groupPhase = 'finals';
-            showToast('全グループ終了！決勝に進みます', 'success');
-            appendLog('全グループ終了 → 決勝フェーズへ');
-          }
-
+      // 全グループ合計の生存者が21人以下 → グループ統合
+      if (allActive.length <= 21) {
+        // 全エントリーのgroup・has_seedをクリア（統合・シードリセット）
+        const batch = db.batch();
+        appState.entries.forEach(e => {
+          batch.update(db.collection('entries').doc(e.id), { group: null, has_seed: false });
+        });
+        batch.update(db.collection('tournaments').doc('current'), {
+          group_phase: 'merged',
+          active_group: null,
+          groups_assigned: false
+        });
+        batch.commit().then(() => {
+          appState.activeGroup = null;
+          appState.groupPhase = 'merged';
+          appState.entries.forEach(e => { e.group = null; e.has_seed = false; });
           renderGroupTabs();
           updateEntriesDisplay();
           updateRouletteWheel();
+          updateBracketControls();
+          showToast('全グループ統合！残り' + allActive.length + '名で最終ルーレットへ', 'success');
+          appendLog('グループ統合: 残り' + allActive.length + '名 → 最終ルーレット');
         });
+        return;
       }
+
+      // まだ21人超 → グループ内の残り人数表示のみ更新
+      const groupEntries = appState.entries.filter(e => e.group === currentGroup);
+      const activeInGroup = groupEntries.filter(e => e.status !== 'LOST' && e.entry_id !== loser.entry_id);
+      renderGroupTabs();
+      updateEntriesDisplay();
+      updateRouletteWheel();
     }
 
     // 大会終了確認

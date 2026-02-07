@@ -3690,11 +3690,11 @@
     
     // リセット確認
     function confirmResetTournament() {
-      // 締切後かつ大会進行中はリセット不可
+      // 締切後かつ参加者がいる場合はリセット不可
       const dl = appState.tournament?.deadline;
       if (dl) {
         const d = dl.toDate ? dl.toDate() : new Date(dl);
-        if (new Date() >= d) {
+        if (new Date() >= d && appState.entries.length > 0) {
           showToast('締切日時以降は大会終了までリセットできません', 'error');
           return;
         }

@@ -3010,11 +3010,19 @@
         }
       }
       
-      // サイズ計算
-      const boxWidth = 60;
-      const boxHeight = 100;
-      const boxGap = 15;
-      const roundHeight = 80;
+      // サイズ計算（人数に応じてアダプティブ）
+      let boxWidth, boxHeight, boxGap, roundHeight;
+      if (bracketSize <= 2) {
+        boxWidth = 100; boxHeight = 140; boxGap = 50; roundHeight = 110;
+      } else if (bracketSize <= 4) {
+        boxWidth = 80; boxHeight = 120; boxGap = 30; roundHeight = 95;
+      } else if (bracketSize <= 8) {
+        boxWidth = 70; boxHeight = 110; boxGap = 20; roundHeight = 85;
+      } else if (bracketSize <= 16) {
+        boxWidth = 60; boxHeight = 100; boxGap = 15; roundHeight = 80;
+      } else {
+        boxWidth = 50; boxHeight = 90; boxGap = 10; roundHeight = 70;
+      }
       const svgWidth = bracketSize * (boxWidth + boxGap);
       const lineAreaHeight = rounds * roundHeight + 30;
 
@@ -3026,12 +3034,17 @@
       // HTMLを生成（gapなしで優勝ボックスとSVGを密着）
       let html = '<div class="bracket-tree" style="display:flex;flex-direction:column;align-items:center;">';
 
+      // 優勝枠サイズ（人数に応じて拡縮）
+      const champPad = bracketSize <= 4 ? '1rem 2rem' : '0.8rem 1.5rem';
+      const champTrophy = bracketSize <= 4 ? '2rem' : '1.5rem';
+      const champNameSize = bracketSize <= 4 ? '1.2rem' : '1rem';
+
       // 優勝枠（最上部）
       html += `
-        <div class="bracket-champion-box ${champion ? '' : 'empty'}">
-          <div class="champion-trophy">🏆</div>
+        <div class="bracket-champion-box ${champion ? '' : 'empty'}" style="padding:${champPad};">
+          <div class="champion-trophy" style="font-size:${champTrophy};">🏆</div>
           <div class="champion-label">優勝</div>
-          <div class="champion-name" style="writing-mode:horizontal-tb;text-orientation:mixed;">${champion ? escapeHtml(champion.username) : '???'}</div>
+          <div class="champion-name" style="writing-mode:horizontal-tb;text-orientation:mixed;font-size:${champNameSize};">${champion ? escapeHtml(champion.username) : '???'}</div>
         </div>
       `;
 
@@ -3121,6 +3134,11 @@
 
       html += '</svg>';
 
+      // プレイヤーボックスのフォントサイズ
+      const nameFontSize = bracketSize <= 2 ? '1rem' : (bracketSize <= 4 ? '0.9rem' : '0.8rem');
+      const idFontSize = bracketSize <= 4 ? '0.7rem' : '0.6rem';
+      const boxStyle = `width:${boxWidth}px;min-height:${boxHeight}px;`;
+
       // プレイヤーボックス（SVGの直下、重ならない位置に配置）
       html += `<div class="bracket-round-row" style="position:absolute;top:${lineAreaHeight}px;left:0;right:0;display:flex;justify-content:center;gap:${boxGap}px;">`;
 
@@ -3128,7 +3146,7 @@
         const player = bracketSlots[i];
 
         if (!player) {
-          html += `<div class="bracket-player-box empty"><span class="player-name-v">BYE</span></div>`;
+          html += `<div class="bracket-player-box empty" style="${boxStyle}"><span class="player-name-v">BYE</span></div>`;
           continue;
         }
 
@@ -3159,12 +3177,12 @@
         ].filter(Boolean).join(' ');
 
         html += `
-          <div class="${classes}" data-slot="${i}"
+          <div class="${classes}" style="${boxStyle}" data-slot="${i}"
             ${canClick ? `onclick="selectBracketWinner(${player.entry_id}, ${opponent.entry_id}, '${escapeHtml(player.username)}', '${escapeHtml(opponent.username)}')"` : ''}>
             ${isWinner ? '<span class="winner-mark">🏆</span>' : ''}
             ${hasSeed ? '<span class="seed-mark">🎖️</span>' : ''}
-            <span class="player-name-v">${escapeHtml(player.username)}</span>
-            <span class="player-id-v">${String(player.entry_id).padStart(2, '0')}</span>
+            <span class="player-name-v" style="font-size:${nameFontSize};">${escapeHtml(player.username)}</span>
+            <span class="player-id-v" style="font-size:${idFontSize};">${String(player.entry_id).padStart(2, '0')}</span>
           </div>
         `;
       }
@@ -3645,12 +3663,13 @@
           const dt = x.date?.toDate?.() || new Date();
           const participants = x.participants || [];
           const participantList = participants.length > 0
-            ? '<div id="historyParticipants' + idx + '" style="display:none;margin-top:0.5rem;padding:0.5rem;background:rgba(0,20,10,0.5);border:1px solid var(--hud-green-dim);border-radius:4px;font-size:0.75rem;color:var(--text-dim);">'
+            ? '<div id="historyParticipants' + idx + '" style="display:none;margin-top:0.5rem;padding:0.5rem;background:rgba(0,20,10,0.5);border:1px solid var(--hud-green-dim);border-radius:4px;font-size:0.75rem;color:var(--text-dim);max-height:200px;overflow-y:auto;">'
               + participants.map(p => 'ID-' + String(p.entry_id).padStart(2,'0') + ' ' + escapeHtml(p.username)).join('<br>')
               + '</div>'
               + '<div style="margin-top:0.4rem;display:flex;gap:0.5rem;flex-wrap:wrap;">'
-              + '<button class="history-toggle-btn" onclick="toggleHistoryParticipants(' + idx + ', this)" style="font-size:0.7rem;padding:0.2rem 0.6rem;background:rgba(0,40,20,0.8);border:1px solid var(--hud-green-dim);color:var(--hud-green);border-radius:4px;cursor:pointer;">参加者一覧</button>'
-              + '<button class="history-export-btn" onclick="exportHistory(\'' + d.id + '\')" style="font-size:0.7rem;padding:0.2rem 0.6rem;background:rgba(0,40,20,0.8);border:1px solid var(--hud-green-dim);color:var(--hud-green);border-radius:4px;cursor:pointer;">CSV出力</button>'
+              + '<button onclick="toggleHistoryParticipants(' + idx + ', this)" style="font-size:0.7rem;padding:0.2rem 0.6rem;background:rgba(0,40,20,0.8);border:1px solid var(--hud-green-dim);color:var(--hud-green);border-radius:4px;cursor:pointer;">参加者一覧 (' + participants.length + '名)</button>'
+              + '<button onclick="exportHistory(\'' + d.id + '\', \'csv\')" style="font-size:0.7rem;padding:0.2rem 0.6rem;background:rgba(0,40,20,0.8);border:1px solid var(--hud-green-dim);color:var(--hud-green);border-radius:4px;cursor:pointer;">CSV出力</button>'
+              + '<button onclick="exportHistory(\'' + d.id + '\', \'txt\')" style="font-size:0.7rem;padding:0.2rem 0.6rem;background:rgba(0,40,20,0.8);border:1px solid var(--hud-green-dim);color:var(--hud-green);border-radius:4px;cursor:pointer;">テキスト出力</button>'
               + '</div>'
             : '';
           return '<div class="history-card"><div class="history-date">' + dt.toLocaleDateString('ja-JP') + '</div><div class="history-game">' + escapeHtml(x.game_name || '不明') + '</div><div class="history-winner">👑 優勝: ' + escapeHtml(x.champion_name || '不明') + '</div><div style="font-size:0.8rem;color:var(--text-dim);margin-top:0.4rem;">管理者: ' + escapeHtml(x.admin_name || '不明') + ' / 参加者: ' + (x.total_participants || 0) + '名</div>' + participantList + '</div>';
@@ -3663,7 +3682,7 @@
       if (el.style.display === 'none') { el.style.display = 'block'; btn.textContent = '一覧を閉じる'; }
       else { el.style.display = 'none'; btn.textContent = '参加者一覧'; }
     }
-    function exportHistory(docId) {
+    function exportHistory(docId, format) {
       if (!db) return;
       db.collection('history').doc(docId).get().then(doc => {
         if (!doc.exists) { showToast('データが見つかりません', 'error'); return; }
@@ -3672,19 +3691,42 @@
         const year = dt.getFullYear();
         const dateStr = dt.toLocaleDateString('ja-JP');
         const participants = x.participants || [];
-        // CSV生成（BOM付きUTF-8）
-        let csv = '\uFEFF';
-        csv += '大会日,ゲーム名,管理者,優勝者,参加者数\n';
-        csv += '"' + dateStr + '","' + (x.game_name || '不明') + '","' + (x.admin_name || '不明') + '","' + (x.champion_name || '不明') + '",' + (x.total_participants || 0) + '\n';
-        csv += '\nID,参加者名\n';
-        participants.forEach(p => { csv += 'ID-' + String(p.entry_id).padStart(2,'0') + ',"' + p.username + '"\n'; });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        let content, mimeType, ext;
+        if (format === 'txt') {
+          // テキスト形式
+          content = '\uFEFF';
+          content += '========================================\n';
+          content += '  大会記録\n';
+          content += '========================================\n';
+          content += '大会日:     ' + dateStr + '\n';
+          content += 'ゲーム名:   ' + (x.game_name || '不明') + '\n';
+          content += '管理者:     ' + (x.admin_name || '不明') + '\n';
+          content += '優勝者:     ' + (x.champion_name || '不明') + '\n';
+          content += '参加者数:   ' + (x.total_participants || 0) + '名\n';
+          content += '========================================\n';
+          content += '  参加者名簿\n';
+          content += '----------------------------------------\n';
+          participants.forEach(p => { content += '  ID-' + String(p.entry_id).padStart(2,'0') + '  ' + p.username + '\n'; });
+          content += '========================================\n';
+          mimeType = 'text/plain;charset=utf-8';
+          ext = 'txt';
+        } else {
+          // CSV形式（BOM付きUTF-8）
+          content = '\uFEFF';
+          content += '大会日,ゲーム名,管理者,優勝者,参加者数\n';
+          content += '"' + dateStr + '","' + (x.game_name || '不明') + '","' + (x.admin_name || '不明') + '","' + (x.champion_name || '不明') + '",' + (x.total_participants || 0) + '\n';
+          content += '\nID,参加者名\n';
+          participants.forEach(p => { content += 'ID-' + String(p.entry_id).padStart(2,'0') + ',"' + p.username + '"\n'; });
+          mimeType = 'text/csv;charset=utf-8';
+          ext = 'csv';
+        }
+        const blob = new Blob([content], { type: mimeType });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = year + '_' + (x.game_name || 'tournament') + '_参加者名簿.csv';
+        a.download = year + '_' + (x.game_name || 'tournament') + '_参加者名簿.' + ext;
         a.click();
         URL.revokeObjectURL(a.href);
-        showToast('CSVをダウンロードしました', 'success');
+        showToast((ext === 'csv' ? 'CSV' : 'テキスト') + 'をダウンロードしました', 'success');
       });
     }
     

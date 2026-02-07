@@ -3513,13 +3513,13 @@
       // デスクトップ基準のサイズ（人数に応じて）
       let baseBoxW, baseBoxH, baseGap, baseRoundH;
       if (bracketSize <= 2) {
-        baseBoxW = 100; baseBoxH = 140; baseGap = 50; baseRoundH = 110;
+        baseBoxW = 100; baseBoxH = 140; baseGap = 50; baseRoundH = 130;
       } else if (bracketSize <= 4) {
-        baseBoxW = 80; baseBoxH = 120; baseGap = 30; baseRoundH = 95;
+        baseBoxW = 80; baseBoxH = 120; baseGap = 30; baseRoundH = 120;
       } else if (bracketSize <= 8) {
-        baseBoxW = 70; baseBoxH = 110; baseGap = 20; baseRoundH = 85;
+        baseBoxW = 70; baseBoxH = 110; baseGap = 20; baseRoundH = 110;
       } else if (bracketSize <= 16) {
-        baseBoxW = 60; baseBoxH = 100; baseGap = 15; baseRoundH = 80;
+        baseBoxW = 60; baseBoxH = 100; baseGap = 15; baseRoundH = 100;
       } else {
         baseBoxW = 50; baseBoxH = 90; baseGap = 10; baseRoundH = 70;
       }
@@ -3541,48 +3541,6 @@
       function slotXPos(idx) { return idx * (boxWidth + boxGap) + boxWidth / 2; }
       // ヘルパー: スロット範囲の中心X座標
       function groupCenterX(start, end) { return (slotXPos(start) + slotXPos(end)) / 2; }
-
-      // ヘルパー: ブランチ内に実プレイヤーが存在するか（BYEだけでない）
-      function hasBranchContent(round, matchIdx) {
-        if (round === 0) {
-          return !!bracketSlots[matchIdx * 2] || !!bracketSlots[matchIdx * 2 + 1];
-        }
-        return hasBranchContent(round - 1, matchIdx * 2) || hasBranchContent(round - 1, matchIdx * 2 + 1);
-      }
-      // ヘルパー: ブランチ内に実対戦（両者揃い）が存在するか
-      function hasRealMatchInBranch(round, matchIdx) {
-        if (round === 0) {
-          return !!bracketSlots[matchIdx * 2] && !!bracketSlots[matchIdx * 2 + 1];
-        }
-        return hasRealMatchInBranch(round - 1, matchIdx * 2) || hasRealMatchInBranch(round - 1, matchIdx * 2 + 1);
-      }
-
-      // BYE自動進出選手の情報を事前計算（エントリーラウンドと位置）
-      const byeAdvancingPlayers = [];
-      for (let i = 0; i < bracketSize; i++) {
-        const player = bracketSlots[i];
-        if (!player) continue;
-        const pairIdx = (i % 2 === 0) ? i + 1 : i - 1;
-        if (bracketSlots[pairIdx]) continue; // 対戦相手がいる→通常選手
-        // BYE自動進出選手: 対戦が始まるラウンドを特定
-        let entryRound = rounds; // デフォルトは最終ラウンド
-        let entryMatchIdx = 0;
-        let entrySide = 'left';
-        let currentMatch = Math.floor(i / 2);
-        for (let r = 1; r <= rounds; r++) {
-          const side = currentMatch % 2; // 0=左, 1=右
-          const parentMatch = Math.floor(currentMatch / 2);
-          const otherChild = (side === 0) ? currentMatch + 1 : currentMatch - 1;
-          if (hasBranchContent(r - 1, otherChild)) {
-            entryRound = r;
-            entryMatchIdx = parentMatch;
-            entrySide = (side === 0) ? 'left' : 'right';
-            break;
-          }
-          currentMatch = parentMatch;
-        }
-        byeAdvancingPlayers.push({ player, slotIndex: i, entryRound, entryMatchIdx, entrySide });
-      }
 
       // HTMLを生成
       const needsScroll = svgWidth > availableWidth;
@@ -3627,11 +3585,6 @@
           const halfSize = Math.pow(2, r);
           const groupStart = m * groupSize;
 
-          // Round 0: BYEペア（片方がnull）は骨格線を描画しない
-          if (r === 0) {
-            if (!bracketSlots[groupStart] || !bracketSlots[groupStart + 1]) continue;
-          }
-
           let leftX, rightX;
           if (r === 0) {
             leftX = slotXPos(groupStart);
@@ -3644,24 +3597,11 @@
           const bottomY = lineAreaHeight - r * roundHeight;
           const topY = lineAreaHeight - (r + 1) * roundHeight;
 
-          // 上位ラウンド: 実対戦がないブランチの垂直線はスキップ
-          const leftHasReal = r === 0 || hasRealMatchInBranch(r - 1, m * 2);
-          const rightHasReal = r === 0 || hasRealMatchInBranch(r - 1, m * 2 + 1);
-
-          // 両方とも実対戦がなければスキップ（ただし両方にプレイヤーがいる場合は水平線を描画）
-          const leftHasContent = r === 0 || hasBranchContent(r - 1, m * 2);
-          const rightHasContent = r === 0 || hasBranchContent(r - 1, m * 2 + 1);
-          if (!leftHasContent && !rightHasContent) continue;
-
-          // 左側垂直線（実対戦がある場合のみ）
-          if (leftHasReal) {
-            html += `<line x1="${leftX}" y1="${bottomY}" x2="${leftX}" y2="${topY}" class="bracket-line" style="stroke-width:${strokeW};" />`;
-          }
-          // 右側垂直線（実対戦がある場合のみ）
-          if (rightHasReal) {
-            html += `<line x1="${rightX}" y1="${bottomY}" x2="${rightX}" y2="${topY}" class="bracket-line" style="stroke-width:${strokeW};" />`;
-          }
-          // 上部水平線（少なくとも片方にコンテンツがあれば描画）
+          // 左側垂直線
+          html += `<line x1="${leftX}" y1="${bottomY}" x2="${leftX}" y2="${topY}" class="bracket-line" style="stroke-width:${strokeW};" />`;
+          // 右側垂直線
+          html += `<line x1="${rightX}" y1="${bottomY}" x2="${rightX}" y2="${topY}" class="bracket-line" style="stroke-width:${strokeW};" />`;
+          // 上部水平線
           html += `<line x1="${leftX}" y1="${topY}" x2="${rightX}" y2="${topY}" class="bracket-line" style="stroke-width:${strokeW};" />`;
         }
       }
@@ -3680,8 +3620,6 @@
         for (let m = 0; m < numMatches; m++) {
           const rw = roundWinners[r].find(w => w.matchIndex === m);
           if (!rw) continue;
-          // BYE自動進出は勝者線を描画しない（選手ボックスがエントリーラウンドに表示される）
-          if (rw.isBye) continue;
 
           const groupSize = Math.pow(2, r + 1);
           const halfSize = Math.pow(2, r);
@@ -3740,27 +3678,21 @@
           continue;
         }
 
-        // BYE自動進出選手は底部行に表示しない（エントリーラウンドに表示）
-        const byeInfo = byeAdvancingPlayers.find(b => b.slotIndex === i);
-        if (byeInfo) {
-          html += `<div style="${boxStyle};visibility:hidden;"></div>`;
-          continue;
-        }
-
         // 対戦相手を特定
         const pairIndex = (i % 2 === 0) ? i + 1 : i - 1;
         const opponent = bracketSlots[pairIndex] || null;
+        const isByeWin = !opponent;
 
         // 1回戦の試合を検索
-        const match = opponent ? matches.find(mt =>
+        const match = !isByeWin ? matches.find(mt =>
           (mt.player1_id === player.entry_id && mt.player2_id === opponent.entry_id) ||
           (mt.player2_id === player.entry_id && mt.player1_id === opponent.entry_id)
         ) : null;
 
         const winnerId = match?.winner_id;
         const isPending = match && !winnerId;
-        const isWinner = winnerId === player.entry_id;
-        const isLoser = winnerId && winnerId !== player.entry_id;
+        const isWinner = isByeWin || winnerId === player.entry_id;
+        const isLoser = !isByeWin && winnerId && winnerId !== player.entry_id;
         const hasSeed = player.has_seed;
         const canClick = isAdmin && isPending && opponent;
 
@@ -3776,7 +3708,7 @@
         html += `
           <div class="${classes}" style="${boxStyle}" data-slot="${i}"
             ${canClick ? `onclick="selectBracketWinner(${player.entry_id}, ${opponent.entry_id}, '${escapeHtml(player.username)}', '${escapeHtml(opponent.username)}')"` : ''}>
-            ${isWinner ? '<span class="winner-mark">🏆</span>' : ''}
+            ${isWinner && !isByeWin ? '<span class="winner-mark">🏆</span>' : ''}
             ${hasSeed ? '<span class="seed-mark">🎖️</span>' : ''}
             <span class="player-name-v" style="font-size:${nameFontSize};max-height:${nameMaxH}px;">${escapeHtml(player.username)}</span>
             <span class="player-id-v" style="font-size:${idFontSize};">${String(player.entry_id).padStart(2, '0')}</span>
@@ -3786,34 +3718,14 @@
 
       html += '</div>'; // bracket-round-row
 
-      // === BYE自動進出選手のボックス（エントリーラウンドの位置に配置） ===
-      byeAdvancingPlayers.forEach(byeP => {
-        const { player, entryRound, entryMatchIdx, entrySide } = byeP;
-        const groupSize = Math.pow(2, entryRound + 1);
-        const halfSize = Math.pow(2, entryRound);
-        const groupStart = entryMatchIdx * groupSize;
+      // === 上位ラウンドのマッチ自動作成 + クリック可能なプレイヤーボックス表示 ===
+      const upperBoxScale = Math.max(0.7, scale);
+      const upperBoxW = Math.max(24, Math.round(boxWidth * 0.85));
+      const upperBoxH = Math.max(40, Math.round(boxHeight * 0.75));
+      const upperBoxPad = Math.max(2, Math.round(6 * upperBoxScale));
+      const upperNameSize = Math.max(0.45, 0.75 * upperBoxScale) + 'rem';
+      const upperIdSize = Math.max(0.35, 0.55 * upperBoxScale) + 'rem';
 
-        let entryX;
-        if (entrySide === 'left') {
-          entryX = groupCenterX(groupStart, groupStart + halfSize - 1);
-        } else {
-          entryX = groupCenterX(groupStart + halfSize, groupStart + groupSize - 1);
-        }
-
-        const entryY = lineAreaHeight - entryRound * roundHeight;
-        const hasSeed = player.has_seed;
-
-        const byeBoxClasses = ['bracket-player-box', 'seed'].filter(Boolean).join(' ');
-        html += `
-          <div class="${byeBoxClasses}" style="${boxStyle};position:absolute;left:${entryX - boxWidth / 2}px;top:${entryY}px;">
-            ${hasSeed ? '<span class="seed-mark">🎖️</span>' : ''}
-            <span class="player-name-v" style="font-size:${nameFontSize};max-height:${nameMaxH}px;">${escapeHtml(player.username)}</span>
-            <span class="player-id-v" style="font-size:${idFontSize};">${String(player.entry_id).padStart(2, '0')}</span>
-          </div>
-        `;
-      });
-
-      // === 上位ラウンドのマッチ自動作成（ボックス表示なし・線で勝ち上がりが分かる） ===
       for (let r = 1; r < rounds; r++) {
         const numMatchesInRound = Math.pow(2, rounds - 1 - r);
         for (let m = 0; m < numMatchesInRound; m++) {
@@ -3833,35 +3745,74 @@
           if (prevWL.length > 0) p1 = allEntries.find(e => e.entry_id === prevWL[prevWL.length - 1].winnerId);
           if (prevWR.length > 0) p2 = allEntries.find(e => e.entry_id === prevWR[prevWR.length - 1].winnerId);
 
-          if (!p1 || !p2) continue;
+          if (!p1 && !p2) continue;
+
           const rw = roundWinners[r].find(w => w.matchIndex === m);
           if (rw && rw.isBye) continue;
           const winnerId = rw ? rw.winnerId : null;
 
-          const matchRecord = matches.find(mt =>
-            (mt.player1_id === p1.entry_id && mt.player2_id === p2.entry_id) ||
-            (mt.player2_id === p1.entry_id && mt.player1_id === p2.entry_id)
-          );
-          const needsMatch = !matchRecord && !winnerId;
+          // 両者揃った場合のマッチ作成・表示
+          if (p1 && p2) {
+            const matchRecord = matches.find(mt =>
+              (mt.player1_id === p1.entry_id && mt.player2_id === p2.entry_id) ||
+              (mt.player2_id === p1.entry_id && mt.player1_id === p2.entry_id)
+            );
+            const needsMatch = !matchRecord && !winnerId;
 
-          // 管理者なら未作成のマッチを自動作成
-          if (needsMatch && isAdmin && db) {
-            const key = p1.entry_id + '_' + p2.entry_id + '_r' + r;
-            if (!window._bracketMatchCreating) window._bracketMatchCreating = {};
-            if (!window._bracketMatchCreating[key]) {
-              window._bracketMatchCreating[key] = true;
-              db.collection('matches').add({
-                player1_id: p1.entry_id,
-                player1_name: p1.username,
-                player2_id: p2.entry_id,
-                player2_name: p2.username,
-                winner_id: null,
-                round: r + 1,
-                group: appState.activeGroup || null,
-                created_at: firebase.firestore.FieldValue.serverTimestamp()
-              }).then(() => { delete window._bracketMatchCreating[key]; })
-                .catch(e => { delete window._bracketMatchCreating[key]; });
+            // 管理者なら未作成のマッチを自動作成
+            if (needsMatch && isAdmin && db) {
+              const key = p1.entry_id + '_' + p2.entry_id + '_r' + r;
+              if (!window._bracketMatchCreating) window._bracketMatchCreating = {};
+              if (!window._bracketMatchCreating[key]) {
+                window._bracketMatchCreating[key] = true;
+                db.collection('matches').add({
+                  player1_id: p1.entry_id,
+                  player1_name: p1.username,
+                  player2_id: p2.entry_id,
+                  player2_name: p2.username,
+                  winner_id: null,
+                  round: r + 1,
+                  group: appState.activeGroup || null,
+                  created_at: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => { delete window._bracketMatchCreating[key]; })
+                  .catch(e => { delete window._bracketMatchCreating[key]; });
+              }
             }
+
+            // 上位ラウンドのクリック可能なプレイヤーボックスを水平線の両端に表示
+            const leftX = groupCenterX(groupStart, groupStart + halfSize - 1);
+            const rightX = groupCenterX(groupStart + halfSize, groupStart + groupSize - 1);
+            const junctionY = lineAreaHeight - (r + 1) * roundHeight;
+            const isPending = (matchRecord && !matchRecord.winner_id) || needsMatch;
+            const canClick = isAdmin && isPending;
+
+            // 左側（p1）ボックス
+            const p1IsWinner = winnerId === p1.entry_id;
+            const p1IsLoser = winnerId && winnerId !== p1.entry_id;
+            const p1Classes = ['bracket-player-box',
+              p1IsWinner ? 'winner' : '', p1IsLoser ? 'loser' : '',
+              canClick ? 'clickable' : '', isPending ? 'active' : ''
+            ].filter(Boolean).join(' ');
+            html += `<div class="${p1Classes}" style="width:${upperBoxW}px;min-height:${upperBoxH}px;padding:${upperBoxPad}px;position:absolute;left:${leftX - upperBoxW / 2}px;top:${junctionY - upperBoxH - 2}px;"
+              ${canClick ? `onclick="selectBracketWinner(${p1.entry_id}, ${p2.entry_id}, '${escapeHtml(p1.username)}', '${escapeHtml(p2.username)}')"` : ''}>
+              ${p1IsWinner ? '<span class="winner-mark">🏆</span>' : ''}
+              <span class="player-name-v" style="font-size:${upperNameSize};">${escapeHtml(p1.username)}</span>
+              <span class="player-id-v" style="font-size:${upperIdSize};">${String(p1.entry_id).padStart(2, '0')}</span>
+            </div>`;
+
+            // 右側（p2）ボックス
+            const p2IsWinner = winnerId === p2.entry_id;
+            const p2IsLoser = winnerId && winnerId !== p2.entry_id;
+            const p2Classes = ['bracket-player-box',
+              p2IsWinner ? 'winner' : '', p2IsLoser ? 'loser' : '',
+              canClick ? 'clickable' : '', isPending ? 'active' : ''
+            ].filter(Boolean).join(' ');
+            html += `<div class="${p2Classes}" style="width:${upperBoxW}px;min-height:${upperBoxH}px;padding:${upperBoxPad}px;position:absolute;left:${rightX - upperBoxW / 2}px;top:${junctionY - upperBoxH - 2}px;"
+              ${canClick ? `onclick="selectBracketWinner(${p2.entry_id}, ${p1.entry_id}, '${escapeHtml(p2.username)}', '${escapeHtml(p1.username)}')"` : ''}>
+              ${p2IsWinner ? '<span class="winner-mark">🏆</span>' : ''}
+              <span class="player-name-v" style="font-size:${upperNameSize};">${escapeHtml(p2.username)}</span>
+              <span class="player-id-v" style="font-size:${upperIdSize};">${String(p2.entry_id).padStart(2, '0')}</span>
+            </div>`;
           }
         }
       }

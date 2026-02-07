@@ -2550,18 +2550,45 @@
       updateLotteryVenueButton();
     }
     async function registerAdmin() { 
-      // クールダウンチェック
-      const cd = await checkCooldown('admin');
-      if (cd.blocked) { showToast('短時間で登録・解除を繰り返したため、しばらくお待ちください（残り' + cd.remaining + '分）', 'error'); return; }
+      const btn = document.querySelector('#adminScreen .submit-btn');
+      if (btn) btn.disabled = true; // 二重クリック防止
       
-      const n = document.getElementById('adminNameInput').value.trim(); const e = document.getElementById('adminNameError'); if (!n) { e.textContent = '管理者名を入力してください'; e.classList.add('visible'); return; } e.classList.remove('visible'); localStorage.setItem('tournament_admin_name', n); appState.adminName = n; appState.isAdmin = true; 
-      
-      // 操作記録
-      await recordAction('admin', 'register_admin');
-      
-      appendLog(n + 'が管理者になりました'); playClick(); screenHistory.push(currentScreen); document.getElementById(currentScreen).classList.remove('active'); document.getElementById('adminSetupScreen').classList.add('active'); currentScreen = 'adminSetupScreen'; document.getElementById('mainHeader').classList.add('visible'); document.getElementById('backBtn').classList.add('visible'); 
+      try {
+        // クールダウンチェック
+        const cd = await checkCooldown('admin');
+        if (cd.blocked) { 
+          showToast('短時間で登録・解除を繰り返したため、しばらくお待ちください（残り' + cd.remaining + '分）', 'error'); 
+          if (btn) btn.disabled = false;
+          return; 
+        }
+        
+        const n = document.getElementById('adminNameInput').value.trim(); 
+        const e = document.getElementById('adminNameError'); 
+        if (!n) { 
+          e.textContent = '管理者名を入力してください'; 
+          e.classList.add('visible'); 
+          if (btn) btn.disabled = false;
+          return; 
+        } 
+        e.classList.remove('visible'); 
+        localStorage.setItem('tournament_admin_name', n); 
+        appState.adminName = n; 
+        appState.isAdmin = true; 
+        
+        // 画面遷移（ログは大会設定完了時に出す）
+        screenHistory.push(currentScreen); 
+        document.getElementById(currentScreen).classList.remove('active'); 
+        document.getElementById('adminSetupScreen').classList.add('active'); 
+        currentScreen = 'adminSetupScreen'; 
+        document.getElementById('mainHeader').classList.add('visible'); 
+        document.getElementById('backBtn').classList.add('visible');
+        if (btn) btn.disabled = false; // 成功後に再有効化
+      } catch (err) {
+        console.error('registerAdmin error:', err);
+        if (btn) btn.disabled = false;
+      }
     }
-    function saveTournamentSettings() { const gn = document.getElementById('setupGameName').value.trim(); const dl = document.getElementById('setupDeadline').value; const ge = document.getElementById('setupGameNameError'); const de = document.getElementById('setupDeadlineError'); ge.classList.remove('visible'); de.classList.remove('visible'); let err = false; if (!gn) { ge.textContent = 'ゲーム名を入力してください'; ge.classList.add('visible'); err = true; } if (!dl) { de.textContent = '締切日時を選択してください'; de.classList.add('visible'); err = true; } if (err) return; playClick(); appState.tournament = { admin_name: appState.adminName, admin_device: appState.deviceId, game_name: gn, deadline: new Date(dl) }; appendLog(appState.adminName + 'がトーナメント「' + gn + '」を作成しました'); if (db) { db.collection('tournaments').doc('current').set({ admin_name: appState.adminName, admin_device: appState.deviceId, game_name: gn, deadline: new Date(dl), updated_at: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }).catch(e => console.error(e)); } updateTournamentDisplay(); showModal('settingsCompleteModal'); }
+    function saveTournamentSettings() { const gn = document.getElementById('setupGameName').value.trim(); const dl = document.getElementById('setupDeadline').value; const ge = document.getElementById('setupGameNameError'); const de = document.getElementById('setupDeadlineError'); ge.classList.remove('visible'); de.classList.remove('visible'); let err = false; if (!gn) { ge.textContent = 'ゲーム名を入力してください'; ge.classList.add('visible'); err = true; } if (!dl) { de.textContent = '締切日時を選択してください'; de.classList.add('visible'); err = true; } if (err) return; appState.tournament = { admin_name: appState.adminName, admin_device: appState.deviceId, game_name: gn, deadline: new Date(dl) }; appendLog(appState.adminName + 'が管理者になり、トーナメント「' + gn + '」を作成しました'); if (db) { db.collection('tournaments').doc('current').set({ admin_name: appState.adminName, admin_device: appState.deviceId, game_name: gn, deadline: new Date(dl), updated_at: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }).catch(e => console.error(e)); } updateTournamentDisplay(); showModal('settingsCompleteModal'); }
     async function submitEntry() { 
       // クールダウンチェック
       const cd = await checkCooldown('user');

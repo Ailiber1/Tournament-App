@@ -552,7 +552,17 @@
     @media (min-width: 900px) {
       .vs-players { gap: 1.5rem; }
     }
-    .vs-player { text-align: center; }
+    .vs-player { text-align: center; transition: all 0.3s; }
+    .vs-player.clickable { cursor: pointer; }
+    .vs-player.clickable:hover { 
+      transform: scale(1.1); 
+      filter: drop-shadow(0 0 10px var(--hud-gold));
+    }
+    .vs-player.winner-selected {
+      background: rgba(0, 255, 65, 0.3);
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+    }
     .vs-player-icon { 
       width: 60px; 
       height: 60px; 
@@ -1262,18 +1272,19 @@
                 <div class="vs-display">
                   <div class="vs-title">⚔️ 対戦カード</div>
                   <div class="vs-players">
-                    <div class="vs-player">
+                    <div class="vs-player" id="vsPlayer1Box" onclick="selectWinnerFromCard(1)">
                       <div class="vs-player-icon" id="vsPlayer1Icon"><span>?</span></div>
                       <div class="vs-player-id" id="vsPlayer1Id">-</div>
                       <div class="vs-player-name" id="vsPlayer1Name">-</div>
                     </div>
                     <div class="vs-text">VS</div>
-                    <div class="vs-player">
+                    <div class="vs-player" id="vsPlayer2Box" onclick="selectWinnerFromCard(2)">
                       <div class="vs-player-icon" id="vsPlayer2Icon"><span>?</span></div>
                       <div class="vs-player-id" id="vsPlayer2Id">-</div>
                       <div class="vs-player-name" id="vsPlayer2Name">-</div>
                     </div>
                   </div>
+                  <div class="vs-help" id="vsHelp" style="display:none;font-size:0.7rem;color:var(--hud-gold);margin-top:0.5rem;">※ 勝者をクリックしてください</div>
                 </div>
               </div>
             </div>
@@ -1283,16 +1294,6 @@
             <button class="roulette-btn" id="spinBtn" onclick="spinRoulette()">ルーレット回転</button>
             <button class="roulette-btn" id="confirmMatchBtn" onclick="confirmMatch()" disabled>対戦確定</button>
             <button class="roulette-btn" id="endTournamentBtn" onclick="confirmEndTournament()" style="background:rgba(40,10,20,0.8);border-color:var(--hud-red);color:var(--hud-red);">大会終了・記録</button>
-          </div>
-          <div class="roulette-controls" id="matchResultControls" style="display:none;">
-            <button class="roulette-btn winner-btn" id="winner1Btn" onclick="declareWinner(1)" style="background:rgba(0,80,40,0.9);border-color:var(--hud-green);">
-              <span class="winner-label">🏆 勝者</span>
-              <span class="winner-name" id="winner1Name">-</span>
-            </button>
-            <button class="roulette-btn winner-btn" id="winner2Btn" onclick="declareWinner(2)" style="background:rgba(0,80,40,0.9);border-color:var(--hud-green);">
-              <span class="winner-label">🏆 勝者</span>
-              <span class="winner-name" id="winner2Name">-</span>
-            </button>
           </div>
           <!-- トーナメント表切り替えボタン（管理者用） -->
           <div class="roulette-controls" id="bracketControls" style="display:none;margin-top:1rem;">
@@ -1306,8 +1307,9 @@
         <div class="bracket-container" id="bracketContainer">
           <h3 class="bracket-title">🏆 トーナメント表</h3>
           <div id="bracketContent"></div>
-          <div style="margin-top:1rem;">
+          <div style="margin-top:1rem;display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
             <button class="bracket-view-btn" onclick="toggleBracketView()">🎲 ルーレットに戻る</button>
+            <button class="bracket-view-btn" id="bracketEndBtn" onclick="confirmEndTournament()" style="display:none;background:rgba(40,10,20,0.8);border-color:var(--hud-red);color:var(--hud-red);">🏆 大会終了・記録</button>
           </div>
         </div>
         
@@ -2683,12 +2685,14 @@
       const bracketContainer = document.getElementById('bracketContainer');
       const lotterySidebar = document.querySelector('.lottery-sidebar');
       const lotteryArena = document.getElementById('lotteryArena');
+      const lotteryEntrance = document.getElementById('lotteryEntrance');
       
       if (bracketMode) {
         // トーナメント表を全画面表示
         rouletteMain.style.display = 'none';
         if (lotterySidebar) lotterySidebar.style.display = 'none';
         if (lotteryArena) lotteryArena.style.gridTemplateColumns = '1fr';
+        if (lotteryEntrance) lotteryEntrance.style.display = 'none';
         bracketContainer.classList.add('active');
         generateBracket();
       } else {
@@ -2696,6 +2700,7 @@
         rouletteMain.style.display = 'flex';
         if (lotterySidebar) lotterySidebar.style.display = '';
         if (lotteryArena) lotteryArena.style.gridTemplateColumns = '';
+        if (lotteryEntrance) lotteryEntrance.style.display = 'none'; // 抽選会場内では常に非表示
         bracketContainer.classList.remove('active');
         // トーナメント表ボタンを再表示
         updateBracketControls();
@@ -2798,22 +2803,25 @@
       const boxGap = 15;
       const roundHeight = 60;
       const svgWidth = bracketSize * (boxWidth + boxGap);
-      const svgHeight = rounds * roundHeight + 80;
+      const svgHeight = rounds * roundHeight + 40;
       
-      // HTMLを生成
-      let html = '<div class="bracket-tree" style="position:relative;min-height:' + (svgHeight + boxHeight + 50) + 'px;">';
+      // HTMLを生成（flexbox縦並び）
+      let html = '<div class="bracket-tree" style="display:flex;flex-direction:column;align-items:center;gap:20px;">';
       
-      // 優勝枠（最上部）
+      // 優勝枠（最上部・横書き）
       html += `
-        <div class="bracket-champion-box ${champion ? '' : 'empty'}" style="position:absolute;top:10px;left:50%;transform:translateX(-50%);">
+        <div class="bracket-champion-box ${champion ? '' : 'empty'}">
           <div class="champion-trophy">🏆</div>
           <div class="champion-label">優勝</div>
-          <div class="champion-name">${champion ? escapeHtml(champion.username) : '???'}</div>
+          <div class="champion-name" style="writing-mode:horizontal-tb;text-orientation:mixed;">${champion ? escapeHtml(champion.username) : '???'}</div>
         </div>
       `;
       
+      // SVGとプレイヤーを含むコンテナ
+      html += `<div style="position:relative;width:${svgWidth}px;height:${svgHeight + boxHeight + 20}px;">`;
+      
       // SVG線を描画
-      html += `<svg class="bracket-lines" width="${svgWidth}" height="${svgHeight}" style="position:absolute;top:100px;left:50%;transform:translateX(-50%);">`;
+      html += `<svg class="bracket-lines" width="${svgWidth}" height="${svgHeight}" style="position:absolute;top:0;left:0;">`;
       
       // 各プレイヤーからの線を描画
       for (let i = 0; i < bracketSize; i++) {
@@ -2874,8 +2882,8 @@
       
       html += '</svg>';
       
-      // プレイヤーボックス（下部に横並び）
-      html += `<div class="bracket-round-row" style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:${boxGap}px;">`;
+      // プレイヤーボックス（SVGの下に横並び）
+      html += `<div class="bracket-round-row" style="position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:${boxGap}px;">`;
       
       for (let i = 0; i < bracketSize; i++) {
         const player = bracketSlots[i];
@@ -2922,10 +2930,21 @@
         `;
       }
       
-      html += '</div>';
-      html += '</div>';
+      html += '</div>'; // bracket-round-row
+      html += '</div>'; // SVGとプレイヤーのコンテナ
+      html += '</div>'; // bracket-tree
       
       container.innerHTML = html;
+      
+      // 管理者用終了ボタンの表示制御
+      const bracketEndBtn = document.getElementById('bracketEndBtn');
+      if (bracketEndBtn) {
+        if (isAdmin) {
+          bracketEndBtn.style.display = '';
+        } else {
+          bracketEndBtn.style.display = 'none';
+        }
+      }
     }
     
     // ブラケットプレイヤーをレンダリング
@@ -3030,9 +3049,10 @@
       if (!controls) return;
       
       const activeCount = appState.entries.filter(e => e.status !== 'LOST').length;
+      const matchCount = appState.matches.length;
       
-      // 20名以下で全ユーザーに表示（操作権限は別で制御）
-      if (activeCount <= 20 && activeCount >= 2) {
+      // 条件：対戦が1つ以上確定している、かつ20名以下
+      if (matchCount >= 1 && activeCount <= 20 && activeCount >= 1) {
         controls.style.display = 'flex';
       } else {
         controls.style.display = 'none';
@@ -3041,7 +3061,71 @@
     
     
     function confirmMatch() { if (!appState.selectedPlayer1 || !appState.selectedPlayer2) return; document.getElementById('confirmMatchText').textContent = appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username; showModal('confirmMatchModal'); }
-    function executeConfirmMatch() { if (!db) return; playClick(); appendLog(appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username + ' の対戦が確定'); db.collection('matches').add({ player1_id: appState.selectedPlayer1.entry_id, player1_name: appState.selectedPlayer1.username, player2_id: appState.selectedPlayer2.entry_id, player2_name: appState.selectedPlayer2.username, winner_id: null, round: 1, created_at: firebase.firestore.FieldValue.serverTimestamp() }).then(() => { hideModal('confirmMatchModal'); document.getElementById('matchResultControls').style.display = 'flex'; document.getElementById('confirmMatchBtn').disabled = true; showToast('対戦を確定しました', 'success'); }).catch(e => showToast('エラー: ' + e.message, 'error')); }
+    function executeConfirmMatch() { 
+      if (!db) return; 
+      playClick(); 
+      appendLog(appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username + ' の対戦が確定'); 
+      db.collection('matches').add({ 
+        player1_id: appState.selectedPlayer1.entry_id, 
+        player1_name: appState.selectedPlayer1.username, 
+        player2_id: appState.selectedPlayer2.entry_id, 
+        player2_name: appState.selectedPlayer2.username, 
+        winner_id: null, 
+        round: 1, 
+        created_at: firebase.firestore.FieldValue.serverTimestamp() 
+      }).then(() => { 
+        hideModal('confirmMatchModal'); 
+        // プレイヤーをクリック可能にする
+        enableWinnerSelection();
+        document.getElementById('confirmMatchBtn').disabled = true; 
+        showToast('対戦を確定しました。勝者をクリックしてください', 'success'); 
+      }).catch(e => showToast('エラー: ' + e.message, 'error')); 
+    }
+    
+    // 勝者選択を有効化
+    function enableWinnerSelection() {
+      const p1Box = document.getElementById('vsPlayer1Box');
+      const p2Box = document.getElementById('vsPlayer2Box');
+      const helpText = document.getElementById('vsHelp');
+      if (p1Box) p1Box.classList.add('clickable');
+      if (p2Box) p2Box.classList.add('clickable');
+      if (helpText) helpText.style.display = 'block';
+    }
+    
+    // 勝者選択を無効化
+    function disableWinnerSelection() {
+      const p1Box = document.getElementById('vsPlayer1Box');
+      const p2Box = document.getElementById('vsPlayer2Box');
+      const helpText = document.getElementById('vsHelp');
+      if (p1Box) { p1Box.classList.remove('clickable'); p1Box.classList.remove('winner-selected'); }
+      if (p2Box) { p2Box.classList.remove('clickable'); p2Box.classList.remove('winner-selected'); }
+      if (helpText) helpText.style.display = 'none';
+    }
+    
+    // 対戦カードから勝者を選択
+    function selectWinnerFromCard(playerNum) {
+      const isAdmin = appState.isAdmin || appState.tournament?.admin_device === appState.deviceId;
+      if (!isAdmin) return;
+      
+      const p1Box = document.getElementById('vsPlayer1Box');
+      const p2Box = document.getElementById('vsPlayer2Box');
+      
+      // クリック可能でない場合は何もしない
+      if (!p1Box.classList.contains('clickable')) return;
+      
+      // 選択状態を表示
+      if (playerNum === 1) {
+        p1Box.classList.add('winner-selected');
+        p2Box.classList.remove('winner-selected');
+      } else {
+        p2Box.classList.add('winner-selected');
+        p1Box.classList.remove('winner-selected');
+      }
+      
+      // declareWinnerを呼び出す
+      declareWinner(playerNum);
+    }
+    
     function declareWinner(n) { appState.pendingWinner = { winner: n === 1 ? appState.selectedPlayer1 : appState.selectedPlayer2, loser: n === 1 ? appState.selectedPlayer2 : appState.selectedPlayer1 }; document.getElementById('confirmWinnerText').textContent = appState.pendingWinner.winner.username; showModal('confirmWinnerModal'); }
     async function executeWinner() { 
       if (!db) return; 
@@ -3068,7 +3152,7 @@
       if (le) db.collection('entries').doc(le.id).update({ status: 'LOST' }); 
       
       hideModal('confirmWinnerModal'); 
-      document.getElementById('matchResultControls').style.display = 'none'; 
+      disableWinnerSelection(); // 勝者選択を無効化
       appState.selectedPlayer1 = null; 
       appState.selectedPlayer2 = null; 
       updateVsDisplay(null, null); 

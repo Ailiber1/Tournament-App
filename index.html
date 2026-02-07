@@ -2431,10 +2431,16 @@
           
           updateTournamentDisplay(); 
         } else {
-          // 大会データが削除された（大会終了）場合
-          if (appState.tournament) {
-            // 以前は大会があったが今はない → リセット
+          // 大会データが存在しない場合
+          const hadTournament = appState.tournament !== null;
+          appState.tournament = null;
+          
+          // 以前は大会があったが今はない → リセット（大会終了）
+          if (hadTournament) {
             resetAfterTournamentEnd();
+          } else {
+            // 初期状態（大会がない状態）- 表示だけ更新
+            updateTournamentDisplay();
           }
         }
       }); 
@@ -3560,3 +3566,10 @@
           btn.style.opacity = '0.3';
         } else {
           btn.disabled = false;
+          btn.style.opacity = '';
+        }
+      }
+    }
+  </script>
+</body>
+</html>

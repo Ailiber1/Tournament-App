@@ -713,6 +713,75 @@
       0%, 100% { opacity: 0.4; }
       50% { opacity: 1; }
     }
+    /* グループタブ */
+    .group-tabs-container {
+      padding: 0.5rem;
+      border-bottom: 1px solid rgba(0,255,65,0.15);
+      margin-bottom: 0.5rem;
+    }
+    .group-tabs {
+      display: flex;
+      gap: 0.4rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .group-tab {
+      padding: 0.4rem 0.8rem;
+      border: 1px solid var(--hud-green-dim);
+      background: rgba(0, 20, 10, 0.6);
+      color: var(--hud-green-dim);
+      cursor: pointer;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.7rem;
+      transition: all 0.3s;
+      border-radius: 2px;
+    }
+    .group-tab:hover {
+      border-color: var(--hud-green);
+      color: var(--hud-green);
+    }
+    .group-tab.active {
+      border-color: var(--hud-green);
+      color: var(--hud-green);
+      background: rgba(0, 255, 65, 0.1);
+      box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+    }
+    .group-tab.completed {
+      border-color: var(--hud-gold);
+      color: var(--hud-gold);
+    }
+    .group-tab.finals-tab {
+      border-color: var(--hud-gold);
+      color: var(--hud-gold);
+      font-weight: 700;
+    }
+    .group-tab.finals-tab.active {
+      background: rgba(255, 204, 0, 0.1);
+      box-shadow: 0 0 10px rgba(255, 204, 0, 0.3);
+    }
+    .group-info-text {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-top: 0.4rem;
+    }
+    .bulk-match-btn {
+      display: inline-block;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--hud-green);
+      background: rgba(0, 40, 20, 0.8);
+      color: var(--hud-green);
+      font-family: 'Orbitron', monospace;
+      font-size: 0.8rem;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      transition: all 0.3s;
+    }
+    .bulk-match-btn:hover {
+      background: rgba(0, 255, 65, 0.15);
+      box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+    }
+
     /* トーナメントブラケット - 伝統的な形式 */
     .bracket-tree {
       display: flex;
@@ -1309,6 +1378,14 @@
       
       <!-- 抽選会場（左：ルーレット、右：リスト） -->
       <div class="lottery-arena" id="lotteryArena">
+        <!-- グループタブ（22人以上の場合表示） -->
+        <div class="group-tabs-container" id="groupTabsContainer" style="display:none;grid-column:1/-1;">
+          <div class="group-tabs" id="groupTabs"></div>
+          <div class="group-info-text" id="groupInfoText"></div>
+          <div id="groupBulkMatch" style="display:none;text-align:center;">
+            <button class="bulk-match-btn" onclick="bulkMatchGroup()">⚡ 一括マッチメイク</button>
+          </div>
+        </div>
         <!-- 左側：ルーレット＋VS -->
         <div class="lottery-main">
           <div class="roulette-container" id="rouletteContainer">
@@ -1352,7 +1429,7 @@
         
         <!-- トーナメント表（20名以下で表示可能） -->
         <div class="bracket-container" id="bracketContainer">
-          <h3 class="bracket-title">🏆 トーナメント表</h3>
+          <h3 class="bracket-title" id="bracketTitle">🏆 トーナメント表</h3>
           <div id="bracketContent"></div>
           <div style="margin-top:1rem;display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
             <button class="bracket-view-btn" id="bracketBackBtn" onclick="toggleBracketView()">🎲 ルーレットに戻る</button>
@@ -1599,7 +1676,9 @@
       selectedPlayer2: null,
       isSpinning: false,
       pendingWinner: null,
-      matchingIds: []
+      matchingIds: [],
+      activeGroup: null,
+      groupPhase: null
     };
     if (appState.adminName) appState.isAdmin = true;
 
@@ -2106,6 +2185,17 @@
           lotteryArena.style.display = '';
           lotteryArena.classList.add('active');
           document.getElementById('rouletteAdminControls').style.display = 'flex';
+
+          // 22人以上でグループ未割り当てなら自動グループ分け
+          if (appState.entries.length >= 22 && !appState.tournament?.groups_assigned) {
+            assignGroups();
+          }
+          if (appState.tournament?.group_phase) {
+            appState.activeGroup = appState.tournament.active_group || 'A';
+            appState.groupPhase = appState.tournament.group_phase;
+            renderGroupTabs();
+          }
+
           updateBracketControls();
           return;
         }
@@ -2225,29 +2315,42 @@
       if (!dl) { showToast('大会が設定されていません', 'error'); return; }
       const d = dl.toDate ? dl.toDate() : new Date(dl);
       if (new Date() < d) { showToast('締切日時以降に解放されます', 'error'); return; }
-      
+
       // BGMをバトルマッチに切り替え
       switchToBattleBGM();
-      
+
       // 入場ボタンと事前リストを非表示
       document.getElementById('lotteryEntrance').style.display = 'none';
       document.getElementById('preArenaList').style.display = 'none';
-      
+
       // 抽選会場を表示（style.displayをクリアしてCSSのactiveクラスを有効にする）
       const lotteryArena = document.getElementById('lotteryArena');
       lotteryArena.style.display = '';
       lotteryArena.classList.add('active');
-      
+
       // 管理者のみルーレット操作ボタン表示
-      if (appState.isAdmin || appState.tournament?.admin_device === appState.deviceId) {
+      const isAdmin = appState.isAdmin || appState.tournament?.admin_device === appState.deviceId;
+      if (isAdmin) {
         document.getElementById('rouletteAdminControls').style.display = 'flex';
       } else {
         document.getElementById('rouletteAdminControls').style.display = 'none';
       }
-      
+
+      // 22人以上でグループ未割り当ての場合、管理者なら自動でグループ分け
+      if (isAdmin && appState.entries.length >= 22 && !appState.tournament?.groups_assigned) {
+        assignGroups();
+      }
+
+      // グループフェーズの場合はタブとアクティブグループを設定
+      if (appState.tournament?.group_phase) {
+        appState.activeGroup = appState.tournament.active_group || 'A';
+        appState.groupPhase = appState.tournament.group_phase;
+        renderGroupTabs();
+      }
+
       // トーナメント表ボタンは全ユーザーに表示
       updateBracketControls();
-      
+
       playClick();
       appendLog('抽選会場に入場しました');
     }
@@ -2256,24 +2359,37 @@
       const listPre = document.getElementById('participantListPre');
       const listCountEl = document.getElementById('listCount');
       const listCountPreEl = document.getElementById('listCountPre');
-      
-      if (listCountEl) listCountEl.textContent = appState.entries.length;
+
       if (listCountPreEl) listCountPreEl.textContent = appState.entries.length;
-      
+
       const matchingIds = appState.matchingIds || [];
-      
-      const html = appState.entries.length === 0 
+
+      // Arena list: filter by active group
+      const arenaEntries = getGroupFilteredEntries();
+      if (listCountEl) listCountEl.textContent = arenaEntries.length;
+
+      const buildRow = (e) => {
+        const isMatching = matchingIds.includes(e.entry_id);
+        const hasSeed = e.has_seed;
+        const statusText = e.status === 'LOST' ? '敗退' : (hasSeed ? '🎖️シード' : '参加中');
+        const statusClass = e.status === 'LOST' ? 'status-lost' : (hasSeed ? 'status-seed' : 'status-active');
+        const groupLabel = e.group ? ' [' + e.group + ']' : '';
+        return '<div class="participant-row' + (isMatching ? ' matching' : '') + '"><div class="participant-id">ID-' + String(e.entry_id).padStart(2,'0') + '</div><div class="participant-icon">' + (e.icon_url ? '<img src="' + e.icon_url + '">' : '👤') + '</div><div>' + escapeHtml(e.username) + groupLabel + (isMatching ? ' ⚔️' : '') + '</div><div><span class="status-badge ' + statusClass + '">' + statusText + '</span></div></div>';
+      };
+
+      const arenaHtml = arenaEntries.length === 0
         ? '<div style="text-align:center;padding:1.5rem;color:var(--text-dim);">参加者はいません</div>'
-        : appState.entries.map(e => {
-            const isMatching = matchingIds.includes(e.entry_id);
-            const hasSeed = e.has_seed;
-            const statusText = e.status === 'LOST' ? '敗退' : (hasSeed ? '🎖️シード' : '参加中');
-            const statusClass = e.status === 'LOST' ? 'status-lost' : (hasSeed ? 'status-seed' : 'status-active');
-            return '<div class="participant-row' + (isMatching ? ' matching' : '') + '"><div class="participant-id">ID-' + String(e.entry_id).padStart(2,'0') + '</div><div class="participant-icon">' + (e.icon_url ? '<img src="' + e.icon_url + '">' : '👤') + '</div><div>' + escapeHtml(e.username) + (isMatching ? ' ⚔️' : '') + '</div><div><span class="status-badge ' + statusClass + '">' + statusText + '</span></div></div>';
-          }).join('');
-      
-      if (list) list.innerHTML = html;
-      if (listPre) listPre.innerHTML = html;
+        : arenaEntries.map(buildRow).join('');
+
+      const preHtml = appState.entries.length === 0
+        ? '<div style="text-align:center;padding:1.5rem;color:var(--text-dim);">参加者はいません</div>'
+        : appState.entries.map(buildRow).join('');
+
+      if (list) list.innerHTML = arenaHtml;
+      if (listPre) listPre.innerHTML = preHtml;
+
+      // Update group tabs if visible
+      renderGroupTabs();
     }
     function updateEntryScreen() {
       const my = appState.entries.find(e => e.device_id === appState.deviceId);
@@ -2282,16 +2398,16 @@
       if (my) { document.getElementById('myEntryDisplay').style.display = 'block'; document.getElementById('entryForm').style.display = 'none'; document.getElementById('myEntryName').textContent = my.username; document.getElementById('myEntryId').textContent = ' (ID-' + String(my.entry_id).padStart(2,'0') + ')'; }
       else { document.getElementById('myEntryDisplay').style.display = past ? 'block' : 'none'; document.getElementById('entryForm').style.display = past ? 'none' : 'block'; if (past) document.getElementById('myEntryDisplay').innerHTML = '<div class="my-entry-box"><p style="color:var(--hud-red);">締切日時を過ぎています</p></div>'; }
     }
-    function updateRouletteWheel() { 
-      const w = document.getElementById('wheelInner'); 
-      const a = appState.entries.filter(e => e.status !== 'LOST'); 
-      if (a.length === 0) { w.innerHTML = ''; return; } 
+    function updateRouletteWheel() {
+      const w = document.getElementById('wheelInner');
+      const a = getGroupFilteredEntries().filter(e => e.status !== 'LOST');
+      if (a.length === 0) { w.innerHTML = ''; return; }
       w.innerHTML = a.map((e,i) => {
         const hasSeed = e.has_seed;
         const style = hasSeed ? 'color:#ffa500;' : '';
         const seedMark = hasSeed ? '🎖️' : '';
         return '<div class="wheel-segment" style="transform:rotate(' + ((360/a.length)*i) + 'deg);' + style + '">' + seedMark + 'ID-' + String(e.entry_id).padStart(2,'0') + '</div>';
-      }).join(''); 
+      }).join('');
     }
     function updateVsDisplay(p1, p2) { 
       document.getElementById('vsPlayer1Id').textContent = p1 ? 'ID-' + String(p1.entry_id).padStart(2,'0') : '-'; 
@@ -2473,12 +2589,19 @@
             const newState = data.roulette_state;
             const prevTimestamp = prevRouletteState?.timestamp?.toMillis?.() || 0;
             const newTimestamp = newState.timestamp?.toMillis?.() || 0;
-            
+
             if (newTimestamp > prevTimestamp) {
               handleRouletteSync(newState);
             }
           }
-          
+
+          // グループ状態の同期
+          if (data.group_phase) {
+            appState.groupPhase = data.group_phase;
+            appState.activeGroup = data.active_group || appState.activeGroup;
+            renderGroupTabs();
+          }
+
           updateTournamentDisplay(); 
         } else {
           // 大会データが存在しない場合
@@ -2510,6 +2633,8 @@
         appState.matches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         updateBracketControls();
         if (bracketMode) generateBracket();
+        // 全対戦カード確定チェック（管理者のみ）
+        if (appState.isAdmin) checkAllMatchupsDecided();
       });
     }
     
@@ -2530,13 +2655,19 @@
       appState.selectedPlayer1 = null;
       appState.selectedPlayer2 = null;
       appState.matchingIds = [];
+      appState.activeGroup = null;
+      appState.groupPhase = null;
       appState.isAdmin = false;
       appState.adminName = null;
       bracketMode = false;
-      
+
       // 管理者情報をlocalStorageから削除
       localStorage.removeItem('tournament_admin_name');
-      
+
+      // グループタブを非表示
+      const groupTabsContainer = document.getElementById('groupTabsContainer');
+      if (groupTabsContainer) groupTabsContainer.style.display = 'none';
+
       // HUDログをクリア
       hudLogs.length = 0;
       
@@ -2671,56 +2802,230 @@
       
       playClick(); const myEntry = appState.entries.find(e => e.device_id === appState.deviceId); const username = myEntry ? myEntry.username : '不明'; const i = appState.entries.findIndex(e => e.device_id === appState.deviceId); if (i !== -1) appState.entries.splice(i, 1); appendLog(username + 'が登録解除しました'); if (db) db.collection('entries').doc(appState.deviceId).delete().catch(e => console.error(e)); updateEntriesDisplay(); updateTournamentDisplay(); updateEntryScreen(); updateCancelEntryButton(); hideModal('confirmCancelEntryModal'); showModal('cancelCompleteModal'); 
     }
-    function spinRoulette() { 
-      if (appState.isSpinning) return; 
-      const a = appState.entries.filter(e => e.status !== 'LOST'); 
-      
+    // ===== グループシステム =====
+    function getGroupFilteredEntries() {
+      if (!appState.tournament?.group_phase) return appState.entries;
+      if (appState.activeGroup === 'finals') {
+        const winners = appState.tournament?.group_winners || {};
+        const winnerIds = Object.values(winners).map(w => w.entry_id);
+        return appState.entries.filter(e => winnerIds.includes(e.entry_id));
+      }
+      if (appState.activeGroup) {
+        return appState.entries.filter(e => e.group === appState.activeGroup);
+      }
+      return appState.entries;
+    }
+    function getGroupFilteredMatches() {
+      if (!appState.tournament?.group_phase) return appState.matches;
+      if (appState.activeGroup === 'finals') {
+        return appState.matches.filter(m => m.group === 'finals');
+      }
+      if (appState.activeGroup) {
+        return appState.matches.filter(m => m.group === appState.activeGroup);
+      }
+      return appState.matches;
+    }
+
+    function assignGroups() {
+      if (!db) return Promise.resolve();
+      const entries = appState.entries;
+      if (entries.length <= 21) return Promise.resolve();
+
+      const count = entries.length;
+      const numGroups = Math.min(5, Math.ceil(count / 20));
+      const groupNames = ['A', 'B', 'C', 'D', 'E'].slice(0, numGroups);
+
+      const shuffled = [...entries].sort(() => Math.random() - 0.5);
+      const batch = db.batch();
+      shuffled.forEach((entry, i) => {
+        const group = groupNames[i % numGroups];
+        batch.update(db.collection('entries').doc(entry.id), { group: group });
+      });
+      batch.update(db.collection('tournaments').doc('current'), {
+        groups_assigned: true,
+        group_phase: 'group',
+        active_group: groupNames[0],
+        group_winners: {}
+      });
+      return batch.commit().then(() => {
+        appState.activeGroup = groupNames[0];
+        appState.groupPhase = 'group';
+        showToast(numGroups + 'グループに分けました', 'success');
+        appendLog('グループ分け完了: ' + numGroups + 'グループ（各最大20人）');
+      });
+    }
+
+    function renderGroupTabs() {
+      const container = document.getElementById('groupTabsContainer');
+      const tabs = document.getElementById('groupTabs');
+      const infoText = document.getElementById('groupInfoText');
+      const bulkBtn = document.getElementById('groupBulkMatch');
+      if (!container || !tabs) return;
+
+      const phase = appState.tournament?.group_phase;
+      if (!phase) {
+        container.style.display = 'none';
+        return;
+      }
+
+      container.style.display = '';
+      const groups = [...new Set(appState.entries.map(e => e.group).filter(Boolean))].sort();
+      if (groups.length === 0) { container.style.display = 'none'; return; }
+
+      const activeGroup = appState.activeGroup || appState.tournament?.active_group || groups[0];
+      const winners = appState.tournament?.group_winners || {};
+
+      let html = '';
+      groups.forEach(g => {
+        const groupEntries = appState.entries.filter(e => e.group === g);
+        const activeCount = groupEntries.filter(e => e.status !== 'LOST').length;
+        const hasWinner = !!winners[g];
+        const isActive = (phase === 'group' && g === activeGroup);
+        html += '<div class="group-tab' + (isActive ? ' active' : '') + (hasWinner ? ' completed' : '') + '" onclick="selectGroup(\'' + g + '\')">';
+        html += 'G-' + g + ' (' + activeCount + '/' + groupEntries.length + ')';
+        if (hasWinner) html += ' ✓';
+        html += '</div>';
+      });
+
+      // 決勝タブ
+      const allGroupsDone = groups.length > 0 && Object.keys(winners).length === groups.length;
+      if (phase === 'finals' || allGroupsDone) {
+        const isFinalsActive = activeGroup === 'finals';
+        html += '<div class="group-tab finals-tab' + (isFinalsActive ? ' active' : '') + '" onclick="selectGroup(\'finals\')">決勝</div>';
+      }
+
+      tabs.innerHTML = html;
+      appState.activeGroup = activeGroup;
+
+      // info text
+      if (infoText) {
+        if (activeGroup === 'finals') {
+          const winnerCount = Object.keys(winners).length;
+          infoText.textContent = '決勝: ' + winnerCount + '名のグループ勝者';
+        } else {
+          const ge = appState.entries.filter(e => e.group === activeGroup);
+          const ac = ge.filter(e => e.status !== 'LOST').length;
+          infoText.textContent = 'グループ' + activeGroup + ': 残り' + ac + '名';
+          if (winners[activeGroup]) {
+            infoText.textContent += ' (勝者: ' + winners[activeGroup].username + ')';
+          }
+        }
+      }
+
+      // bulk match button (admin only, group phase, not completed group)
+      if (bulkBtn) {
+        const isAdmin = appState.isAdmin || appState.tournament?.admin_device === appState.deviceId;
+        if (isAdmin && activeGroup !== 'finals' && !winners[activeGroup]) {
+          bulkBtn.style.display = '';
+        } else if (isAdmin && activeGroup === 'finals' && phase === 'finals') {
+          bulkBtn.style.display = '';
+        } else {
+          bulkBtn.style.display = 'none';
+        }
+      }
+    }
+
+    function selectGroup(group) {
+      appState.activeGroup = group;
+      if (db && appState.isAdmin) {
+        db.collection('tournaments').doc('current').update({
+          active_group: group,
+          group_phase: group === 'finals' ? 'finals' : (appState.tournament?.group_phase || 'group')
+        }).catch(e => {});
+      }
+      renderGroupTabs();
+      updateEntriesDisplay();
+      updateRouletteWheel();
+      updateBracketControls();
+      if (bracketMode) generateBracket();
+    }
+
+    async function bulkMatchGroup() {
+      const isAdmin = appState.isAdmin || appState.tournament?.admin_device === appState.deviceId;
+      if (!isAdmin || !db) return;
+
+      const entries = getGroupFilteredEntries();
+      const active = entries.filter(e => e.status !== 'LOST');
+      const inMatch = getGroupFilteredMatches().filter(m => !m.winner_id);
+      const inMatchIds = inMatch.flatMap(m => [m.player1_id, m.player2_id]);
+      const available = active.filter(e => !inMatchIds.includes(e.entry_id) && !e.has_seed);
+
+      if (available.length < 2) {
+        showToast('マッチング可能な参加者が不足しています', 'error');
+        return;
+      }
+
+      const shuffled = [...available].sort(() => Math.random() - 0.5);
+      const batch = db.batch();
+      let matchCount = 0;
+      const groupTag = appState.activeGroup || null;
+
+      for (let i = 0; i + 1 < shuffled.length; i += 2) {
+        const ref = db.collection('matches').doc();
+        batch.set(ref, {
+          player1_id: shuffled[i].entry_id,
+          player1_name: shuffled[i].username,
+          player2_id: shuffled[i + 1].entry_id,
+          player2_name: shuffled[i + 1].username,
+          winner_id: null,
+          round: 1,
+          group: groupTag,
+          created_at: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        matchCount++;
+      }
+
+      if (shuffled.length % 2 === 1) {
+        const lastPlayer = shuffled[shuffled.length - 1];
+        batch.update(db.collection('entries').doc(lastPlayer.id), { has_seed: true });
+      }
+
+      await batch.commit();
+      showToast(matchCount + '組の対戦カードを作成しました', 'success');
+      appendLog('一括マッチメイク: ' + matchCount + '組');
+    }
+    // ===== グループシステムここまで =====
+
+    function spinRoulette() {
+      if (appState.isSpinning) return;
+      const a = getGroupFilteredEntries().filter(e => e.status !== 'LOST');
+
       // 優勝者が決まっている場合は回せない
       if (a.length <= 1) {
-        showToast('大会は終了しています', 'error');
+        showToast('このグループは終了しています', 'error');
         return;
       }
-      
-      // 進行中の試合がある人を除外（シード保持者も含む）
-      const inMatch = appState.matches.filter(m => !m.winner_id);
+
+      // 進行中の試合がある人を除外（グループフィルタ）
+      const inMatch = getGroupFilteredMatches().filter(m => !m.winner_id);
       const inMatchIds = inMatch.flatMap(m => [m.player1_id, m.player2_id]);
-      
-      // 対戦可能なプレイヤー（敗退しておらず、進行中の試合がない）
-      const available = a.filter(e => !inMatchIds.includes(e.entry_id));
-      
-      // シード未使用の人（まだシード抽選が必要かどうか判定用）
-      const needsSeedLottery = available.filter(e => !e.has_seed);
-      
-      // 対戦可能な参加者がいない（全員が試合中）
+
+      // 対戦可能なプレイヤー（敗退せず、進行中の試合がなく、シード権もない）
+      const available = a.filter(e => !inMatchIds.includes(e.entry_id) && !e.has_seed);
+
+      // 対戦可能な参加者がいない
       if (available.length === 0) {
-        showToast('全員が試合中です。結果を確定してください。', 'error');
+        showToast('全ての対戦カードが確定済みです', 'info');
         return;
       }
-      
-      // 1人だけの場合
+
+      // 1人だけ残った場合 → 自動シード
       if (available.length === 1) {
-        showToast('対戦相手がいません。試合結果を確定してください。', 'error');
+        autoAssignSeed(available[0]);
         return;
       }
-      
-      // 奇数の場合かつシード未保持者が奇数ならシード抽選
-      if (needsSeedLottery.length % 2 === 1 && needsSeedLottery.length >= 1 && available.length > 2) {
-        showSeedLottery(needsSeedLottery);
-        return;
-      }
-      
+
       if (available.length < 2) { showToast('対戦可能な参加者が不足しています', 'error'); return; }
-      
-      // 対戦カードを決定（シード保持者も含む）
-      const f = available; 
-      appState.isSpinning = true; 
-      document.getElementById('spinBtn').disabled = true; 
-      const s = [...f].sort(() => Math.random() - 0.5); 
-      appState.selectedPlayer1 = s[0]; 
-      appState.selectedPlayer2 = s[1]; 
-      
+
+      // 対戦カードを決定
+      appState.isSpinning = true;
+      document.getElementById('spinBtn').disabled = true;
+      const s = [...available].sort(() => Math.random() - 0.5);
+      appState.selectedPlayer1 = s[0];
+      appState.selectedPlayer2 = s[1];
+
       const rotation = 1800 + Math.random() * 720;
-      
+
       // Firestoreにルーレット状態を保存（他デバイスに同期）
       if (db) {
         db.collection('tournaments').doc('current').update({
@@ -2734,56 +3039,34 @@
           }
         }).catch(e => console.log('Roulette sync error:', e));
       }
-      
-      // ルーレット回転音
+
       playSpinSound();
-      
-      document.getElementById('wheelInner').style.transform = 'rotate(' + rotation + 'deg)'; 
-      setTimeout(() => { 
-        playVsSound(); 
-        updateVsDisplay(appState.selectedPlayer1, appState.selectedPlayer2); 
-        appendLog(appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username); 
-        document.getElementById('confirmMatchBtn').disabled = false; 
-        appState.isSpinning = false; 
+
+      document.getElementById('wheelInner').style.transform = 'rotate(' + rotation + 'deg)';
+      setTimeout(() => {
+        playVsSound();
+        updateVsDisplay(appState.selectedPlayer1, appState.selectedPlayer2);
+        appendLog(appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username);
+        document.getElementById('confirmMatchBtn').disabled = false;
+        appState.isSpinning = false;
         document.getElementById('spinBtn').disabled = false;
-        
+
         // 回転完了を同期
         if (db) {
           db.collection('tournaments').doc('current').update({
             'roulette_state.spinning': false
           }).catch(e => {});
         }
-      }, 4000); 
+      }, 4000);
     }
-    
-    // シード抽選を表示
-    function showSeedLottery(players) {
-      const count = players.length;
-      document.getElementById('seedLotteryInfo').textContent = 
-        `対戦可能な参加者が${count}名（奇数）です。1名にシード権（不戦勝）を与えます。`;
-      showModal('seedLotteryModal');
-    }
-    
-    // シード抽選を実行
-    function executeSeedLottery() {
-      hideModal('seedLotteryModal');
-      
-      const a = appState.entries.filter(e => e.status !== 'LOST'); 
-      const f = a.filter(e => !e.has_seed && !appState.matches.some(m => (m.player1_id === e.entry_id || m.player2_id === e.entry_id) && !m.winner_id)); 
-      
-      if (f.length === 0) {
-        showToast('シード対象者がいません', 'error');
-        return;
-      }
-      
+
+    // 最後の1人に自動でシード権を付与
+    function autoAssignSeed(player) {
       appState.isSpinning = true;
       document.getElementById('spinBtn').disabled = true;
-      
-      // ランダムに1名を選ぶ
-      const seedPlayer = f[Math.floor(Math.random() * f.length)];
-      
+
       const rotation = 1800 + Math.random() * 720;
-      
+
       // Firestoreにルーレット状態を保存
       if (db) {
         db.collection('tournaments').doc('current').update({
@@ -2791,47 +3074,50 @@
             spinning: true,
             rotation: rotation,
             seed_lottery: true,
-            seed_player_id: seedPlayer.entry_id,
+            seed_player_id: player.entry_id,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
           }
-        }).catch(e => console.log('Seed lottery sync error:', e));
+        }).catch(e => console.log('Seed sync error:', e));
       }
-      
+
       playSpinSound();
       document.getElementById('wheelInner').style.transform = 'rotate(' + rotation + 'deg)';
-      
+
       setTimeout(() => {
         // シード権を付与
         if (db) {
-          db.collection('entries').doc(seedPlayer.id).update({ has_seed: true }).catch(e => {});
+          db.collection('entries').doc(player.id).update({ has_seed: true }).catch(e => {});
         }
-        seedPlayer.has_seed = true;
-        
+        player.has_seed = true;
+
         // VS表示をシード用に
         document.getElementById('vsOverlay').style.display = 'flex';
-        document.getElementById('vsPlayer1Id').textContent = 'ID-' + String(seedPlayer.entry_id).padStart(2, '0');
-        document.getElementById('vsPlayer1Name').textContent = seedPlayer.username;
-        document.getElementById('vsPlayer1Icon').innerHTML = seedPlayer.icon_url ? '<img src="' + seedPlayer.icon_url + '" style="width:100%;height:100%;object-fit:cover;">' : '<span>👑</span>';
+        document.getElementById('vsPlayer1Id').textContent = 'ID-' + String(player.entry_id).padStart(2, '0');
+        document.getElementById('vsPlayer1Name').textContent = player.username;
+        document.getElementById('vsPlayer1Icon').innerHTML = player.icon_url ? '<img src="' + player.icon_url + '" style="width:100%;height:100%;object-fit:cover;">' : '<svg class="silhouette-icon" viewBox="0 0 100 120"><circle cx="50" cy="30" r="22"/><path d="M10 120 Q10 70 50 65 Q90 70 90 120Z"/></svg>';
         document.getElementById('vsPlayer2Id').textContent = 'SEED';
         document.getElementById('vsPlayer2Name').textContent = '不戦勝';
         document.getElementById('vsPlayer2Icon').innerHTML = '<span>🎖️</span>';
-        
+
         playVsSound();
-        appendLog('🎖️ ' + seedPlayer.username + ' がシード権を獲得！');
-        showToast(seedPlayer.username + ' がシード権を獲得！', 'success');
-        
+        appendLog('🎖️ ' + player.username + ' がシード権を獲得！（最後の1人）');
+        showToast(player.username + ' がシード権を獲得！', 'success');
+
         appState.isSpinning = false;
         document.getElementById('spinBtn').disabled = false;
-        
-        // ルーレット更新
+
         updateRouletteWheel();
-        
+        updateEntriesDisplay();
+
         // 回転完了を同期
         if (db) {
           db.collection('tournaments').doc('current').update({
             'roulette_state.spinning': false
           }).catch(e => {});
         }
+
+        // 全対戦カード確定チェック
+        checkAllMatchupsDecided();
       }, 4000);
     }
     
@@ -2853,7 +3139,7 @@
               document.getElementById('vsOverlay').style.display = 'flex';
               document.getElementById('vsPlayer1Id').textContent = 'ID-' + String(seedPlayer.entry_id).padStart(2, '0');
               document.getElementById('vsPlayer1Name').textContent = seedPlayer.username;
-              document.getElementById('vsPlayer1Icon').innerHTML = seedPlayer.icon_url ? '<img src="' + seedPlayer.icon_url + '" style="width:100%;height:100%;object-fit:cover;">' : '<span>👑</span>';
+              document.getElementById('vsPlayer1Icon').innerHTML = seedPlayer.icon_url ? '<img src="' + seedPlayer.icon_url + '" style="width:100%;height:100%;object-fit:cover;">' : '<svg class="silhouette-icon" viewBox="0 0 100 120"><circle cx="50" cy="30" r="22"/><path d="M10 120 Q10 70 50 65 Q90 70 90 120Z"/></svg>';
               document.getElementById('vsPlayer2Id').textContent = 'SEED';
               document.getElementById('vsPlayer2Name').textContent = '不戦勝';
               document.getElementById('vsPlayer2Icon').innerHTML = '<span>🎖️</span>';
@@ -2955,10 +3241,22 @@
     // トーナメント表を生成（線で勝ち上がる形式）
     function generateBracket() {
       const container = document.getElementById('bracketContent');
-      const allEntries = appState.entries;
-      const matches = appState.matches || [];
+      const allEntries = getGroupFilteredEntries();
+      const matches = getGroupFilteredMatches();
       const isAdmin = appState.isAdmin || appState.tournament?.admin_device === appState.deviceId;
-      
+
+      // タイトル更新
+      const bracketTitleEl = document.getElementById('bracketTitle');
+      if (bracketTitleEl) {
+        if (appState.activeGroup === 'finals') {
+          bracketTitleEl.textContent = '🏆 決勝トーナメント';
+        } else if (appState.activeGroup && appState.tournament?.group_phase) {
+          bracketTitleEl.textContent = '🏆 グループ' + appState.activeGroup + ' トーナメント表';
+        } else {
+          bracketTitleEl.textContent = '🏆 トーナメント表';
+        }
+      }
+
       if (allEntries.length === 0) {
         container.innerHTML = '<p style="color:var(--text-dim);text-align:center;">参加者がいません</p>';
         return;
@@ -3367,39 +3665,66 @@
     function updateBracketControls() {
       const controls = document.getElementById('bracketControls');
       if (!controls) return;
-      
-      const activeCount = appState.entries.filter(e => e.status !== 'LOST').length;
-      const matchCount = appState.matches.length;
-      
-      // 条件：対戦が1つ以上確定している、かつ20名以下
-      if (matchCount >= 1 && activeCount <= 20 && activeCount >= 1) {
+
+      const filteredEntries = getGroupFilteredEntries();
+      const activeCount = filteredEntries.filter(e => e.status !== 'LOST').length;
+      const matchCount = getGroupFilteredMatches().length;
+
+      // 条件：対戦が1つ以上確定している、かつ21名以下
+      if (matchCount >= 1 && activeCount <= 21 && activeCount >= 1) {
         controls.style.display = 'flex';
       } else {
         controls.style.display = 'none';
       }
     }
+
+    // 全対戦カードが確定したかチェックし、確定済みならトーナメント表を表示
+    function checkAllMatchupsDecided() {
+      const active = getGroupFilteredEntries().filter(e => e.status !== 'LOST');
+      const inMatch = getGroupFilteredMatches().filter(m => !m.winner_id);
+      const inMatchIds = inMatch.flatMap(m => [m.player1_id, m.player2_id]);
+      const unmatched = active.filter(e => !inMatchIds.includes(e.entry_id) && !e.has_seed);
+
+      // 未マッチの人が1人→自動シード付与
+      if (unmatched.length === 1) {
+        autoAssignSeed(unmatched[0]);
+        return;
+      }
+
+      // 全員がマッチ済みまたはシード済み → トーナメント表ボタンを表示
+      if (unmatched.length === 0 && getGroupFilteredMatches().length > 0) {
+        updateBracketControls();
+        if (!bracketMode) {
+          const groupLabel = appState.activeGroup && appState.activeGroup !== 'finals' ? 'グループ' + appState.activeGroup + 'の' : '';
+          showToast(groupLabel + '全対戦カードが確定しました！', 'success');
+        }
+      }
+    }
     
     
     function confirmMatch() { if (!appState.selectedPlayer1 || !appState.selectedPlayer2) return; document.getElementById('confirmMatchText').textContent = appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username; showModal('confirmMatchModal'); }
-    function executeConfirmMatch() { 
-      if (!db) return; 
-      playClick(); 
-      appendLog(appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username + ' の対戦が確定'); 
-      db.collection('matches').add({ 
-        player1_id: appState.selectedPlayer1.entry_id, 
-        player1_name: appState.selectedPlayer1.username, 
-        player2_id: appState.selectedPlayer2.entry_id, 
-        player2_name: appState.selectedPlayer2.username, 
-        winner_id: null, 
-        round: 1, 
-        created_at: firebase.firestore.FieldValue.serverTimestamp() 
-      }).then(() => { 
-        hideModal('confirmMatchModal'); 
-        // プレイヤーをクリック可能にする
+    function executeConfirmMatch() {
+      if (!db) return;
+      playClick();
+      appendLog(appState.selectedPlayer1.username + ' VS ' + appState.selectedPlayer2.username + ' の対戦が確定');
+      db.collection('matches').add({
+        player1_id: appState.selectedPlayer1.entry_id,
+        player1_name: appState.selectedPlayer1.username,
+        player2_id: appState.selectedPlayer2.entry_id,
+        player2_name: appState.selectedPlayer2.username,
+        winner_id: null,
+        round: 1,
+        group: appState.activeGroup || null,
+        created_at: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(() => {
+        hideModal('confirmMatchModal');
         enableWinnerSelection();
-        document.getElementById('confirmMatchBtn').disabled = true; 
-        showToast('対戦を確定しました。勝者をクリックしてください', 'success'); 
-      }).catch(e => showToast('エラー: ' + e.message, 'error')); 
+        document.getElementById('confirmMatchBtn').disabled = true;
+        showToast('対戦を確定しました。勝者をクリックしてください', 'success');
+
+        // 次のスピンで残り1人ならシード自動付与チェック
+        setTimeout(() => { checkAllMatchupsDecided(); }, 500);
+      }).catch(e => showToast('エラー: ' + e.message, 'error'));
     }
     
     // 勝者選択を有効化
@@ -3471,18 +3796,66 @@
       const le = appState.entries.find(e => e.entry_id === loser.entry_id); 
       if (le) db.collection('entries').doc(le.id).update({ status: 'LOST' }); 
       
-      hideModal('confirmWinnerModal'); 
+      hideModal('confirmWinnerModal');
       disableWinnerSelection(); // 勝者選択を無効化
-      appState.selectedPlayer1 = null; 
-      appState.selectedPlayer2 = null; 
-      updateVsDisplay(null, null); 
-      document.getElementById('wheelInner').style.transform = 'rotate(0deg)'; 
-      showToast('勝者を確定しました', 'success'); 
+      appState.selectedPlayer1 = null;
+      appState.selectedPlayer2 = null;
+      updateVsDisplay(null, null);
+      document.getElementById('wheelInner').style.transform = 'rotate(0deg)';
+      showToast('勝者を確定しました', 'success');
       checkAndUpdateStatus();
       updateBracketControls(); // トーナメント表ボタンを再表示
-      
+
       // トーナメント表を更新
       if (bracketMode) generateBracket();
+
+      // グループ勝者チェック
+      checkGroupWinner(winner, loser);
+    }
+
+    // グループ勝者チェック
+    function checkGroupWinner(winner, loser) {
+      if (!db) return;
+      const phase = appState.tournament?.group_phase;
+      if (!phase || phase === 'none') return;
+
+      const currentGroup = appState.activeGroup;
+      if (!currentGroup || currentGroup === 'finals') return;
+
+      // 敗者がまだ entries に反映されていない可能性があるので、loser を手動で除外
+      const groupEntries = appState.entries.filter(e => e.group === currentGroup);
+      const activeInGroup = groupEntries.filter(e => e.status !== 'LOST' && e.entry_id !== loser.entry_id);
+
+      if (activeInGroup.length === 1) {
+        const groupWinner = activeInGroup[0];
+        const winners = { ...(appState.tournament.group_winners || {}) };
+        winners[currentGroup] = { entry_id: groupWinner.entry_id, username: groupWinner.username };
+
+        const allGroups = [...new Set(appState.entries.map(e => e.group).filter(Boolean))];
+        const allDone = Object.keys(winners).length === allGroups.length;
+
+        const updateData = { group_winners: winners };
+        if (allDone) {
+          updateData.group_phase = 'finals';
+          updateData.active_group = 'finals';
+        }
+
+        db.collection('tournaments').doc('current').update(updateData).then(() => {
+          showToast('グループ' + currentGroup + 'の勝者: ' + groupWinner.username, 'success');
+          appendLog('グループ' + currentGroup + ' 勝者: ' + groupWinner.username);
+
+          if (allDone) {
+            appState.activeGroup = 'finals';
+            appState.groupPhase = 'finals';
+            showToast('全グループ終了！決勝に進みます', 'success');
+            appendLog('全グループ終了 → 決勝フェーズへ');
+          }
+
+          renderGroupTabs();
+          updateEntriesDisplay();
+          updateRouletteWheel();
+        });
+      }
     }
 
     // 大会終了確認
@@ -3516,6 +3889,14 @@
       appendLog('🏆 ' + champion.username + 'が優勝！大会終了');
       tournamentEndedLocally = true;
 
+      // CSV用に現在のデータをキャプチャ
+      const csvData = {
+        gameName: appState.tournament?.game_name || '不明',
+        adminName: appState.tournament?.admin_name || '不明',
+        championName: champion.username,
+        entries: appState.entries.map(e => ({ entry_id: e.entry_id, username: e.username }))
+      };
+
       // 履歴に保存してから全データをクリア
       if (db) {
         db.collection('history').add({
@@ -3524,7 +3905,8 @@
           champion_name: champion.username,
           champion_id: champion.entry_id,
           total_participants: appState.entries.length,
-          participants: appState.entries.map(e => ({ entry_id: e.entry_id, username: e.username })),
+          participants: appState.entries.map(e => ({ entry_id: e.entry_id, username: e.username, group: e.group || null })),
+          group_winners: appState.tournament?.group_winners || null,
           date: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => {
           // すべてのFirestoreデータを削除
@@ -3563,23 +3945,29 @@
           return Promise.all(deletePromises);
         }).then(() => {
           console.log('全データ削除完了');
-          completeEndTournament(champion.username);
+          completeEndTournament(champion.username, csvData);
         }).catch(e => {
           console.error('データ削除エラー:', e);
-          completeEndTournament(champion.username);
+          completeEndTournament(champion.username, csvData);
         });
       } else {
-        completeEndTournament(champion.username);
+        completeEndTournament(champion.username, csvData);
       }
     }
     
     // 大会終了の完了処理
-    function completeEndTournament(championName) {
+    function completeEndTournament(championName, csvData) {
       // BGMを通常に戻す
       switchToNormalBGM();
 
       hideModal('endTournamentModal');
       showToast('大会が終了しました！優勝: ' + championName, 'success');
+
+      // 管理者のみ: CSV自動ダウンロード
+      if (csvData) {
+        downloadTournamentCSV(csvData.gameName, csvData.adminName, csvData.championName, csvData.entries);
+        showToast('参加者名簿CSVをダウンロードしました', 'info');
+      }
 
       // ブラケット表示のボタンを更新（結果を見せたまま）
       const bracketBackBtn = document.getElementById('bracketBackBtn');
@@ -3620,12 +4008,18 @@
       appState.selectedPlayer1 = null;
       appState.selectedPlayer2 = null;
       appState.matchingIds = [];
+      appState.activeGroup = null;
+      appState.groupPhase = null;
       appState.isAdmin = false;
       appState.adminName = null;
       bracketMode = false;
 
       // 管理者情報をlocalStorageから削除
       localStorage.removeItem('tournament_admin_name');
+
+      // グループタブを非表示
+      const groupTabsEl = document.getElementById('groupTabsContainer');
+      if (groupTabsEl) groupTabsEl.style.display = 'none';
 
       // HUDログをクリア
       hudLogs.length = 0;
@@ -3729,10 +4123,8 @@
             ? '<div id="historyParticipants' + idx + '" style="display:none;margin-top:0.5rem;padding:0.5rem;background:rgba(0,20,10,0.5);border:1px solid var(--hud-green-dim);border-radius:4px;font-size:0.75rem;color:var(--text-dim);max-height:200px;overflow-y:auto;">'
               + participants.map(p => 'ID-' + String(p.entry_id).padStart(2,'0') + ' ' + escapeHtml(p.username)).join('<br>')
               + '</div>'
-              + '<div style="margin-top:0.4rem;display:flex;gap:0.5rem;flex-wrap:wrap;">'
-              + '<button onclick="toggleHistoryParticipants(' + idx + ', this)" style="font-size:0.7rem;padding:0.2rem 0.6rem;background:rgba(0,40,20,0.8);border:1px solid var(--hud-green-dim);color:var(--hud-green);border-radius:4px;cursor:pointer;">参加者一覧 (' + participants.length + '名)</button>'
-              + '<button onclick="exportHistory(\'' + d.id + '\', \'csv\')" style="font-size:0.7rem;padding:0.2rem 0.6rem;background:rgba(0,40,20,0.8);border:1px solid var(--hud-green-dim);color:var(--hud-green);border-radius:4px;cursor:pointer;">CSV出力</button>'
-              + '<button onclick="exportHistory(\'' + d.id + '\', \'txt\')" style="font-size:0.7rem;padding:0.2rem 0.6rem;background:rgba(0,40,20,0.8);border:1px solid var(--hud-green-dim);color:var(--hud-green);border-radius:4px;cursor:pointer;">テキスト出力</button>'
+              + '<div style="margin-top:0.4rem;">'
+              + '<button onclick="toggleHistoryParticipants(' + idx + ', this)" style="font-size:0.7rem;padding:0.2rem 0.6rem;background:rgba(0,40,20,0.8);border:1px solid var(--hud-green-dim);color:var(--hud-green);border-radius:4px;cursor:pointer;">▼ 参加者一覧 (' + participants.length + '名)</button>'
               + '</div>'
             : '';
           return '<div class="history-card"><div class="history-date">' + dt.toLocaleDateString('ja-JP') + '</div><div class="history-game">' + escapeHtml(x.game_name || '不明') + '</div><div class="history-winner">👑 優勝: ' + escapeHtml(x.champion_name || '不明') + '</div><div style="font-size:0.8rem;color:var(--text-dim);margin-top:0.4rem;">管理者: ' + escapeHtml(x.admin_name || '不明') + ' / 参加者: ' + (x.total_participants || 0) + '名</div>' + participantList + '</div>';
@@ -3742,55 +4134,26 @@
     function toggleHistoryParticipants(idx, btn) {
       const el = document.getElementById('historyParticipants' + idx);
       if (!el) return;
-      if (el.style.display === 'none') { el.style.display = 'block'; btn.textContent = '一覧を閉じる'; }
-      else { el.style.display = 'none'; btn.textContent = '参加者一覧'; }
+      const count = el.querySelectorAll('br').length + 1;
+      if (el.style.display === 'none') { el.style.display = 'block'; btn.textContent = '▲ 一覧を閉じる'; }
+      else { el.style.display = 'none'; btn.textContent = '▼ 参加者一覧 (' + count + '名)'; }
     }
-    function exportHistory(docId, format) {
-      if (!db) return;
-      db.collection('history').doc(docId).get().then(doc => {
-        if (!doc.exists) { showToast('データが見つかりません', 'error'); return; }
-        const x = doc.data();
-        const dt = x.date?.toDate?.() || new Date();
-        const year = dt.getFullYear();
-        const dateStr = dt.toLocaleDateString('ja-JP');
-        const participants = x.participants || [];
-        let content, mimeType, ext;
-        if (format === 'txt') {
-          // テキスト形式
-          content = '\uFEFF';
-          content += '========================================\n';
-          content += '  大会記録\n';
-          content += '========================================\n';
-          content += '大会日:     ' + dateStr + '\n';
-          content += 'ゲーム名:   ' + (x.game_name || '不明') + '\n';
-          content += '管理者:     ' + (x.admin_name || '不明') + '\n';
-          content += '優勝者:     ' + (x.champion_name || '不明') + '\n';
-          content += '参加者数:   ' + (x.total_participants || 0) + '名\n';
-          content += '========================================\n';
-          content += '  参加者名簿\n';
-          content += '----------------------------------------\n';
-          participants.forEach(p => { content += '  ID-' + String(p.entry_id).padStart(2,'0') + '  ' + p.username + '\n'; });
-          content += '========================================\n';
-          mimeType = 'text/plain;charset=utf-8';
-          ext = 'txt';
-        } else {
-          // CSV形式（BOM付きUTF-8）
-          content = '\uFEFF';
-          content += '大会日,ゲーム名,管理者,優勝者,参加者数\n';
-          content += '"' + dateStr + '","' + (x.game_name || '不明') + '","' + (x.admin_name || '不明') + '","' + (x.champion_name || '不明') + '",' + (x.total_participants || 0) + '\n';
-          content += '\nID,参加者名\n';
-          participants.forEach(p => { content += 'ID-' + String(p.entry_id).padStart(2,'0') + ',"' + p.username + '"\n'; });
-          mimeType = 'text/csv;charset=utf-8';
-          ext = 'csv';
-        }
-        const blob = new Blob([content], { type: mimeType });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = year + '_' + (x.game_name || 'tournament') + '_参加者名簿.' + ext;
-        a.click();
-        URL.revokeObjectURL(a.href);
-        showToast((ext === 'csv' ? 'CSV' : 'テキスト') + 'をダウンロードしました', 'success');
-      });
+    // 管理者専用：大会終了時にCSVダウンロード
+    function downloadTournamentCSV(gameName, adminName, championName, entries) {
+      const now = new Date();
+      const year = now.getFullYear();
+      const dateStr = now.toLocaleDateString('ja-JP');
+      let csv = '\uFEFF';
+      csv += '大会日,ゲーム名,管理者,優勝者,参加者数\n';
+      csv += '"' + dateStr + '","' + (gameName || '不明') + '","' + (adminName || '不明') + '","' + (championName || '不明') + '",' + entries.length + '\n';
+      csv += '\nID,参加者名\n';
+      entries.forEach(e => { csv += 'ID-' + String(e.entry_id).padStart(2,'0') + ',"' + e.username + '"\n'; });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = year + '_' + (gameName || 'tournament') + '_参加者名簿.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
     }
     
     // リセット確認

@@ -1409,9 +1409,9 @@
             <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;">※締切日時以降に有効化されます</p>
           </div>
           <button class="submit-btn" onclick="saveTournamentSettings()">設定を保存</button>
-          <div style="margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--hud-green-dim);">
+          <div style="margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--hud-green-dim);margin-bottom:0.5rem;">
             <p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.6rem;">⚠️ 管理者専用</p>
-            <button class="submit-btn" id="resetTournamentBtn" onclick="confirmResetTournament()" style="background:rgba(40,10,20,0.8);border-color:var(--hud-red);color:var(--hud-red);">管理者登録解除・大会リセット</button>
+            <button id="resetTournamentBtn" onclick="confirmResetTournament()" style="width:100%;padding:0.9rem;background:rgba(40,10,20,0.8);border:2px solid var(--hud-red);color:var(--hud-red);font-size:1rem;font-weight:bold;cursor:pointer;transition:all 0.2s;">管理者登録解除・大会リセット</button>
             <p style="font-size:0.7rem;color:var(--text-dim);margin-top:0.4rem;">※締切日時以降は大会終了まで使用不可</p>
           </div>
         </div>
@@ -2926,6 +2926,7 @@
       if (!url) { errEl.textContent = 'URLを入力してください'; errEl.classList.add('visible'); return; }
       try { new URL(url); } catch { errEl.textContent = '有効なURLを入力してください'; errEl.classList.add('visible'); return; }
       if (appState.games.find(g => g.name === name)) { errEl.textContent = 'このゲーム名は既に登録済みです'; errEl.classList.add('visible'); return; }
+      if (appState.games.find(g => g.url === url)) { errEl.textContent = 'このURLは既に登録済みです'; errEl.classList.add('visible'); return; }
       try {
         const gameId = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
         const gameData = {};
@@ -2949,15 +2950,23 @@
       const container = document.getElementById('gameListAdmin');
       if (!container) return;
       if (appState.games.length === 0) { container.innerHTML = '<p style="color:var(--text-dim);font-size:0.8rem;text-align:center;">登録されたゲームはありません</p>'; return; }
-      let html = '<div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.4rem;">登録済みゲーム:</div>';
+      let html = '<div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.4rem;">登録済みゲーム (' + appState.games.length + '件):</div>';
+      html += '<div style="display:flex;align-items:center;gap:0.5rem;">';
+      html += '<select id="gameListSelect" class="form-input" style="flex:1;cursor:pointer;">';
       appState.games.forEach(g => {
-        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.4rem 0.6rem;margin-bottom:0.3rem;background:rgba(0,255,65,0.05);border:1px solid var(--hud-green-dim);border-radius:4px;">';
-        html += '<div style="flex:1;min-width:0;"><div style="color:var(--hud-green);font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(g.name) + '</div>';
-        html += '<div style="color:var(--text-dim);font-size:0.7rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(g.url) + '</div></div>';
-        html += '<button onclick="removeGame(\'' + g.id + '\',\'' + escapeHtml(g.name).replace(/'/g, "\\'") + '\')" style="background:none;border:1px solid var(--hud-red);color:var(--hud-red);padding:0.2rem 0.5rem;border-radius:3px;cursor:pointer;font-size:0.75rem;margin-left:0.5rem;flex-shrink:0;">削除</button>';
-        html += '</div>';
+        html += '<option value="' + escapeHtml(g.id) + '" data-name="' + escapeHtml(g.name) + '">' + escapeHtml(g.name) + ' - ' + escapeHtml(g.url) + '</option>';
       });
+      html += '</select>';
+      html += '<button onclick="removeSelectedGame()" style="background:none;border:1px solid var(--hud-red);color:var(--hud-red);padding:0.4rem 0.8rem;border-radius:3px;cursor:pointer;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">削除</button>';
+      html += '</div>';
       container.innerHTML = html;
+    }
+    function removeSelectedGame() {
+      const sel = document.getElementById('gameListSelect');
+      if (!sel || !sel.value) return;
+      const gameId = sel.value;
+      const gameName = sel.options[sel.selectedIndex].dataset.name;
+      removeGame(gameId, gameName);
     }
     function renderGameDropdown() {
       const dropdown = document.getElementById('gameDropdown');

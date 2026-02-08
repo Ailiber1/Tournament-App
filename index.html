@@ -494,18 +494,22 @@
 
     /* ゲーム選択エリア */
     .game-select-area {
-      max-width: 700px;
-      margin: 0 auto 0.8rem;
+      margin: 0 auto 0.3rem;
+    }
+    .game-select-wrapper {
+      position: relative;
+      max-width: 400px;
+      margin: 0 auto;
     }
     .game-select-header {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.6rem;
-      padding: 0.7rem 1.2rem;
+      gap: 0.5rem;
+      padding: 0.45rem 1rem;
       background: rgba(0, 30, 15, 0.9);
       border: 1px solid var(--hud-green-dim);
-      border-radius: 6px;
+      border-radius: 4px;
       cursor: pointer;
       transition: all 0.3s;
       user-select: none;
@@ -514,46 +518,47 @@
       border-color: var(--hud-green);
       box-shadow: 0 0 12px var(--hud-green-glow);
     }
-    @media (hover: hover) {
-      .game-select-header:active { transform: scale(0.98); }
-    }
-    .game-select-icon {
-      font-size: 1.1rem;
-    }
+    .game-select-icon { font-size: 0.9rem; }
     .game-select-label {
       font-family: 'Orbitron', sans-serif;
-      font-size: 0.8rem;
+      font-size: 0.7rem;
       color: var(--hud-green);
       letter-spacing: 0.05em;
     }
     .game-select-arrow {
-      font-size: 0.65rem;
+      font-size: 0.55rem;
       color: var(--hud-green-dim);
       transition: transform 0.3s;
     }
-    .game-select-arrow.open {
-      transform: rotate(180deg);
-    }
+    .game-select-arrow.open { transform: rotate(180deg); }
     .game-select-panel {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
       margin-top: 4px;
       border: 1px solid var(--hud-green-dim);
       border-radius: 6px;
-      background: rgba(0, 20, 10, 0.95);
+      background: rgba(0, 20, 10, 0.97);
       overflow: hidden;
+      z-index: 50;
       animation: gameSelectSlide 0.2s ease-out;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
     }
     @keyframes gameSelectSlide {
-      from { opacity: 0; transform: translateY(-8px); }
+      from { opacity: 0; transform: translateY(-6px); }
       to { opacity: 1; transform: translateY(0); }
     }
     .game-select-list {
       padding: 0.3rem;
+      max-height: 200px;
+      overflow-y: auto;
     }
     .game-select-item {
       display: flex;
       align-items: center;
-      gap: 0.6rem;
-      padding: 0.65rem 0.8rem;
+      gap: 0.5rem;
+      padding: 0.5rem 0.7rem;
       border-radius: 4px;
       cursor: pointer;
       transition: all 0.2s;
@@ -572,36 +577,35 @@
       pointer-events: none;
     }
     .game-select-item-icon {
-      width: 28px;
-      height: 28px;
+      width: 24px;
+      height: 24px;
       border: 1px solid var(--hud-green-dim);
-      border-radius: 4px;
+      border-radius: 3px;
       display: flex;
       align-items: center;
       justify-content: center;
       background: rgba(0, 40, 20, 0.6);
-      font-size: 0.9rem;
+      font-size: 0.75rem;
       flex-shrink: 0;
     }
     .game-select-item-name {
       flex: 1;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       color: var(--hud-green);
     }
     .game-select-item.disabled .game-select-item-name {
       color: var(--text-dim);
     }
     .game-select-item-badge {
-      font-size: 0.6rem;
+      font-size: 0.55rem;
       color: var(--bg-dark);
       background: var(--hud-green);
-      padding: 0.15rem 0.4rem;
+      padding: 0.1rem 0.35rem;
       border-radius: 3px;
       font-weight: bold;
-      letter-spacing: 0.03em;
     }
     .game-select-item-tag {
-      font-size: 0.65rem;
+      font-size: 0.6rem;
       color: var(--text-dim);
     }
 
@@ -1624,21 +1628,22 @@
         </button>
       </div>
 
-      <!-- ゲームリンク（lotteryArenaの外に配置） -->
-      <div id="gameDropdownArea" class="game-select-area" style="display:none;">
-        <div class="game-select-header" onclick="toggleGameSelectPanel()">
-          <span class="game-select-icon">🎮</span>
-          <span class="game-select-label">ゲームを起動</span>
-          <span class="game-select-arrow" id="gameSelectArrow">▼</span>
-        </div>
-        <div class="game-select-panel" id="gameSelectPanel" style="display:none;">
-          <div class="game-select-list" id="gameSelectList"></div>
-        </div>
-        <a id="gameHiddenLink" href="#" target="_blank" rel="noopener" style="display:none;"></a>
-      </div>
-
       <!-- 抽選会場（左：ルーレット、右：リスト） -->
       <div class="lottery-arena" id="lotteryArena">
+        <!-- ゲーム選択（アリーナ内、grid全幅） -->
+        <div id="gameDropdownArea" class="game-select-area" style="display:none;grid-column:1/-1;">
+          <div class="game-select-wrapper">
+            <div class="game-select-header" onclick="toggleGameSelectPanel()">
+              <span class="game-select-icon">🎮</span>
+              <span class="game-select-label">ゲームを起動</span>
+              <span class="game-select-arrow" id="gameSelectArrow">▼</span>
+            </div>
+            <div class="game-select-panel" id="gameSelectPanel" style="display:none;">
+              <div class="game-select-list" id="gameSelectList"></div>
+            </div>
+          </div>
+          <a id="gameHiddenLink" href="#" target="_blank" rel="noopener" style="display:none;"></a>
+        </div>
         <!-- グループタブ（22人以上の場合表示） -->
         <div class="group-tabs-container" id="groupTabsContainer" style="display:none;grid-column:1/-1;">
           <div class="group-tabs" id="groupTabs"></div>

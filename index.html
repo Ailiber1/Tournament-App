@@ -474,7 +474,120 @@
     .lottery-text { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; color: var(--hud-green); font-weight: bold; }
     .lottery-sub { font-size: 0.75rem; color: var(--text-dim); }
     .lottery-venue-btn:not(:disabled) .lottery-sub { display: none; }
-    
+
+    /* ゲーム選択エリア */
+    .game-select-area {
+      max-width: 700px;
+      margin: 0 auto 0.8rem;
+    }
+    .game-select-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      padding: 0.7rem 1.2rem;
+      background: rgba(0, 30, 15, 0.9);
+      border: 1px solid var(--hud-green-dim);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+      user-select: none;
+    }
+    .game-select-header:hover {
+      border-color: var(--hud-green);
+      box-shadow: 0 0 12px var(--hud-green-glow);
+    }
+    .game-select-header:active {
+      transform: scale(0.98);
+    }
+    .game-select-icon {
+      font-size: 1.1rem;
+    }
+    .game-select-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.8rem;
+      color: var(--hud-green);
+      letter-spacing: 0.05em;
+    }
+    .game-select-arrow {
+      font-size: 0.65rem;
+      color: var(--hud-green-dim);
+      transition: transform 0.3s;
+    }
+    .game-select-arrow.open {
+      transform: rotate(180deg);
+    }
+    .game-select-panel {
+      margin-top: 4px;
+      border: 1px solid var(--hud-green-dim);
+      border-radius: 6px;
+      background: rgba(0, 20, 10, 0.95);
+      overflow: hidden;
+      animation: gameSelectSlide 0.2s ease-out;
+    }
+    @keyframes gameSelectSlide {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .game-select-list {
+      padding: 0.3rem;
+    }
+    .game-select-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.65rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+    }
+    .game-select-item:hover {
+      background: rgba(0, 255, 65, 0.08);
+      border-color: var(--hud-green-dim);
+    }
+    .game-select-item:active {
+      background: rgba(0, 255, 65, 0.15);
+    }
+    .game-select-item.disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    .game-select-item-icon {
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--hud-green-dim);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 40, 20, 0.6);
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+    .game-select-item-name {
+      flex: 1;
+      font-size: 0.85rem;
+      color: var(--hud-green);
+    }
+    .game-select-item.disabled .game-select-item-name {
+      color: var(--text-dim);
+    }
+    .game-select-item-badge {
+      font-size: 0.6rem;
+      color: var(--bg-dark);
+      background: var(--hud-green);
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+      font-weight: bold;
+      letter-spacing: 0.03em;
+    }
+    .game-select-item-tag {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+    }
+
     /* 抽選会場レイアウト */
     .lottery-arena {
       display: none;
@@ -1486,12 +1599,14 @@
       </div>
 
       <!-- ゲームリンク（lotteryArenaの外に配置） -->
-      <div id="gameDropdownArea" style="max-width:700px;margin:0 auto 0.8rem;display:none;">
-        <div style="display:flex;align-items:center;gap:0.6rem;justify-content:center;">
-          <label style="color:var(--hud-green);font-size:0.85rem;white-space:nowrap;">🎮 ゲーム選択:</label>
-          <select id="gameDropdown" onchange="openSelectedGame()" style="flex:1;max-width:300px;padding:0.5rem 0.8rem;background:var(--bg-dark);color:var(--hud-green);border:1px solid var(--hud-green-dim);border-radius:4px;font-size:0.85rem;cursor:pointer;">
-            <option value="">-- ゲームを選択 --</option>
-          </select>
+      <div id="gameDropdownArea" class="game-select-area" style="display:none;">
+        <div class="game-select-header" onclick="toggleGameSelectPanel()">
+          <span class="game-select-icon">🎮</span>
+          <span class="game-select-label">ゲームを起動</span>
+          <span class="game-select-arrow" id="gameSelectArrow">▼</span>
+        </div>
+        <div class="game-select-panel" id="gameSelectPanel" style="display:none;">
+          <div class="game-select-list" id="gameSelectList"></div>
         </div>
         <a id="gameHiddenLink" href="#" target="_blank" rel="noopener" style="display:none;"></a>
       </div>
@@ -2298,6 +2413,9 @@
           lotteryArena.classList.add('active');
           document.getElementById('rouletteAdminControls').style.display = 'flex';
 
+          // ゲームドロップダウン表示
+          showGameDropdown();
+
           // 22人以上でグループ未割り当てなら自動グループ分け
           if (appState.entries.length >= 22 && !appState.tournament?.groups_assigned) {
             assignGroups();
@@ -2967,32 +3085,48 @@
       const gameName = sel.options[sel.selectedIndex].dataset.name;
       removeGame(gameId, gameName);
     }
-    // ゲームドロップダウンの選択肢を更新（表示/非表示は制御しない）
-    function updateGameDropdownOptions() {
-      const dropdown = document.getElementById('gameDropdown');
-      if (!dropdown) return;
-      const tournamentGame = appState.tournament?.game_name || '';
-      const normalize = s => s.replace(/\s/g, '').toLowerCase();
-      const matchedGame = appState.games.find(g => normalize(g.name) === normalize(tournamentGame));
-      let html = '';
-      if (matchedGame) {
-        html += '<option value="">-- ゲームを選択 --</option>';
-        appState.games.forEach(g => {
-          if (normalize(g.name) === normalize(tournamentGame)) {
-            html += '<option value="' + escapeHtml(g.url) + '">' + escapeHtml(g.name) + '</option>';
-          } else {
-            html += '<option value="" disabled style="color:gray;">' + escapeHtml(g.name) + '（対象外）</option>';
-          }
-        });
+    // ゲーム選択パネルの開閉
+    function toggleGameSelectPanel() {
+      var panel = document.getElementById('gameSelectPanel');
+      var arrow = document.getElementById('gameSelectArrow');
+      if (!panel) return;
+      if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+        if (arrow) arrow.classList.add('open');
       } else {
-        html += '<option value="">-- 対象ゲームなし --</option>';
-        appState.games.forEach(g => {
-          html += '<option value="" disabled style="color:gray;">' + escapeHtml(g.name) + '（対象外）</option>';
-        });
+        panel.style.display = 'none';
+        if (arrow) arrow.classList.remove('open');
       }
-      dropdown.innerHTML = html;
     }
-    // 抽選会場でゲームドロップダウンを表示する
+    // ゲーム選択リストを更新（表示/非表示は制御しない）
+    function updateGameDropdownOptions() {
+      var list = document.getElementById('gameSelectList');
+      if (!list) return;
+      var tournamentGame = appState.tournament?.game_name || '';
+      var normalize = function(s) { return s.replace(/\s/g, '').toLowerCase(); };
+      var html = '';
+      appState.games.forEach(function(g) {
+        var isMatch = normalize(g.name) === normalize(tournamentGame);
+        if (isMatch) {
+          html += '<div class="game-select-item" onclick="openGameByUrl(\'' + escapeHtml(g.url).replace(/'/g, "\\'") + '\')">';
+          html += '<div class="game-select-item-icon">🎮</div>';
+          html += '<div class="game-select-item-name">' + escapeHtml(g.name) + '</div>';
+          html += '<div class="game-select-item-badge">PLAY</div>';
+          html += '</div>';
+        } else {
+          html += '<div class="game-select-item disabled">';
+          html += '<div class="game-select-item-icon" style="opacity:0.4;">🎮</div>';
+          html += '<div class="game-select-item-name">' + escapeHtml(g.name) + '</div>';
+          html += '<div class="game-select-item-tag">対象外</div>';
+          html += '</div>';
+        }
+      });
+      if (html === '') {
+        html = '<div style="padding:0.6rem;text-align:center;color:var(--text-dim);font-size:0.8rem;">対象ゲームなし</div>';
+      }
+      list.innerHTML = html;
+    }
+    // 抽選会場でゲーム選択エリアを表示する
     function showGameDropdown() {
       var area = document.getElementById('gameDropdownArea');
       if (!area) return;
@@ -3001,14 +3135,19 @@
       area.style.display = 'block';
     }
     // ゲーム選択時：隠し<a>タグ経由で新タブを開く
-    function openSelectedGame() {
-      var dropdown = document.getElementById('gameDropdown');
+    function openGameByUrl(url) {
       var link = document.getElementById('gameHiddenLink');
-      if (!dropdown || !link || !dropdown.value) return;
-      link.href = dropdown.value;
+      if (!link || !url) return;
+      link.href = url;
       link.click();
-      dropdown.value = '';
+      // パネルを閉じる
+      var panel = document.getElementById('gameSelectPanel');
+      var arrow = document.getElementById('gameSelectArrow');
+      if (panel) panel.style.display = 'none';
+      if (arrow) arrow.classList.remove('open');
     }
+    // 後方互換: openSelectedGame (もう使われないが念のため)
+    function openSelectedGame() {}
     // 後方互換用
     function renderGameDropdown() {
       var arenaActive = document.getElementById('lotteryArena')?.classList.contains('active');

@@ -1409,9 +1409,14 @@
             <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;">※締切日時以降に有効化されます</p>
           </div>
           <button class="submit-btn" onclick="saveTournamentSettings()">設定を保存</button>
+          <div style="margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--hud-green-dim);">
+            <p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.6rem;">⚠️ 管理者専用</p>
+            <button class="submit-btn" id="resetTournamentBtn" onclick="confirmResetTournament()" style="background:rgba(40,10,20,0.8);border-color:var(--hud-red);color:var(--hud-red);">管理者登録解除・大会リセット</button>
+            <p style="font-size:0.7rem;color:var(--text-dim);margin-top:0.4rem;">※締切日時以降は大会終了まで使用不可</p>
+          </div>
         </div>
 
-        <!-- 右カラム：ゲーム登録 + 管理者専用 -->
+        <!-- 右カラム：ゲーム登録 -->
         <div class="admin-setup-right">
           <div class="hud-panel admin-setup-col">
             <div class="hud-panel-title" style="font-size:0.95rem;">◇ ゲーム登録</div>
@@ -1428,11 +1433,6 @@
             <div class="error-message" id="gameRegError" style="margin-bottom:0.5rem;"></div>
             <button class="submit-btn" onclick="registerGame()" style="margin-bottom:0.8rem;">ゲームを追加</button>
             <div id="gameListAdmin"></div>
-          </div>
-          <div class="hud-panel admin-setup-col" style="margin-top:0.8rem;">
-            <p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.6rem;">⚠️ 管理者専用</p>
-            <button class="submit-btn" id="resetTournamentBtn" onclick="confirmResetTournament()" style="background:rgba(40,10,20,0.8);border-color:var(--hud-red);color:var(--hud-red);">管理者登録解除・大会リセット</button>
-            <p style="font-size:0.7rem;color:var(--text-dim);margin-top:0.4rem;">※締切日時以降は大会終了まで使用不可</p>
           </div>
         </div>
       </div>
@@ -2757,9 +2757,18 @@
         if (appState.isAdmin) checkAllMatchupsDecided();
       });
 
-      // ゲーム情報の監視
-      db.collection('games').orderBy('created_at', 'asc').onSnapshot(snap => {
-        appState.games = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // ゲーム情報の監視（tournaments/games_registryに保存）
+      db.collection('tournaments').doc('games_registry').onSnapshot(doc => {
+        if (doc.exists) {
+          const data = doc.data();
+          appState.games = Object.entries(data).map(([id, g]) => ({ id, ...g })).sort((a, b) => {
+            const ta = a.created_at || '';
+            const tb = b.created_at || '';
+            return ta < tb ? -1 : ta > tb ? 1 : 0;
+          });
+        } else {
+          appState.games = [];
+        }
         renderGameList();
         renderGameDropdown();
       });
@@ -2918,7 +2927,10 @@
       try { new URL(url); } catch { errEl.textContent = '有効なURLを入力してください'; errEl.classList.add('visible'); return; }
       if (appState.games.find(g => g.name === name)) { errEl.textContent = 'このゲーム名は既に登録済みです'; errEl.classList.add('visible'); return; }
       try {
-        await db.collection('games').add({ name, url, admin_device: appState.deviceId, created_at: firebase.firestore.FieldValue.serverTimestamp() });
+        const gameId = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+        const gameData = {};
+        gameData[gameId] = { name, url, admin_device: appState.deviceId, created_at: new Date().toISOString() };
+        await db.collection('tournaments').doc('games_registry').set(gameData, { merge: true });
         nameEl.value = ''; urlEl.value = '';
         showToast('ゲーム「' + name + '」を登録しました');
       } catch (e) { console.error('Game register error:', e); showToast('登録に失敗しました: ' + e.message, 'error'); }
@@ -2927,7 +2939,9 @@
       if (!db || !appState.isAdmin) return;
       if (!confirm('「' + gameName + '」を削除しますか？')) return;
       try {
-        await db.collection('games').doc(gameId).delete();
+        const deleteData = {};
+        deleteData[gameId] = firebase.firestore.FieldValue.delete();
+        await db.collection('tournaments').doc('games_registry').update(deleteData);
         showToast('「' + gameName + '」を削除しました');
       } catch (e) { console.error(e); showToast('削除に失敗しました', 'error'); }
     }

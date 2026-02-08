@@ -2954,7 +2954,7 @@
       html += '<div style="display:flex;align-items:center;gap:0.5rem;">';
       html += '<select id="gameListSelect" class="form-input" style="flex:1;cursor:pointer;">';
       appState.games.forEach(g => {
-        html += '<option value="' + escapeHtml(g.id) + '" data-name="' + escapeHtml(g.name) + '">' + escapeHtml(g.name) + ' - ' + escapeHtml(g.url) + '</option>';
+        html += '<option value="' + escapeHtml(g.id) + '" data-name="' + escapeHtml(g.name) + '">' + escapeHtml(g.name) + '</option>';
       });
       html += '</select>';
       html += '<button onclick="removeSelectedGame()" style="background:none;border:1px solid var(--hud-red);color:var(--hud-red);padding:0.4rem 0.8rem;border-radius:3px;cursor:pointer;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">削除</button>';
@@ -2975,8 +2975,24 @@
       const arenaActive = document.getElementById('lotteryArena')?.classList.contains('active');
       if (appState.games.length === 0 || !arenaActive) { area.style.display = 'none'; return; }
       area.style.display = 'block';
-      let html = '<option value="">-- ゲームを選択 --</option>';
-      appState.games.forEach(g => { html += '<option value="' + escapeHtml(g.url) + '">' + escapeHtml(g.name) + '</option>'; });
+      const tournamentGame = appState.tournament?.game_name || '';
+      const matchedGame = appState.games.find(g => g.name === tournamentGame);
+      let html = '';
+      if (matchedGame) {
+        html += '<option value="">-- ゲームを選択 --</option>';
+        appState.games.forEach(g => {
+          if (g.name === tournamentGame) {
+            html += '<option value="' + escapeHtml(g.url) + '">' + escapeHtml(g.name) + '</option>';
+          } else {
+            html += '<option value="" disabled style="color:gray;">' + escapeHtml(g.name) + '（対象外）</option>';
+          }
+        });
+      } else {
+        html += '<option value="">-- 対象ゲームなし --</option>';
+        appState.games.forEach(g => {
+          html += '<option value="" disabled style="color:gray;">' + escapeHtml(g.name) + '（対象外）</option>';
+        });
+      }
       dropdown.innerHTML = html;
     }
     function openGameUrl(url) {

@@ -2954,7 +2954,7 @@
       html += '<div style="display:flex;align-items:center;gap:0.5rem;">';
       html += '<select id="gameListSelect" class="form-input" style="flex:1;cursor:pointer;">';
       appState.games.forEach(g => {
-        html += '<option value="' + escapeHtml(g.id) + '" data-name="' + escapeHtml(g.name) + '">' + escapeHtml(g.name) + ' - ' + escapeHtml(g.url) + '</option>';
+        html += '<option value="' + escapeHtml(g.id) + '" data-name="' + escapeHtml(g.name) + '">' + escapeHtml(g.name) + '</option>';
       });
       html += '</select>';
       html += '<button onclick="removeSelectedGame()" style="background:none;border:1px solid var(--hud-red);color:var(--hud-red);padding:0.4rem 0.8rem;border-radius:3px;cursor:pointer;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">削除</button>';

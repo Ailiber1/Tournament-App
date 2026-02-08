@@ -2440,9 +2440,7 @@
       lotteryArena.classList.add('active');
 
       // ゲームドロップダウン表示
-      if (appState.games.length > 0) {
-        document.getElementById('gameDropdownArea').style.display = 'block';
-      }
+      renderGameDropdown();
 
       // 管理者のみルーレット操作ボタン表示
       const isAdmin = appState.isAdmin || appState.tournament?.admin_device === appState.deviceId;
@@ -2973,8 +2971,10 @@
       const area = document.getElementById('gameDropdownArea');
       if (!dropdown || !area) return;
       const arenaActive = document.getElementById('lotteryArena')?.classList.contains('active');
-      if (appState.games.length === 0 || !arenaActive) { area.style.display = 'none'; return; }
-      area.style.display = 'block';
+      if (appState.games.length === 0 || !arenaActive) {
+        area.style.display = 'none';
+        return;
+      }
       const tournamentGame = appState.tournament?.game_name || '';
       const matchedGame = appState.games.find(g => g.name === tournamentGame);
       let html = '';
@@ -2994,6 +2994,7 @@
         });
       }
       dropdown.innerHTML = html;
+      area.style.display = 'block';
     }
     function openGameUrl(url) {
       if (!url) return;

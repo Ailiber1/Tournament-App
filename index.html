@@ -1796,7 +1796,8 @@
       <div class="guide-content">
         <h4>🔐 管理者登録</h4><p>「管理者登録をする」から管理者名を入力して登録します。</p>
         <h4>⚙️ 大会設定</h4><ul><li>ゲーム名（大会名）を入力</li><li>エントリー締切日時を設定</li><li>設定保存でエントリー登録が有効化されます</li></ul>
-        <h4>🎮 ゲーム登録</h4><ul><li>大会設定画面の「ゲーム登録」セクションからゲーム名とURLを登録できます</li><li>登録したゲームは抽選会場のドロップダウンに表示されます</li><li>プレイヤーがゲーム名を選択するとURLへ移動します</li><li>いつでもゲームの追加・削除が可能です</li></ul>
+        <h4>🎮 ゲーム登録</h4><ul><li>大会設定画面の「ゲーム登録」セクションからゲーム名とURLを登録できます</li><li>登録したゲームは抽選会場のドロップダウンに表示されます</li><li>プレイヤーがゲーム名を選択するとURLへ移動します</li><li>いつでもゲームの追加・削除が可能です</li><li>登録上限: <strong>20件</strong>まで</li></ul>
+        <h4>🛡️ スパム対策</h4><ul><li>エントリー登録・解除、ゲーム登録・削除のすべてにレート制限があります</li><li><strong>5分以内に3回</strong>操作すると<strong>5分間のクールダウン</strong>が発動します</li><li>クールダウン中は該当操作がブロックされます</li></ul>
         <h4>🎲 対戦カード抽選</h4><ul><li>締切日時が過ぎると「抽選会場へ」が解放されます</li><li>プレイヤーに抽選会場へ移動するよう案内してください</li><li>ルーレットで対戦カードを決定します</li></ul>
       </div>
     </div>
@@ -3097,6 +3098,9 @@
     async function registerGame() {
       if (!db) { showToast('データベースに接続できません。ページを再読み込みしてください。', 'error'); return; }
       if (!appState.isAdmin) { showToast('管理者として登録してください', 'error'); return; }
+      // クールダウンチェック
+      const cd = await checkCooldown('admin');
+      if (cd.blocked) { showToast('短時間で操作を繰り返したため、しばらくお待ちください（残り' + cd.remaining + '分）', 'error'); return; }
       const nameEl = document.getElementById('gameRegName');
       const urlEl = document.getElementById('gameRegUrl');
       const errEl = document.getElementById('gameRegError');
@@ -3106,8 +3110,12 @@
       if (!name) { errEl.textContent = 'ゲーム名を入力してください'; errEl.classList.add('visible'); return; }
       if (!url) { errEl.textContent = 'URLを入力してください'; errEl.classList.add('visible'); return; }
       try { new URL(url); } catch { errEl.textContent = '有効なURLを入力してください'; errEl.classList.add('visible'); return; }
+      if (appState.games.length >= 20) { errEl.textContent = 'ゲーム登録は最大20件までです'; errEl.classList.add('visible'); return; }
       if (appState.games.find(g => g.name === name)) { errEl.textContent = 'このゲーム名は既に登録済みです'; errEl.classList.add('visible'); return; }
       if (appState.games.find(g => g.url === url)) { errEl.textContent = 'このURLは既に登録済みです'; errEl.classList.add('visible'); return; }
+      // 操作記録
+      const triggered = await recordAction('admin', 'register_game');
+      if (triggered) { showToast('短時間でゲーム登録を繰り返したため、しばらくお待ちください', 'error'); return; }
       try {
         const gameId = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
         const gameData = {};
@@ -3119,7 +3127,13 @@
     }
     async function removeGame(gameId, gameName) {
       if (!db || !appState.isAdmin) return;
+      // クールダウンチェック
+      const cd = await checkCooldown('admin');
+      if (cd.blocked) { showToast('短時間で操作を繰り返したため、しばらくお待ちください（残り' + cd.remaining + '分）', 'error'); return; }
       if (!confirm('「' + gameName + '」を削除しますか？')) return;
+      // 操作記録
+      const triggered = await recordAction('admin', 'remove_game');
+      if (triggered) { showToast('短時間でゲーム削除を繰り返したため、しばらくお待ちください', 'error'); return; }
       try {
         const deleteData = {};
         deleteData[gameId] = firebase.firestore.FieldValue.delete();

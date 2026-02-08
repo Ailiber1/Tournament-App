@@ -2975,8 +2975,24 @@
       const arenaActive = document.getElementById('lotteryArena')?.classList.contains('active');
       if (appState.games.length === 0 || !arenaActive) { area.style.display = 'none'; return; }
       area.style.display = 'block';
-      let html = '<option value="">-- ゲームを選択 --</option>';
-      appState.games.forEach(g => { html += '<option value="' + escapeHtml(g.url) + '">' + escapeHtml(g.name) + '</option>'; });
+      const tournamentGame = appState.tournament?.game_name || '';
+      const matchedGame = appState.games.find(g => g.name === tournamentGame);
+      let html = '';
+      if (matchedGame) {
+        html += '<option value="">-- ゲームを選択 --</option>';
+        appState.games.forEach(g => {
+          if (g.name === tournamentGame) {
+            html += '<option value="' + escapeHtml(g.url) + '">' + escapeHtml(g.name) + '</option>';
+          } else {
+            html += '<option value="" disabled style="color:gray;">' + escapeHtml(g.name) + '（対象外）</option>';
+          }
+        });
+      } else {
+        html += '<option value="">-- 対象ゲームなし --</option>';
+        appState.games.forEach(g => {
+          html += '<option value="" disabled style="color:gray;">' + escapeHtml(g.name) + '（対象外）</option>';
+        });
+      }
       dropdown.innerHTML = html;
     }
     function openGameUrl(url) {

@@ -20,12 +20,17 @@
       --text-dim: #4a8a4a;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    html {
+      overflow: hidden;
+      height: 100%;
+    }
     body {
       font-family: 'Noto Sans JP', sans-serif;
       background: #000a04;
       color: var(--text-primary);
-      min-height: 100vh;
-      overflow-x: hidden;
+      height: 100%;
+      overflow: hidden;
+      overscroll-behavior: none;
     }
     .matrix-bg {
       position: fixed;
@@ -97,10 +102,20 @@
       justify-content: center;
       transition: all 0.2s;
     }
-    .info-btn:hover { background: var(--hud-green); color: var(--bg-dark); box-shadow: 0 0 15px var(--hud-green-glow); transform: scale(1.1); }
+    .info-btn:hover { background: var(--hud-green); color: var(--bg-dark); box-shadow: 0 0 15px var(--hud-green-glow); }
+    @media (hover: hover) { .info-btn:hover { transform: scale(1.1); } }
     .info-btn.admin-info { border-color: var(--hud-gold); color: var(--hud-gold); }
     .info-btn.admin-info:hover { background: var(--hud-gold); box-shadow: 0 0 15px rgba(255,204,0,0.5); }
-    .main-container { position: relative; z-index: 5; min-height: 100vh; padding: 1rem; }
+    .main-container {
+      position: relative;
+      z-index: 5;
+      height: 100%;
+      padding: 1rem;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+    }
     .screen { display: none; }
     .screen.active { display: block; }
     .title-screen { min-height: 100vh; display: flex; flex-direction: column; }
@@ -463,8 +478,10 @@
       animation: lottery-pulse 2s infinite;
     }
     .lottery-venue-btn:not(:disabled):hover {
-      transform: scale(1.05);
       box-shadow: 0 0 30px var(--hud-green-glow), inset 0 0 30px rgba(0, 255, 65, 0.2);
+    }
+    @media (hover: hover) {
+      .lottery-venue-btn:not(:disabled):hover { transform: scale(1.05); }
     }
     @keyframes lottery-pulse {
       0%, 100% { box-shadow: 0 0 20px var(--hud-green-glow); }
@@ -497,8 +514,8 @@
       border-color: var(--hud-green);
       box-shadow: 0 0 12px var(--hud-green-glow);
     }
-    .game-select-header:active {
-      transform: scale(0.98);
+    @media (hover: hover) {
+      .game-select-header:active { transform: scale(0.98); }
     }
     .game-select-icon {
       font-size: 1.1rem;
@@ -683,9 +700,11 @@
     }
     .vs-player { text-align: center; transition: all 0.3s; }
     .vs-player.clickable { cursor: pointer; }
-    .vs-player.clickable:hover { 
-      transform: scale(1.1); 
+    .vs-player.clickable:hover {
       filter: drop-shadow(0 0 10px var(--hud-gold));
+    }
+    @media (hover: hover) {
+      .vs-player.clickable:hover { transform: scale(1.1); }
     }
     .vs-player.winner-selected {
       background: rgba(0, 255, 65, 0.3);
@@ -767,7 +786,8 @@
       padding: 1rem 1.5rem !important;
       min-width: 140px;
     }
-    .winner-btn:hover { box-shadow: 0 0 20px var(--hud-green-glow); transform: scale(1.05); }
+    .winner-btn:hover { box-shadow: 0 0 20px var(--hud-green-glow); }
+    @media (hover: hover) { .winner-btn:hover { transform: scale(1.05); } }
     .winner-label { font-size: 0.8rem; color: var(--hud-gold); }
     .winner-name { font-size: 1.1rem; font-weight: bold; color: var(--hud-green); }
     
@@ -1026,7 +1046,9 @@
     .bracket-player-box.clickable { cursor: pointer; }
     .bracket-player-box.clickable:hover {
       background: rgba(0, 255, 65, 0.2);
-      transform: scale(1.05);
+    }
+    @media (hover: hover) {
+      .bracket-player-box.clickable:hover { transform: scale(1.05); }
     }
     .bracket-player-box.winner {
       background: rgba(0, 255, 65, 0.15);
@@ -1066,7 +1088,9 @@
     }
     .bracket-vs-btn:hover {
       background: rgba(255, 204, 0, 0.4);
-      transform: scale(1.15);
+    }
+    @media (hover: hover) {
+      .bracket-vs-btn:hover { transform: scale(1.15); }
     }
     .bracket-player-box.empty .player-name-v {
       color: var(--text-dim);
@@ -1126,8 +1150,10 @@
     .bracket-upper-box.clickable { cursor: pointer; }
     .bracket-upper-box.clickable:hover {
       background: rgba(0, 255, 65, 0.25);
-      transform: scale(1.1);
       box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+    }
+    @media (hover: hover) {
+      .bracket-upper-box.clickable:hover { transform: scale(1.1); }
     }
     .bracket-upper-box.winner {
       background: rgba(0, 255, 65, 0.15);

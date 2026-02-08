@@ -1415,7 +1415,8 @@
         <div class="admin-setup-right">
           <div class="hud-panel admin-setup-col">
             <div class="hud-panel-title" style="font-size:0.95rem;">◇ ゲーム登録</div>
-            <p style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.6rem;">抽選会場でプレイヤーがゲーム画面へ移動できるようにURLを登録できます。</p>
+            <p style="font-size:0.75rem;color:var(--hud-green);margin-bottom:0.3rem;">※大会を開かなくても、いつでもゲームを追加できます</p>
+            <p style="font-size:0.7rem;color:var(--text-dim);margin-bottom:0.6rem;">登録したゲームは抽選会場のドロップダウンに表示されます。</p>
             <div class="form-group">
               <label class="form-label">ゲーム名</label>
               <input type="text" class="form-input" id="gameRegName" placeholder="例: スマブラSP" maxlength="30">
@@ -2904,7 +2905,8 @@
     }
     // ゲーム登録・管理
     async function registerGame() {
-      if (!db || !appState.isAdmin) return;
+      if (!db) { showToast('データベースに接続できません。ページを再読み込みしてください。', 'error'); return; }
+      if (!appState.isAdmin) { showToast('管理者として登録してください', 'error'); return; }
       const nameEl = document.getElementById('gameRegName');
       const urlEl = document.getElementById('gameRegUrl');
       const errEl = document.getElementById('gameRegError');
@@ -2916,10 +2918,10 @@
       try { new URL(url); } catch { errEl.textContent = '有効なURLを入力してください'; errEl.classList.add('visible'); return; }
       if (appState.games.find(g => g.name === name)) { errEl.textContent = 'このゲーム名は既に登録済みです'; errEl.classList.add('visible'); return; }
       try {
-        await db.collection('games').add({ name, url, created_at: firebase.firestore.FieldValue.serverTimestamp() });
+        await db.collection('games').add({ name, url, admin_device: appState.deviceId, created_at: firebase.firestore.FieldValue.serverTimestamp() });
         nameEl.value = ''; urlEl.value = '';
         showToast('ゲーム「' + name + '」を登録しました');
-      } catch (e) { console.error(e); showToast('登録に失敗しました', 'error'); }
+      } catch (e) { console.error('Game register error:', e); showToast('登録に失敗しました: ' + e.message, 'error'); }
     }
     async function removeGame(gameId, gameName) {
       if (!db || !appState.isAdmin) return;

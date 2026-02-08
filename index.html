@@ -494,12 +494,22 @@
 
     /* ゲーム選択エリア */
     .game-select-area {
-      margin: 0 auto 0.3rem;
+      margin: 0.5rem 0;
+      width: 100%;
+      max-width: 280px;
+    }
+    @media (min-width: 900px) {
+      .game-select-area {
+        margin: 0;
+        flex-shrink: 0;
+        width: 180px;
+        max-width: 180px;
+        align-self: flex-start;
+        margin-top: 2rem;
+      }
     }
     .game-select-wrapper {
       position: relative;
-      max-width: 400px;
-      margin: 0 auto;
     }
     .game-select-header {
       display: flex;
@@ -633,7 +643,20 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+    }
+    .lottery-main-top {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+    @media (min-width: 900px) {
+      .lottery-main-top {
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 1.5rem;
+      }
     }
     
     .roulette-container { 
@@ -1630,20 +1653,6 @@
 
       <!-- 抽選会場（左：ルーレット、右：リスト） -->
       <div class="lottery-arena" id="lotteryArena">
-        <!-- ゲーム選択（アリーナ内、grid全幅） -->
-        <div id="gameDropdownArea" class="game-select-area" style="display:none;grid-column:1/-1;">
-          <div class="game-select-wrapper">
-            <div class="game-select-header" onclick="toggleGameSelectPanel()">
-              <span class="game-select-icon">🎮</span>
-              <span class="game-select-label">ゲームを起動</span>
-              <span class="game-select-arrow" id="gameSelectArrow">▼</span>
-            </div>
-            <div class="game-select-panel" id="gameSelectPanel" style="display:none;">
-              <div class="game-select-list" id="gameSelectList"></div>
-            </div>
-          </div>
-          <a id="gameHiddenLink" href="#" target="_blank" rel="noopener" style="display:none;"></a>
-        </div>
         <!-- グループタブ（22人以上の場合表示） -->
         <div class="group-tabs-container" id="groupTabsContainer" style="display:none;grid-column:1/-1;">
           <div class="group-tabs" id="groupTabs"></div>
@@ -1654,7 +1663,8 @@
         </div>
         <!-- 左側：ルーレット＋VS -->
         <div class="lottery-main">
-          <div class="roulette-container" id="rouletteContainer">
+          <div class="lottery-main-top">
+            <div class="roulette-container" id="rouletteContainer">
             <div class="roulette-wheel">
               <div class="wheel-inner" id="wheelInner"></div>
               <!-- VS表示（中央に重ねる） -->
@@ -1679,6 +1689,21 @@
               </div>
             </div>
           </div>
+          <!-- ゲーム選択（ルーレット横の余白に配置） -->
+          <div id="gameDropdownArea" class="game-select-area" style="display:none;">
+            <div class="game-select-wrapper">
+              <div class="game-select-header" onclick="toggleGameSelectPanel()">
+                <span class="game-select-icon">🎮</span>
+                <span class="game-select-label">ゲームを起動</span>
+                <span class="game-select-arrow" id="gameSelectArrow">▼</span>
+              </div>
+              <div class="game-select-panel" id="gameSelectPanel" style="display:none;">
+                <div class="game-select-list" id="gameSelectList"></div>
+              </div>
+            </div>
+            <a id="gameHiddenLink" href="#" target="_blank" rel="noopener" style="display:none;"></a>
+          </div>
+          </div><!-- /lottery-main-top -->
           <!-- 操作ボタン -->
           <div class="roulette-controls" id="rouletteAdminControls" style="display:none;">
             <button class="roulette-btn" id="spinBtn" onclick="spinRoulette()">ルーレット回転</button>

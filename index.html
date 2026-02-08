@@ -859,15 +859,14 @@
       display: none;
       flex-direction: column;
       align-items: center;
-      padding: 1rem 0.5rem;
+      padding: 1rem 0.5rem 2rem;
       overflow-x: auto;
       overflow-y: auto;
       width: 100%;
-      min-height: 60vh;
       -webkit-overflow-scrolling: touch;
     }
     @media (min-width: 900px) {
-      .bracket-container { padding: 1.5rem 1rem; }
+      .bracket-container { padding: 1.5rem 1rem; min-height: 60vh; }
     }
     .bracket-container.active { display: flex; }
 
@@ -4657,6 +4656,10 @@
       if (bracketBackBtn) {
         bracketBackBtn.textContent = '🏠 タイトルに戻る';
         bracketBackBtn.setAttribute('onclick', 'goToTitleAfterEnd()');
+        bracketBackBtn.style.background = 'rgba(40, 30, 0, 0.8)';
+        bracketBackBtn.style.borderColor = 'var(--hud-gold)';
+        bracketBackBtn.style.color = 'var(--hud-gold)';
+        bracketBackBtn.style.boxShadow = '0 0 15px rgba(255, 204, 0, 0.4)';
       }
       const bracketEndBtn = document.getElementById('bracketEndBtn');
       if (bracketEndBtn) {
@@ -4674,9 +4677,10 @@
       if (endTournamentBtn) {
         endTournamentBtn.textContent = '🏠 タイトルに戻る';
         endTournamentBtn.setAttribute('onclick', 'goToTitleAfterEnd()');
-        endTournamentBtn.style.background = '';
-        endTournamentBtn.style.borderColor = 'var(--hud-green)';
-        endTournamentBtn.style.color = 'var(--hud-green)';
+        endTournamentBtn.style.background = 'rgba(40, 30, 0, 0.8)';
+        endTournamentBtn.style.borderColor = 'var(--hud-gold)';
+        endTournamentBtn.style.color = 'var(--hud-gold)';
+        endTournamentBtn.style.boxShadow = '0 0 15px rgba(255, 204, 0, 0.4)';
       }
     }
 

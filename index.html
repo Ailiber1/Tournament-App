@@ -2976,12 +2976,13 @@
         return;
       }
       const tournamentGame = appState.tournament?.game_name || '';
-      const matchedGame = appState.games.find(g => g.name === tournamentGame);
+      const normalize = s => s.replace(/\s/g, '').toLowerCase();
+      const matchedGame = appState.games.find(g => normalize(g.name) === normalize(tournamentGame));
       let html = '';
       if (matchedGame) {
         html += '<option value="">-- ゲームを選択 --</option>';
         appState.games.forEach(g => {
-          if (g.name === tournamentGame) {
+          if (normalize(g.name) === normalize(tournamentGame)) {
             html += '<option value="' + escapeHtml(g.url) + '">' + escapeHtml(g.name) + '</option>';
           } else {
             html += '<option value="" disabled style="color:gray;">' + escapeHtml(g.name) + '（対象外）</option>';

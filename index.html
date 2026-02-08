@@ -311,6 +311,21 @@
       .sound-controls { bottom: 1rem; left: 1rem; }
       .sound-btn { width: 40px; height: 40px; font-size: 1rem; }
     }
+    /* 管理者設定2カラムレイアウト */
+    .admin-setup-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      max-width: 900px;
+      margin: 1.5rem auto;
+      padding: 0 0.8rem;
+      align-items: start;
+    }
+    .admin-setup-col { padding: 1rem; }
+    .admin-setup-right { display: flex; flex-direction: column; }
+    @media (max-width: 700px) {
+      .admin-setup-grid { grid-template-columns: 1fr; max-width: 480px; }
+    }
     .form-group { margin-bottom: 1.2rem; }
     .form-label { display: block; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.4rem; }
     .form-input {
@@ -1372,49 +1387,52 @@
       </div>
     </div>
     <div class="screen" id="adminSetupScreen">
-      <div class="hud-panel" style="max-width:480px;margin:2rem auto;">
-        <div class="hud-panel-title">◆ 大会設定</div>
-        <p style="margin-bottom:1.2rem;color:var(--text-dim);font-size:0.9rem;">締切日時を設定すると、参加者がエントリーできるようになります。</p>
-        <div class="form-group">
-          <label class="form-label">ゲーム名（大会名）<span style="color:var(--hud-red);"> *必須</span></label>
-          <input type="text" class="form-input" id="setupGameName" placeholder="例: スマブラSP大会">
-          <div class="error-message" id="setupGameNameError"></div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">エントリー締切日時 <span style="color:var(--hud-red);">*必須</span></label>
-          <button type="button" class="form-input" id="setupDeadlineBtn" onclick="openCalendar('setup')" style="text-align:left;cursor:pointer;">クリックして日時を選択</button>
-          <input type="hidden" id="setupDeadline">
-          <div class="error-message" id="setupDeadlineError"></div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">対戦相手を決める</label>
-          <button type="button" class="form-input" id="matchmakingBtn" onclick="showMatchmakingInfo()" style="text-align:center;cursor:pointer;opacity:0.5;">🎲 対戦カード抽選（締切後に有効化）</button>
-          <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;">※締切日時以降に有効化されます</p>
-        </div>
-        <button class="submit-btn" onclick="saveTournamentSettings()">設定を保存</button>
-
-        <!-- ゲーム登録セクション -->
-        <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--hud-green-dim);">
-          <div class="hud-panel-title" style="font-size:0.95rem;margin-bottom:0.8rem;">◇ ゲーム登録</div>
-          <p style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.8rem;">抽選会場でプレイヤーがゲーム画面へ移動できるようにURLを登録できます。</p>
+      <div class="admin-setup-grid">
+        <!-- 左カラム：大会設定 -->
+        <div class="hud-panel admin-setup-col">
+          <div class="hud-panel-title">◆ 大会設定</div>
+          <p style="margin-bottom:0.8rem;color:var(--text-dim);font-size:0.85rem;">締切日時を設定すると、参加者がエントリーできるようになります。</p>
           <div class="form-group">
-            <label class="form-label">ゲーム名</label>
-            <input type="text" class="form-input" id="gameRegName" placeholder="例: スマブラSP" maxlength="30">
+            <label class="form-label">ゲーム名（大会名）<span style="color:var(--hud-red);"> *必須</span></label>
+            <input type="text" class="form-input" id="setupGameName" placeholder="例: スマブラSP大会">
+            <div class="error-message" id="setupGameNameError"></div>
           </div>
           <div class="form-group">
-            <label class="form-label">URL</label>
-            <input type="url" class="form-input" id="gameRegUrl" placeholder="https://example.com/game">
+            <label class="form-label">エントリー締切日時 <span style="color:var(--hud-red);">*必須</span></label>
+            <button type="button" class="form-input" id="setupDeadlineBtn" onclick="openCalendar('setup')" style="text-align:left;cursor:pointer;">クリックして日時を選択</button>
+            <input type="hidden" id="setupDeadline">
+            <div class="error-message" id="setupDeadlineError"></div>
           </div>
-          <div class="error-message" id="gameRegError" style="margin-bottom:0.5rem;"></div>
-          <button class="submit-btn" onclick="registerGame()" style="margin-bottom:1rem;">ゲームを追加</button>
-          <div id="gameListAdmin"></div>
+          <div class="form-group">
+            <label class="form-label">対戦相手を決める</label>
+            <button type="button" class="form-input" id="matchmakingBtn" onclick="showMatchmakingInfo()" style="text-align:center;cursor:pointer;opacity:0.5;">🎲 対戦カード抽選（締切後に有効化）</button>
+            <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;">※締切日時以降に有効化されます</p>
+          </div>
+          <button class="submit-btn" onclick="saveTournamentSettings()">設定を保存</button>
         </div>
 
-        <!-- 管理者リセットボタン -->
-        <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--hud-green-dim);">
-          <p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.8rem;">⚠️ 管理者専用</p>
-          <button class="submit-btn" id="resetTournamentBtn" onclick="confirmResetTournament()" style="background:rgba(40,10,20,0.8);border-color:var(--hud-red);color:var(--hud-red);">管理者登録解除・大会リセット</button>
-          <p style="font-size:0.7rem;color:var(--text-dim);margin-top:0.5rem;">※締切日時以降は大会終了まで使用不可</p>
+        <!-- 右カラム：ゲーム登録 + 管理者専用 -->
+        <div class="admin-setup-right">
+          <div class="hud-panel admin-setup-col">
+            <div class="hud-panel-title" style="font-size:0.95rem;">◇ ゲーム登録</div>
+            <p style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.6rem;">抽選会場でプレイヤーがゲーム画面へ移動できるようにURLを登録できます。</p>
+            <div class="form-group">
+              <label class="form-label">ゲーム名</label>
+              <input type="text" class="form-input" id="gameRegName" placeholder="例: スマブラSP" maxlength="30">
+            </div>
+            <div class="form-group">
+              <label class="form-label">URL</label>
+              <input type="url" class="form-input" id="gameRegUrl" placeholder="https://example.com/game">
+            </div>
+            <div class="error-message" id="gameRegError" style="margin-bottom:0.5rem;"></div>
+            <button class="submit-btn" onclick="registerGame()" style="margin-bottom:0.8rem;">ゲームを追加</button>
+            <div id="gameListAdmin"></div>
+          </div>
+          <div class="hud-panel admin-setup-col" style="margin-top:0.8rem;">
+            <p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.6rem;">⚠️ 管理者専用</p>
+            <button class="submit-btn" id="resetTournamentBtn" onclick="confirmResetTournament()" style="background:rgba(40,10,20,0.8);border-color:var(--hud-red);color:var(--hud-red);">管理者登録解除・大会リセット</button>
+            <p style="font-size:0.7rem;color:var(--text-dim);margin-top:0.4rem;">※締切日時以降は大会終了まで使用不可</p>
+          </div>
         </div>
       </div>
     </div>

@@ -1485,18 +1485,19 @@
         </button>
       </div>
 
+      <!-- ゲームリンク（lotteryArenaの外に配置） -->
+      <div id="gameDropdownArea" style="max-width:700px;margin:0 auto 0.8rem;display:none;">
+        <div style="display:flex;align-items:center;gap:0.6rem;justify-content:center;">
+          <label style="color:var(--hud-green);font-size:0.85rem;white-space:nowrap;">🎮 ゲーム選択:</label>
+          <select id="gameDropdown" onchange="openSelectedGame()" style="flex:1;max-width:300px;padding:0.5rem 0.8rem;background:var(--bg-dark);color:var(--hud-green);border:1px solid var(--hud-green-dim);border-radius:4px;font-size:0.85rem;cursor:pointer;">
+            <option value="">-- ゲームを選択 --</option>
+          </select>
+        </div>
+        <a id="gameHiddenLink" href="#" target="_blank" rel="noopener" style="display:none;"></a>
+      </div>
+
       <!-- 抽選会場（左：ルーレット、右：リスト） -->
       <div class="lottery-arena" id="lotteryArena">
-        <!-- ゲームリンク -->
-        <div id="gameDropdownArea" style="grid-column:1/-1;display:none;">
-          <div style="display:flex;align-items:center;gap:0.6rem;justify-content:center;max-width:700px;margin:0 auto;">
-            <label style="color:var(--hud-green);font-size:0.85rem;white-space:nowrap;">🎮 ゲーム選択:</label>
-            <select id="gameDropdown" style="flex:1;max-width:300px;padding:0.5rem 0.8rem;background:var(--bg-dark);color:var(--hud-green);border:1px solid var(--hud-green-dim);border-radius:4px;font-size:0.85rem;cursor:pointer;">
-              <option value="">-- ゲームを選択 --</option>
-            </select>
-            <a id="gameOpenBtn" href="#" target="_blank" rel="noopener" onclick="return handleGameOpen()" style="display:none;padding:0.4rem 0.8rem;background:rgba(0,60,30,0.9);border:1px solid var(--hud-green);color:var(--hud-green);border-radius:4px;font-size:0.85rem;cursor:pointer;text-decoration:none;white-space:nowrap;">開く</a>
-          </div>
-        </div>
         <!-- グループタブ（22人以上の場合表示） -->
         <div class="group-tabs-container" id="groupTabsContainer" style="display:none;grid-column:1/-1;">
           <div class="group-tabs" id="groupTabs"></div>
@@ -2440,7 +2441,7 @@
       lotteryArena.classList.add('active');
 
       // ゲームドロップダウン表示
-      renderGameDropdown();
+      showGameDropdown();
 
       // 管理者のみルーレット操作ボタン表示
       const isAdmin = appState.isAdmin || appState.tournament?.admin_device === appState.deviceId;
@@ -2966,15 +2967,10 @@
       const gameName = sel.options[sel.selectedIndex].dataset.name;
       removeGame(gameId, gameName);
     }
-    function renderGameDropdown() {
+    // ゲームドロップダウンの選択肢を更新（表示/非表示は制御しない）
+    function updateGameDropdownOptions() {
       const dropdown = document.getElementById('gameDropdown');
-      const area = document.getElementById('gameDropdownArea');
-      if (!dropdown || !area) return;
-      const arenaActive = document.getElementById('lotteryArena')?.classList.contains('active');
-      if (appState.games.length === 0 || !arenaActive) {
-        area.style.display = 'none';
-        return;
-      }
+      if (!dropdown) return;
       const tournamentGame = appState.tournament?.game_name || '';
       const normalize = s => s.replace(/\s/g, '').toLowerCase();
       const matchedGame = appState.games.find(g => normalize(g.name) === normalize(tournamentGame));
@@ -2995,27 +2991,28 @@
         });
       }
       dropdown.innerHTML = html;
-      dropdown.onchange = onGameSelect;
-      var openBtn = document.getElementById('gameOpenBtn');
-      if (openBtn) { openBtn.style.display = 'none'; openBtn.href = '#'; }
+    }
+    // 抽選会場でゲームドロップダウンを表示する
+    function showGameDropdown() {
+      var area = document.getElementById('gameDropdownArea');
+      if (!area) return;
+      if (appState.games.length === 0) { area.style.display = 'none'; return; }
+      updateGameDropdownOptions();
       area.style.display = 'block';
     }
-    function onGameSelect() {
-      const dropdown = document.getElementById('gameDropdown');
-      const btn = document.getElementById('gameOpenBtn');
-      if (!dropdown || !btn) return;
-      if (dropdown.value) {
-        btn.href = dropdown.value;
-        btn.style.display = 'inline-block';
-      } else {
-        btn.href = '#';
-        btn.style.display = 'none';
-      }
+    // ゲーム選択時：隠し<a>タグ経由で新タブを開く
+    function openSelectedGame() {
+      var dropdown = document.getElementById('gameDropdown');
+      var link = document.getElementById('gameHiddenLink');
+      if (!dropdown || !link || !dropdown.value) return;
+      link.href = dropdown.value;
+      link.click();
+      dropdown.value = '';
     }
-    function handleGameOpen() {
-      const dropdown = document.getElementById('gameDropdown');
-      if (!dropdown || !dropdown.value) return false;
-      return true;
+    // 後方互換用
+    function renderGameDropdown() {
+      var arenaActive = document.getElementById('lotteryArena')?.classList.contains('active');
+      if (arenaActive) { showGameDropdown(); }
     }
 
     function saveTournamentSettings() { const gn = document.getElementById('setupGameName').value.trim(); const dl = document.getElementById('setupDeadline').value; const ge = document.getElementById('setupGameNameError'); const de = document.getElementById('setupDeadlineError'); ge.classList.remove('visible'); de.classList.remove('visible'); let err = false; if (!gn) { ge.textContent = 'ゲーム名を入力してください'; ge.classList.add('visible'); err = true; } if (!dl) { de.textContent = '締切日時を選択してください'; de.classList.add('visible'); err = true; } if (err) return; appState.tournament = { admin_name: appState.adminName, admin_device: appState.deviceId, game_name: gn, deadline: new Date(dl) }; appendLog(appState.adminName + 'が管理者になり、トーナメント「' + gn + '」を作成しました'); if (db) { db.collection('tournaments').doc('current').set({ admin_name: appState.adminName, admin_device: appState.deviceId, game_name: gn, deadline: new Date(dl), updated_at: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }).catch(e => console.error(e)); } updateTournamentDisplay(); showModal('settingsCompleteModal'); }

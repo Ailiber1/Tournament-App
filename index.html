@@ -3152,11 +3152,12 @@
       }
       list.innerHTML = html;
     }
-    // 抽選会場でゲーム選択エリアを表示する
+    // 抽選会場でゲーム選択エリアを表示する（アリーナがアクティブな時のみ）
     function showGameDropdown() {
       var area = document.getElementById('gameDropdownArea');
       if (!area) return;
-      if (appState.games.length === 0) { area.style.display = 'none'; return; }
+      var arenaActive = document.getElementById('lotteryArena')?.classList.contains('active');
+      if (!arenaActive || appState.games.length === 0) { area.style.display = 'none'; return; }
       updateGameDropdownOptions();
       area.style.display = 'block';
     }

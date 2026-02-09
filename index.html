@@ -2771,6 +2771,12 @@
             const tb = b.created_at || '';
             return ta < tb ? -1 : ta > tb ? 1 : 0;
           });
+          // 認証IDが未設定の場合、管理者なら自動設定
+          if (!data._auth_hash && appState.isAdmin) {
+            hashString('GmReg847').then(hash => {
+              db.collection('tournaments').doc('games_registry').set({ _auth_hash: hash }, { merge: true });
+            });
+          }
         } else {
           appState.games = [];
           appState.gameAuthHash = null;

@@ -2964,14 +2964,7 @@
     }
     async function removeGame(gameId, gameName) {
       if (!db || !appState.isAdmin) return;
-      if (appState.gameAuthHash) {
-        const authId = prompt('「' + gameName + '」を削除するには認証IDを入力してください');
-        if (!authId) return;
-        const inputHash = await hashString(authId.trim());
-        if (inputHash !== appState.gameAuthHash) { showToast('認証IDが一致しません', 'error'); return; }
-      } else {
-        if (!confirm('「' + gameName + '」を削除しますか？')) return;
-      }
+      if (!confirm('「' + gameName + '」を削除しますか？')) return;
       try {
         const deleteData = {};
         deleteData[gameId] = firebase.firestore.FieldValue.delete();

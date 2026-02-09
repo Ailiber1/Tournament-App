@@ -1430,6 +1430,10 @@
               <label class="form-label">URL</label>
               <input type="url" class="form-input" id="gameRegUrl" placeholder="https://example.com/game">
             </div>
+            <div class="form-group">
+              <label class="form-label">認証ID <span style="color:var(--hud-red);font-size:0.75rem;">※IDを知っている人のみ登録可</span></label>
+              <input type="password" class="form-input" id="gameRegAuthId" placeholder="認証IDを入力" maxlength="30">
+            </div>
             <div class="error-message" id="gameRegError" style="margin-bottom:0.5rem;"></div>
             <button class="submit-btn" onclick="registerGame()" style="margin-bottom:0.8rem;">ゲームを追加</button>
             <div id="gameListAdmin"></div>
@@ -1784,6 +1788,7 @@
       entries: [],
       matches: [],
       games: [],
+      gameAuthHash: null,
       selectedPlayer1: null,
       selectedPlayer2: null,
       isSpinning: false,
@@ -2760,13 +2765,15 @@
       db.collection('tournaments').doc('games_registry').onSnapshot(doc => {
         if (doc.exists) {
           const data = doc.data();
-          appState.games = Object.entries(data).map(([id, g]) => ({ id, ...g })).sort((a, b) => {
+          appState.gameAuthHash = data._auth_hash || null;
+          appState.games = Object.entries(data).filter(([id]) => !id.startsWith('_')).map(([id, g]) => ({ id, ...g })).sort((a, b) => {
             const ta = a.created_at || '';
             const tb = b.created_at || '';
             return ta < tb ? -1 : ta > tb ? 1 : 0;
           });
         } else {
           appState.games = [];
+          appState.gameAuthHash = null;
         }
         renderGameList();
         renderGameDropdown();
@@ -2912,32 +2919,59 @@
       }
     }
     // ゲーム登録・管理
+    async function hashString(str) {
+      const data = new TextEncoder().encode(str);
+      const buf = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
     async function registerGame() {
       if (!db) { showToast('データベースに接続できません。ページを再読み込みしてください。', 'error'); return; }
       if (!appState.isAdmin) { showToast('管理者として登録してください', 'error'); return; }
       const nameEl = document.getElementById('gameRegName');
       const urlEl = document.getElementById('gameRegUrl');
+      const authEl = document.getElementById('gameRegAuthId');
       const errEl = document.getElementById('gameRegError');
       const name = nameEl.value.trim();
       const url = urlEl.value.trim();
+      const authId = authEl.value.trim();
       errEl.classList.remove('visible');
       if (!name) { errEl.textContent = 'ゲーム名を入力してください'; errEl.classList.add('visible'); return; }
       if (!url) { errEl.textContent = 'URLを入力してください'; errEl.classList.add('visible'); return; }
       try { new URL(url); } catch { errEl.textContent = '有効なURLを入力してください'; errEl.classList.add('visible'); return; }
+      if (!authId) { errEl.textContent = '認証IDを入力してください'; errEl.classList.add('visible'); return; }
       if (appState.games.find(g => g.name === name)) { errEl.textContent = 'このゲーム名は既に登録済みです'; errEl.classList.add('visible'); return; }
       if (appState.games.find(g => g.url === url)) { errEl.textContent = 'このURLは既に登録済みです'; errEl.classList.add('visible'); return; }
+      // 認証IDの検証
+      const inputHash = await hashString(authId);
+      if (appState.gameAuthHash) {
+        // 既に認証IDが設定済み → 一致チェック
+        if (inputHash !== appState.gameAuthHash) {
+          errEl.textContent = '認証IDが一致しません'; errEl.classList.add('visible'); return;
+        }
+      }
       try {
         const gameId = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
         const gameData = {};
         gameData[gameId] = { name, url, admin_device: appState.deviceId, created_at: new Date().toISOString() };
+        if (!appState.gameAuthHash) {
+          // 初回：認証IDハッシュも一緒に保存
+          gameData._auth_hash = inputHash;
+        }
         await db.collection('tournaments').doc('games_registry').set(gameData, { merge: true });
-        nameEl.value = ''; urlEl.value = '';
+        nameEl.value = ''; urlEl.value = ''; authEl.value = '';
         showToast('ゲーム「' + name + '」を登録しました');
       } catch (e) { console.error('Game register error:', e); showToast('登録に失敗しました: ' + e.message, 'error'); }
     }
     async function removeGame(gameId, gameName) {
       if (!db || !appState.isAdmin) return;
-      if (!confirm('「' + gameName + '」を削除しますか？')) return;
+      if (appState.gameAuthHash) {
+        const authId = prompt('「' + gameName + '」を削除するには認証IDを入力してください');
+        if (!authId) return;
+        const inputHash = await hashString(authId.trim());
+        if (inputHash !== appState.gameAuthHash) { showToast('認証IDが一致しません', 'error'); return; }
+      } else {
+        if (!confirm('「' + gameName + '」を削除しますか？')) return;
+      }
       try {
         const deleteData = {};
         deleteData[gameId] = firebase.firestore.FieldValue.delete();

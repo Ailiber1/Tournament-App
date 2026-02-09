@@ -1604,8 +1604,13 @@
               <label class="form-label">URL</label>
               <input type="url" class="form-input" id="gameRegUrl" placeholder="https://example.com/game">
             </div>
+            <div class="form-group">
+              <label class="form-label">認証ID <span style="color:var(--hud-red);font-size:0.75rem;">※IDを知っている人のみ登録可</span></label>
+              <input type="password" class="form-input" id="gameRegAuthId" placeholder="認証IDを入力" maxlength="30">
+            </div>
             <div class="error-message" id="gameRegError" style="margin-bottom:0.5rem;"></div>
             <button class="submit-btn" onclick="registerGame()" style="margin-bottom:0.8rem;">ゲームを追加</button>
+            <div id="gameAuthStatus" style="font-size:0.75rem;margin-bottom:0.6rem;"></div>
             <div id="gameListAdmin"></div>
           </div>
         </div>
@@ -1964,6 +1969,7 @@
       entries: [],
       matches: [],
       games: [],
+      gameAuthHash: null,
       selectedPlayer1: null,
       selectedPlayer2: null,
       isSpinning: false,
@@ -2943,16 +2949,25 @@
       db.collection('tournaments').doc('games_registry').onSnapshot(doc => {
         if (doc.exists) {
           const data = doc.data();
-          appState.games = Object.entries(data).map(([id, g]) => ({ id, ...g })).sort((a, b) => {
+          appState.gameAuthHash = data._auth_hash || null;
+          appState.games = Object.entries(data).filter(([id]) => !id.startsWith('_')).map(([id, g]) => ({ id, ...g })).sort((a, b) => {
             const ta = a.created_at || '';
             const tb = b.created_at || '';
             return ta < tb ? -1 : ta > tb ? 1 : 0;
           });
+          // 認証IDが未設定の場合、管理者なら自動設定
+          if (!data._auth_hash && appState.isAdmin) {
+            hashString('GmReg847').then(hash => {
+              db.collection('tournaments').doc('games_registry').set({ _auth_hash: hash }, { merge: true });
+            });
+          }
         } else {
           appState.games = [];
+          appState.gameAuthHash = null;
         }
         renderGameList();
         renderGameDropdown();
+        updateGameAuthStatus();
       });
     }
     
@@ -3095,6 +3110,11 @@
       }
     }
     // ゲーム登録・管理
+    async function hashString(str) {
+      const data = new TextEncoder().encode(str);
+      const buf = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
     async function registerGame() {
       if (!db) { showToast('データベースに接続できません。ページを再読み込みしてください。', 'error'); return; }
       if (!appState.isAdmin) { showToast('管理者として登録してください', 'error'); return; }
@@ -3103,16 +3123,26 @@
       if (cd.blocked) { showToast('短時間で操作を繰り返したため、しばらくお待ちください（残り' + cd.remaining + '分）', 'error'); return; }
       const nameEl = document.getElementById('gameRegName');
       const urlEl = document.getElementById('gameRegUrl');
+      const authEl = document.getElementById('gameRegAuthId');
       const errEl = document.getElementById('gameRegError');
       const name = nameEl.value.trim();
       const url = urlEl.value.trim();
+      const authId = authEl.value.trim();
       errEl.classList.remove('visible');
       if (!name) { errEl.textContent = 'ゲーム名を入力してください'; errEl.classList.add('visible'); return; }
       if (!url) { errEl.textContent = 'URLを入力してください'; errEl.classList.add('visible'); return; }
       try { new URL(url); } catch { errEl.textContent = '有効なURLを入力してください'; errEl.classList.add('visible'); return; }
+      if (!authId) { errEl.textContent = '認証IDを入力してください'; errEl.classList.add('visible'); return; }
       if (appState.games.length >= 20) { errEl.textContent = 'ゲーム登録は最大20件までです'; errEl.classList.add('visible'); return; }
       if (appState.games.find(g => g.name === name)) { errEl.textContent = 'このゲーム名は既に登録済みです'; errEl.classList.add('visible'); return; }
       if (appState.games.find(g => g.url === url)) { errEl.textContent = 'このURLは既に登録済みです'; errEl.classList.add('visible'); return; }
+      // 認証IDの検証
+      const inputHash = await hashString(authId);
+      if (appState.gameAuthHash) {
+        if (inputHash !== appState.gameAuthHash) {
+          errEl.textContent = '認証IDが一致しません'; errEl.classList.add('visible'); return;
+        }
+      }
       // 操作記録
       const triggered = await recordAction('admin', 'register_game');
       if (triggered) { showToast('短時間でゲーム登録を繰り返したため、しばらくお待ちください', 'error'); return; }
@@ -3120,8 +3150,12 @@
         const gameId = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
         const gameData = {};
         gameData[gameId] = { name, url, admin_device: appState.deviceId, created_at: new Date().toISOString() };
+        if (!appState.gameAuthHash) {
+          // 初回：認証IDハッシュも一緒に保存
+          gameData._auth_hash = inputHash;
+        }
         await db.collection('tournaments').doc('games_registry').set(gameData, { merge: true });
-        nameEl.value = ''; urlEl.value = '';
+        nameEl.value = ''; urlEl.value = ''; authEl.value = '';
         showToast('ゲーム「' + name + '」を登録しました');
       } catch (e) { console.error('Game register error:', e); showToast('登録に失敗しました: ' + e.message, 'error'); }
     }
@@ -3140,6 +3174,26 @@
         await db.collection('tournaments').doc('games_registry').update(deleteData);
         showToast('「' + gameName + '」を削除しました');
       } catch (e) { console.error(e); showToast('削除に失敗しました', 'error'); }
+    }
+    function updateGameAuthStatus() {
+      var el = document.getElementById('gameAuthStatus');
+      if (!el) return;
+      if (appState.gameAuthHash) {
+        el.innerHTML = '<span style="color:var(--hud-green);">🔒 認証ID: 設定済み</span>' +
+          ' <button onclick="verifyAuthId()" style="background:none;border:1px solid var(--hud-green-dim);color:var(--text-dim);padding:0.15rem 0.5rem;border-radius:3px;cursor:pointer;font-size:0.7rem;margin-left:0.3rem;">確認</button>';
+      } else {
+        el.innerHTML = '<span style="color:var(--hud-red);">🔓 認証ID: 未設定（次回登録時に設定されます）</span>';
+      }
+    }
+    async function verifyAuthId() {
+      var input = prompt('認証IDを入力して確認:');
+      if (!input) return;
+      var hash = await hashString(input.trim());
+      if (hash === appState.gameAuthHash) {
+        showToast('認証ID: 一致しました ✓', 'success');
+      } else {
+        showToast('認証ID: 一致しません ✗', 'error');
+      }
     }
     function renderGameList() {
       const container = document.getElementById('gameListAdmin');

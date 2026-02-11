@@ -2783,6 +2783,12 @@
     document.getElementById('calendarHour')?.addEventListener('input', updateCalendarDisplay);
     document.getElementById('calendarMinute')?.addEventListener('input', updateCalendarDisplay);
     function confirmCalendar() { if (!calendarSelectedDate) { showToast('日付を選択してください', 'error'); return; } const h = parseInt(document.getElementById('calendarHour').value) || 0, mi = parseInt(document.getElementById('calendarMinute').value) || 0; const dt = new Date(calendarSelectedDate.getFullYear(), calendarSelectedDate.getMonth(), calendarSelectedDate.getDate(), h, mi); if (dt <= new Date()) { showToast('現在より後の日時を選択してください', 'error'); return; } const str = dt.toLocaleString('ja-JP', {year:'numeric',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}); if (calendarTarget === 'setup') { document.getElementById('setupDeadline').value = dt.toISOString(); document.getElementById('setupDeadlineBtn').textContent = str; } playClick(); closeCalendar(); }
+    // タイトル画面のスクロールを完全に防止
+    function preventTitleScroll(e) {
+      if (currentScreen === 'titleScreen') { e.preventDefault(); }
+    }
+    document.addEventListener('wheel', preventTitleScroll, { passive: false });
+    document.addEventListener('touchmove', preventTitleScroll, { passive: false });
     document.addEventListener('DOMContentLoaded', () => { setTimeout(addSounds, 100); initBGM(); initFirebase(); updateHudVisibility(); var mc = document.querySelector('.main-container'); if (mc) mc.style.overflow = 'hidden'; });
   </script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>

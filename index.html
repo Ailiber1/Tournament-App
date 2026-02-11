@@ -125,8 +125,12 @@
     }
     .screen { display: none; overflow: hidden; }
     .screen.active { display: block; height: 100vh; overflow-y: auto; overscroll-behavior: none; }
-    .title-screen { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-    .title-screen.active { overflow: hidden; }
+    .title-screen { height: 100vh; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
+    .title-screen.active { }
+    @media (min-width: 900px) {
+      .title-screen { overflow: hidden; }
+      .title-screen.active { overflow: hidden; }
+    }
     @media (min-width: 900px) {
       .title-screen { flex-direction: row; padding: 2rem; }
     }
@@ -1910,7 +1914,7 @@
   <div class="toast" id="toast"></div>
   
   <!-- BGM/SE Controls -->
-  <div class="sound-controls" id="soundControls">
+  <div class="sound-controls" id="soundControls" style="display:none;">
     <button class="sound-btn" id="bgmBtn" onclick="toggleBGM()" title="BGM ON/OFF">🎵</button>
     <button class="sound-btn" id="seBtn" onclick="toggleSE()" title="SE ON/OFF">🔊</button>
   </div>

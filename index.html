@@ -124,8 +124,8 @@
       overflow: hidden;
     }
     .screen { display: none; overflow: hidden; }
-    .screen.active { display: block; height: 100vh; overflow-y: auto; overscroll-behavior: none; }
-    .title-screen { height: 100vh; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
+    .screen.active { display: block; height: 100vh; height: 100dvh; overflow-y: auto; overscroll-behavior: none; }
+    .title-screen { height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; padding-bottom: env(safe-area-inset-bottom, 0px); }
     .title-screen.active { }
     @media (min-width: 900px) {
       .title-screen { overflow: hidden; }
@@ -1521,7 +1521,7 @@
           <button class="menu-btn cancel-btn" id="cancelEntryBtn" onclick="cancelEntry()" disabled>登録解除</button>
           
           <!-- 参加者数表示（メニュー下） -->
-          <div class="participant-status" style="margin-top:1.5rem;padding:1rem 0;">
+          <div class="participant-status" style="margin-top:1.5rem;padding:1rem 0 3rem 0;">
             <div class="participant-status-main">参加者数：<span id="titleParticipantCount">0</span>/100</div>
             <div class="participant-status-sub">※最大100人・上限で締切</div>
           </div>

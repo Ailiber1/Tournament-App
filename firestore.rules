@@ -1,32 +1,51 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // --- Game uses these collections (keep current behavior) ---
+    // Tournaments: current tournament state and games registry
     match /tournaments/{docId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if request.resource.data != null;
     }
+    // Entries: tournament participants
     match /entries/{docId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAny(['username', 'device_id'])
+                    && request.resource.data.username is string
+                    && request.resource.data.username.size() <= 16;
+      allow update, delete: if true;
     }
+    // Matches: tournament match records
     match /matches/{docId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if request.resource.data != null;
     }
+    // Logs: operation logs (limited)
     match /logs/{docId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAny(['message', 'timestamp']);
+      allow delete: if true;
     }
+    // History: tournament history archives
     match /history/{docId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAny(['date']);
     }
+    // Cooldowns: spam prevention cooldown records
     match /cooldowns/{docId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if true;
     }
+    // Action logs: rate limiting records
     match /action_logs/{docId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAny(['device_id', 'type']);
     }
+    // Spam alerts: abuse detection logs
     match /spam_alerts/{docId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAny(['device_id', 'type']);
     }
-    // --- Deny all other collections ---
+    // Deny all other collections
     match /{document=**} {
       allow read, write: if false;
     }
